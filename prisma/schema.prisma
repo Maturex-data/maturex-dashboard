@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RawOrder {
+  id                     String    @id @default(cuid())
+  shopifyOrderId         String    @unique @map("shopify_order_id")
+  orderName              String    @map("order_name")
+  orderDate              DateTime  @map("order_date") @db.Date
+  financialStatus        String?   @map("financial_status")
+  fulfillmentStatus      String?   @map("fulfillment_status")
+  fulfillmentDate        DateTime? @map("fulfillment_date") @db.Date
+  deliveryStatus         String?   @map("delivery_status")
+  deliveryDate           DateTime? @map("delivery_date") @db.Date
+  grossSales             Decimal   @map("gross_sales") @db.Decimal(18, 4)
+  discounts              Decimal   @db.Decimal(18, 4)
+  shippingCharged        Decimal   @map("shipping_charged") @db.Decimal(18, 4)
+  salesTax               Decimal   @map("sales_tax") @db.Decimal(18, 4)
+  orderTotalBeforeRefund Decimal   @map("order_total_before_refund") @db.Decimal(18, 4)
+  orderTotal             Decimal   @map("order_total") @db.Decimal(18, 4)
+  refundAmount           Decimal   @map("refund_amount") @db.Decimal(18, 4)
+  refundDate             DateTime? @map("refund_date") @db.Date
+  items                  Int
+  tag                    String?
+  syncedAt               DateTime  @default(now()) @map("synced_at")
+
+  @@index([orderDate])
+  @@map("raw_orders")
+}
+
+model ShopifySyncRun {
+  id           String    @id @default(cuid())
+  status       String
+  startedAt    DateTime  @default(now()) @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  pageCount    Int       @default(0) @map("page_count")
+  addedCount   Int       @default(0) @map("added_count")
+  skippedCount Int       @default(0) @map("skipped_count")
+  errorMessage String?   @map("error_message") @db.Text
+
+  @@index([startedAt])
+  @@map("shopify_sync_runs")
+}

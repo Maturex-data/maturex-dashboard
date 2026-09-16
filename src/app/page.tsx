@@ -208,7 +208,6 @@ export default function Page() {
 
         {/* Client Tabs for Data Tables */}
         <EcDashboardTabs
-          shopifyOrders={mockShopifyOrders}
           adSpendRecords={mockAdSpendRecords}
           productCostRecords={mockProductCostRecords}
           appCostRecords={mockAppCostRecords}

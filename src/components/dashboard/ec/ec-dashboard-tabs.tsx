@@ -7,7 +7,8 @@ import {
   ShoppingBagIcon,
 } from "lucide-react";
 import * as React from "react";
-import { EcShopifyOrdersTable } from "@/components/dashboard/ec/ec-shopify-orders-table";
+import { RawOrdersTable } from "@/components/dashboard/ec/raw-orders-table";
+import { ShopifySyncButton } from "@/components/dashboard/ec/shopify-sync-button";
 import { FlAppCostTable } from "@/components/dashboard/fl/fl-app-cost-table";
 import { MiAdSpendTable } from "@/components/dashboard/mi/mi-ad-spend-table";
 import { PoProductCostTable } from "@/components/dashboard/po/po-product-cost-table";
@@ -24,18 +25,15 @@ import type {
   AdSpendRecord,
   AppCostRecord,
   ProductCostRecord,
-  ShopifyOrder,
 } from "@/lib/mock-data";
 
 interface EcDashboardTabsProps {
-  shopifyOrders: ShopifyOrder[];
   adSpendRecords: AdSpendRecord[];
   productCostRecords: ProductCostRecord[];
   appCostRecords: AppCostRecord[];
 }
 
 export function EcDashboardTabs({
-  shopifyOrders,
   adSpendRecords,
   productCostRecords,
   appCostRecords,
@@ -50,7 +48,7 @@ export function EcDashboardTabs({
             <ShoppingBagIcon className="size-3.5" />
             <span>1. Đơn Hàng Shopify</span>
             <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
-              {shopifyOrders.length}
+              Neon
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="ads" className="gap-2 text-xs md:text-sm">
@@ -92,16 +90,11 @@ export function EcDashboardTabs({
                   Refund, Transaction Fee và tình trạng Payout về ngân hàng.
                 </CardDescription>
               </div>
-              <Badge
-                variant="outline"
-                className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 shrink-0 px-3 py-1 font-medium"
-              >
-                Sync: Realtime
-              </Badge>
+              <ShopifySyncButton />
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <EcShopifyOrdersTable orders={shopifyOrders} />
+            <RawOrdersTable />
           </CardContent>
         </Card>
       </TabsContent>
