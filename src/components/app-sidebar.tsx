@@ -124,7 +124,18 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  user?: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}) {
+  const currentUser = user || data.user;
+
   return (
     <Sidebar
       collapsible="icon"
@@ -138,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter className="p-3">
-        <NavUser user={data.user} />
+        <NavUser user={currentUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -31,10 +31,18 @@ export function NavUser({
   user: {
     name: string;
     email: string;
-    avatar: string;
+    avatar?: string;
   };
 }) {
   const { isMobile } = useSidebar();
+  const initials = (user.name || user.email || "MX")
+    .split(" ")
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -50,7 +58,7 @@ export function NavUser({
             <Avatar className="size-7 rounded-lg ring-1 ring-border/80 shrink-0">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-semibold">
-                AD
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
@@ -75,7 +83,7 @@ export function NavUser({
                   <Avatar className="size-8 rounded-lg ring-1 ring-border/80 shrink-0">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="rounded-lg bg-emerald-500/10 text-emerald-600 font-semibold text-xs">
-                      AD
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
@@ -112,7 +120,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1" />
-            <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10">
+            <DropdownMenuItem
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/auth/login";
+              }}
+              className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
+            >
               <LogOutIcon className="size-3.5" />
               Đăng xuất
             </DropdownMenuItem>
