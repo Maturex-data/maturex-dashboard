@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -15,14 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset className="min-w-0">{children}</SidebarInset>
-          </SidebarProvider>
-        </TooltipProvider>
+    <html lang="vi" className="h-full antialiased">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-foreground selection:text-background">
+        <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
   );
