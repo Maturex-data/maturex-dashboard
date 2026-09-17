@@ -65,3 +65,16 @@ export async function verifyAccessToken(
     return null;
   }
 }
+
+/**
+ * Server-side helper to get authenticated user from incoming cookies.
+ * Supports passing either an access token string or Next.js cookies() ReadonlyRequestCookies.
+ */
+export async function getSessionUser(
+  cookieStore?: { get: (name: string) => { value: string } | undefined } | null,
+): Promise<AuthUserPayload | null> {
+  if (!cookieStore) return null;
+  const token = cookieStore.get(ACCESS_COOKIE_NAME)?.value;
+  if (!token) return null;
+  return verifyAccessToken(token);
+}

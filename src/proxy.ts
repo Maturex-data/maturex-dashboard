@@ -29,7 +29,18 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. If not authenticated and attempting to access protected dashboard routes, redirect to login
+  // 4. Handle protected API routes: return 401 JSON if unauthenticated
+  if (pathname.startsWith("/api/")) {
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized. Authentication required." },
+        { status: 401 },
+      );
+    }
+    return NextResponse.next();
+  }
+
+  // 5. If not authenticated and attempting to access protected dashboard routes, redirect to login
   if (!user && !pathname.startsWith("/auth")) {
     const loginUrl = new URL("/auth/login", req.url);
     if (pathname !== "/") {
