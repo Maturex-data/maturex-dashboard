@@ -14,7 +14,8 @@
     "export:airwallex:account-activity:enrich": "npm run export:airwallex:account-activity && npm run export:airwallex:account-statement-pdf && /Users/tatuanthanh/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/enrich-airwallex-activity-from-statement.py && /Users/tatuanthanh/.cache/codex-primary-runtime/dependencies/python/bin/python3 scripts/create-airwallex-statement-xlsx.py",
     "export:airwallex:account-activity:xlsx": "npm run export:airwallex:account-activity && /Users/tatuanthanh/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/create-airwallex-statement-xlsx.py",
     "export:airwallex:cards": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
-    "export:airwallex:card-6171": "node --env-file=.env scripts/export-airwallex-card-statement.mjs"
+    "export:airwallex:card-6171": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
+    "export:fastway": "node scripts/export-fastway-data.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

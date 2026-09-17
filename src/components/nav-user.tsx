@@ -41,65 +41,80 @@ export function NavUser({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
+              <SidebarMenuButton
+                size="lg"
+                className="h-12 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 data-open:bg-muted/60 transition-all p-2 gap-2.5"
+              />
             }
           >
-            <Avatar>
+            <Avatar className="size-7 rounded-lg ring-1 ring-border/80 shrink-0">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback className="rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-semibold">
+                AD
+              </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
+            <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+              <span className="truncate font-semibold text-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-[10px] text-muted-foreground font-mono">
+                {user.email}
+              </span>
             </div>
-            <ChevronsUpDownIcon className="ml-auto size-4" />
+            <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-fit"
+            className="w-56 p-1.5"
             side={isMobile ? "bottom" : "right"}
             align="end"
-            sideOffset={4}
+            sideOffset={6}
           >
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar>
+                <div className="flex items-center gap-2.5 p-2 text-left text-xs">
+                  <Avatar className="size-8 rounded-lg ring-1 ring-border/80 shrink-0">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback className="rounded-lg bg-emerald-500/10 text-emerald-600 font-semibold text-xs">
+                      AD
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                  <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+                    <span className="truncate font-semibold text-foreground">
+                      {user.name}
+                    </span>
+                    <span className="truncate text-[10px] text-muted-foreground font-mono">
+                      {user.email}
+                    </span>
                   </div>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="my-1" />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SparklesIcon />
-                Upgrade to Pro
+              <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                <SparklesIcon className="size-3.5 text-amber-500" />
+                MatureX Workspace Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="my-1" />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon />
-                Account
+              <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                <BadgeCheckIcon className="size-3.5" />
+                Tài khoản & Phân quyền
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
+              <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                <CreditCardIcon className="size-3.5" />
+                Gói dịch vụ & Chi phí
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+              <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                <BellIcon className="size-3.5" />
+                Thông báo hệ thống
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon />
-              Log out
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10">
+              <LogOutIcon className="size-3.5" />
+              Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

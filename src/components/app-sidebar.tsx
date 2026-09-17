@@ -32,21 +32,25 @@ const data = {
       name: "EC Team",
       logo: <ShoppingBagIcon className="size-4 text-emerald-400" />,
       plan: "Shopify / POD / Ads",
+      href: "/",
     },
     {
       name: "Flowa",
       logo: <SparklesIcon className="size-4 text-purple-400" />,
       plan: "Digital / Media",
+      href: "/flowa",
     },
     {
       name: "Microm",
       logo: <LayersIcon className="size-4 text-sky-400" />,
       plan: "Micro SaaS",
+      href: "/dashboard?team=microm",
     },
     {
       name: "Pocdy",
       logo: <CreditCardIcon className="size-4 text-amber-400" />,
       plan: "Cross-border Brand",
+      href: "/dashboard?team=pocdy",
     },
   ],
   navMain: [
@@ -55,17 +59,20 @@ const data = {
       url: "#",
       icon: <BarChart3Icon />,
       isActive: true,
+      badge: "Active",
       items: [
         {
-          title: "Dữ liệu EC (Active)",
+          title: "Dữ liệu EC Tổng quan",
+          url: "/",
+          isActive: true,
+          badge: "Realtime",
+        },
+        {
+          title: "Shopify Orders & Payout",
           url: "#",
         },
         {
-          title: "Shopify & Payout",
-          url: "#",
-        },
-        {
-          title: "Chi phí Ads",
+          title: "Chi phí Meta Ads",
           url: "#",
         },
         {
@@ -73,7 +80,7 @@ const data = {
           url: "#",
         },
         {
-          title: "App & Dịch vụ",
+          title: "Airwallex Thu & Chi",
           url: "#",
         },
       ],
@@ -86,14 +93,16 @@ const data = {
         {
           title: "Printify Portal",
           url: "#",
+          badge: "API",
         },
         {
           title: "PG Print 1",
           url: "#",
         },
         {
-          title: "Sheet LPro",
+          title: "Google Sheet LPro",
           url: "#",
+          badge: "Sync",
         },
       ],
     },
@@ -117,14 +126,18 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border/60 bg-sidebar/50 backdrop-blur-xs"
+      {...props}
+    >
+      <SidebarHeader className="p-3">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <NavMain items={data.navMain} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-3">
         <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
