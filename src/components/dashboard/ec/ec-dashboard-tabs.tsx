@@ -1,15 +1,16 @@
 "use client";
 
 import {
-  LayersIcon,
   MegaphoneIcon,
   PackageCheckIcon,
   ShoppingBagIcon,
+  WalletCardsIcon,
 } from "lucide-react";
 import * as React from "react";
-import { RawOrdersTable } from "@/components/dashboard/ec/raw-orders-table";
+import { AirwallexAccountActivityTable } from "@/components/dashboard/ec/airwallex-account-activity-table";
+import { DataExportControls } from "@/components/dashboard/ec/data-export-controls";
+import { ShopifyRawTables } from "@/components/dashboard/ec/shopify-raw-tables";
 import { ShopifySyncButton } from "@/components/dashboard/ec/shopify-sync-button";
-import { FlAppCostTable } from "@/components/dashboard/fl/fl-app-cost-table";
 import { MiAdSpendTable } from "@/components/dashboard/mi/mi-ad-spend-table";
 import { PoProductCostTable } from "@/components/dashboard/po/po-product-cost-table";
 import { Badge } from "@/components/ui/badge";
@@ -21,23 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  AdSpendRecord,
-  AppCostRecord,
-  ProductCostRecord,
-} from "@/lib/mock-data";
-
-interface EcDashboardTabsProps {
-  adSpendRecords: AdSpendRecord[];
-  productCostRecords: ProductCostRecord[];
-  appCostRecords: AppCostRecord[];
-}
-
-export function EcDashboardTabs({
-  adSpendRecords,
-  productCostRecords,
-  appCostRecords,
-}: EcDashboardTabsProps) {
+export function EcDashboardTabs() {
   const [activeTab, setActiveTab] = React.useState("shopify");
 
   return (
@@ -55,24 +40,25 @@ export function EcDashboardTabs({
             <MegaphoneIcon className="size-3.5" />
             <span>2. Tài Khoản Ad & Spend</span>
             <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
-              {adSpendRecords.length}
+              DB
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="cogs" className="gap-2 text-xs md:text-sm">
             <PackageCheckIcon className="size-3.5" />
             <span>3. Product Cost (Printify / PG / LPro)</span>
             <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
-              {productCostRecords.length}
+              Neon
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="apps" className="gap-2 text-xs md:text-sm">
-            <LayersIcon className="size-3.5" />
-            <span>4. Chi Phí App</span>
+          <TabsTrigger value="airwallex" className="gap-2 text-xs md:text-sm">
+            <WalletCardsIcon className="size-3.5" />
+            <span>4. Airwallex</span>
             <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
-              {appCostRecords.length}
+              DB
             </Badge>
           </TabsTrigger>
         </TabsList>
+        <DataExportControls />
       </div>
 
       {/* Tab 1: Shopify SQL Orders & Details */}
@@ -94,7 +80,7 @@ export function EcDashboardTabs({
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <RawOrdersTable />
+            <ShopifyRawTables />
           </CardContent>
         </Card>
       </TabsContent>
@@ -118,12 +104,12 @@ export function EcDashboardTabs({
                 variant="outline"
                 className="border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 shrink-0 px-3 py-1 font-medium"
               >
-                {adSpendRecords.length} Tài Khoản
+                Meta Ads · DB
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <MiAdSpendTable records={adSpendRecords} />
+            <MiAdSpendTable />
           </CardContent>
         </Card>
       </TabsContent>
@@ -166,36 +152,24 @@ export function EcDashboardTabs({
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <PoProductCostTable records={productCostRecords} />
+            <PoProductCostTable />
           </CardContent>
         </Card>
       </TabsContent>
 
-      {/* Tab 4: App Cost */}
-      <TabsContent value="apps" className="mt-0 space-y-4">
+      <TabsContent value="airwallex" className="mt-0 space-y-4">
         <Card className="border-border/60 shadow-sm overflow-hidden bg-card/40">
           <CardHeader className="pb-4 bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-border/50">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <LayersIcon className="w-5 h-5 text-purple-500" />
-                  Chi Phí App & Dịch Vụ (App Costs)
-                </CardTitle>
-                <CardDescription className="mt-1.5 text-sm">
-                  Các khoản phí phần mềm định kỳ, công cụ đo lường quảng cáo,
-                  app tích hợp Shopify và fulfillment portal.
-                </CardDescription>
-              </div>
-              <Badge
-                variant="outline"
-                className="border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 shrink-0 px-3 py-1 font-medium"
-              >
-                Định kỳ & Usage
-              </Badge>
-            </div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <WalletCardsIcon className="w-5 h-5 text-violet-500" />
+              Airwallex Account Activity
+            </CardTitle>
+            <CardDescription className="mt-1.5 text-sm">
+              Sao ke thu chi, giao dich card va tai khoan Airwallex.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <FlAppCostTable records={appCostRecords} />
+            <AirwallexAccountActivityTable />
           </CardContent>
         </Card>
       </TabsContent>

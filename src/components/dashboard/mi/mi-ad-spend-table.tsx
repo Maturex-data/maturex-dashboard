@@ -1,148 +1,199 @@
-import { type ColumnDef, DataTable } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
-import type { AdSpendRecord } from "@/lib/mock-data";
+"use client";
 
-// Generate platform styles
-const getPlatformStyle = (platform: string) => {
-  switch (platform) {
-    case "Facebook Ads":
-      return {
-        initial: "FB",
-        color:
-          "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
-      };
-    case "Google Ads":
-      return {
-        initial: "GG",
-        color:
-          "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-      };
-    case "TikTok Ads":
-      return {
-        initial: "TK",
-        color:
-          "bg-zinc-200 text-zinc-800 border-zinc-300 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700",
-      };
-    default:
-      return {
-        initial: "AD",
-        color:
-          "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800",
-      };
-  }
+import { RefreshCwIcon } from "lucide-react";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { vietnamMonthOptions } from "@/lib/date-time";
+
+type MetaRow = {
+  id: string;
+  account_id: string;
+  date_start: string;
+  date_stop: string;
+  currency: string | null;
+  spend: string;
+  purchase_count: string;
+  purchase_value: string;
+  purchase_roas: string;
+  cost_per_purchase: string;
+  impressions: string;
+  clicks: string;
+  cpc: string;
+  cpm: string;
+  ctr: string;
 };
 
-const columns: ColumnDef<AdSpendRecord>[] = [
-  {
-    header: "Nền tảng & Tài khoản",
-    headerClassName: "pl-6",
-    cellClassName: "pl-6 align-middle",
-    accessor: (rec) => {
-      const platformStyle = getPlatformStyle(rec.platform);
-      return (
-        <div className="flex items-center gap-4">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold text-sm shadow-sm border ${platformStyle.color}`}
-          >
-            {platformStyle.initial}
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">
-              {rec.accountName}
-            </span>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="w-fit text-[10px] px-1.5 py-0 font-medium bg-muted text-muted-foreground shadow-none"
-              >
-                {rec.platform}
-              </Badge>
-              <span className="text-[11px] font-mono text-muted-foreground">
-                {rec.accountId}
-              </span>
-            </div>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    header: "Trạng thái",
-    cellClassName: "align-middle",
-    accessor: (rec) => (
-      <>
-        {rec.status === "Active" ? (
-          <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            Đang chạy
-          </div>
-        ) : rec.status === "Paused" ? (
-          <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-muted bg-muted/50 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50"></span>
-            Tạm dừng
-          </div>
-        ) : (
-          <div className="inline-flex items-center justify-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
-            Kháng nghị
-          </div>
-        )}
-      </>
-    ),
-  },
-  {
-    header: "Chi tiêu (Spend)",
-    headerClassName: "text-right",
-    cellClassName: "text-right align-middle",
-    accessor: (rec) => (
-      <span className="font-bold text-foreground text-[16px] font-mono tracking-tight">
-        $
-        {rec.spend.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}
-      </span>
-    ),
-  },
-  {
-    header: "Hiển thị (Impr.)",
-    headerClassName: "text-right",
-    cellClassName: "text-right align-middle",
-    accessor: (rec) => (
-      <span className="text-muted-foreground font-mono font-medium text-sm">
-        {rec.impressions.toLocaleString()}
-      </span>
-    ),
-  },
-  {
-    header: "Click & CPC",
-    headerClassName: "text-right pr-6",
-    cellClassName: "text-right pr-6 align-middle",
-    accessor: (rec) => (
-      <div className="flex flex-col items-end gap-1">
-        <span className="font-semibold text-foreground font-mono text-sm">
-          {rec.clicks.toLocaleString()}{" "}
-          <span className="text-xs text-muted-foreground font-sans">
-            clicks
-          </span>
-        </span>
-        <span className="text-[11px] text-muted-foreground font-mono">
-          CPC: ${rec.cpc.toFixed(2)}
-        </span>
-      </div>
-    ),
-  },
-];
+const headers = [
+  "account_id",
+  "date_start",
+  "date_stop",
+  "currency",
+  "spend",
+  "purchase_count",
+  "purchase_value",
+  "purchase_roas",
+  "cost_per_purchase",
+  "impressions",
+  "clicks",
+  "cpc",
+  "cpm",
+  "ctr",
+] as const;
 
-export function MiAdSpendTable({ records }: { records: AdSpendRecord[] }) {
+function formatNumber(value: string, fractionDigits = 2): string {
+  return Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+}
+
+function monthOptions(): string[] {
+  return vietnamMonthOptions();
+}
+
+export function MiAdSpendTable() {
+  const options = React.useMemo(monthOptions, []);
+  const [month, setMonth] = React.useState(options[0] || "2026-01");
+  const [rows, setRows] = React.useState<MetaRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [syncing, setSyncing] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/meta/daily-financials?month=${month}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const payload = (await response.json()) as {
+        rows?: MetaRow[];
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to load Meta data.");
+      }
+      setRows(payload.rows || []);
+    } catch (reason) {
+      setRows([]);
+      setError(
+        reason instanceof Error ? reason.message : "Unable to load Meta data.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [month]);
+
+  React.useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function sync() {
+    setSyncing(true);
+    setError("");
+    try {
+      const response = await fetch("/api/meta/daily-financials", {
+        method: "POST",
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error || "Meta sync failed.");
+      }
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Meta sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
-    <DataTable
-      columns={columns}
-      data={records}
-      keyExtractor={(rec) => rec.id}
-    />
+    <div className="w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <label className="flex items-center gap-2 text-muted-foreground text-sm">
+          Month
+          <select
+            aria-label="Select Meta month"
+            className="h-8 rounded-lg border border-input bg-background px-2 text-foreground"
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
+          >
+            {options.map((value) => (
+              <option key={value} value={value}>
+                Tháng {Number(value.slice(5))} năm {value.slice(0, 4)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void sync()}
+          disabled={syncing}
+        >
+          <RefreshCwIcon className={syncing ? "animate-spin" : ""} />
+          Sync Meta
+        </Button>
+      </div>
+      {error ? (
+        <p className="px-4 py-3 text-destructive text-xs">{error}</p>
+      ) : null}
+      <div className="max-h-[520px] overflow-auto">
+        <Table className="min-w-max">
+          <TableHeader className="sticky top-0 z-10 bg-muted/95">
+            <TableRow>
+              {headers.map((header) => (
+                <TableHead key={header}>{header}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={headers.length}>Loading...</TableCell>
+              </TableRow>
+            ) : null}
+            {!loading && !error && rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={headers.length}>
+                  No Meta financial records for this month.
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {!loading
+              ? rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.account_id}</TableCell>
+                    <TableCell>{row.date_start}</TableCell>
+                    <TableCell>{row.date_stop}</TableCell>
+                    <TableCell>{row.currency || ""}</TableCell>
+                    <TableCell>{formatNumber(row.spend)}</TableCell>
+                    <TableCell>{formatNumber(row.purchase_count)}</TableCell>
+                    <TableCell>{formatNumber(row.purchase_value)}</TableCell>
+                    <TableCell>{formatNumber(row.purchase_roas)}</TableCell>
+                    <TableCell>{formatNumber(row.cost_per_purchase)}</TableCell>
+                    <TableCell>{formatNumber(row.impressions, 0)}</TableCell>
+                    <TableCell>{formatNumber(row.clicks, 0)}</TableCell>
+                    <TableCell>{formatNumber(row.cpc)}</TableCell>
+                    <TableCell>{formatNumber(row.cpm)}</TableCell>
+                    <TableCell>{formatNumber(row.ctr)}</TableCell>
+                  </TableRow>
+                ))
+              : null}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }

@@ -1,3 +1,8 @@
+import {
+  formatVietnamDate,
+  formatVietnamMonth,
+  vietnamMonthRange,
+} from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -7,15 +12,11 @@ function isMonth(value: string | null): value is string {
 }
 
 function monthBounds(month: string): { from: Date; to: Date } {
-  const [year, monthNumber] = month.split("-").map(Number);
-  const from = new Date(Date.UTC(year, monthNumber - 1, 1));
-  const to = new Date(Date.UTC(year, monthNumber, 1));
-
-  return { from, to };
+  return vietnamMonthRange(month);
 }
 
 function toDate(value: Date | null): string | null {
-  return value ? value.toISOString().slice(0, 10) : null;
+  return value ? formatVietnamDate(value) : null;
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -24,20 +25,23 @@ export async function GET(request: Request): Promise<Response> {
     orderBy: { orderDate: "desc" },
     select: { orderDate: true },
   });
-  const latestMonth = latest?.orderDate.toISOString().slice(0, 7) ?? null;
-  const month = isMonth(url.searchParams.get("month"))
-    ? url.searchParams.get("month")
-    : latestMonth;
+  const latestMonth = latest ? formatVietnamMonth(latest.orderDate) : null;
+  const monthParam = url.searchParams.get("month");
+  const month = isMonth(monthParam)
+    ? monthParam
+    : monthParam === "all"
+      ? null
+      : latestMonth;
 
-  const rows = month
-    ? await prisma.rawOrder.findMany({
-        where: (() => {
+  const rows = await prisma.rawOrder.findMany({
+    where: month
+      ? (() => {
           const bounds = monthBounds(month);
           return { orderDate: { gte: bounds.from, lt: bounds.to } };
-        })(),
-        orderBy: [{ orderDate: "desc" }, { orderName: "asc" }],
-      })
-    : [];
+        })()
+      : undefined,
+    orderBy: [{ orderDate: "desc" }, { orderName: "asc" }],
+  });
   const months = await prisma.rawOrder.findMany({
     distinct: ["orderDate"],
     orderBy: { orderDate: "desc" },
@@ -47,9 +51,10 @@ export async function GET(request: Request): Promise<Response> {
   return Response.json({
     month,
     months: [
-      ...new Set(months.map((row) => row.orderDate.toISOString().slice(0, 7))),
+      ...new Set(months.map((row) => formatVietnamMonth(row.orderDate))),
     ],
     rows: rows.map((row) => ({
+      shopify_order_id: row.shopifyOrderId,
       order_name: row.orderName,
       order_date: toDate(row.orderDate),
       financial_status: row.financialStatus,
@@ -64,6 +69,7 @@ export async function GET(request: Request): Promise<Response> {
       order_total_before_refund: row.orderTotalBeforeRefund.toString(),
       order_total: row.orderTotal.toString(),
       refund_amount: row.refundAmount.toString(),
+      calc_order_net_after_refund: row.calcOrderNetAfterRefund.toString(),
       refund_date: toDate(row.refundDate),
       items: row.items,
       tag: row.tag,

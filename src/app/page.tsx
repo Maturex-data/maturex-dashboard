@@ -27,7 +27,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   mockAdSpendRecords,
   mockAppCostRecords,
-  mockProductCostRecords,
   mockShopifyOrders,
 } from "@/lib/mock-data";
 
@@ -40,10 +39,7 @@ export default function Page() {
     (acc, ad) => acc + ad.spend,
     0,
   );
-  const totalProductCost = mockProductCostRecords.reduce(
-    (acc, prod) => acc + prod.totalCost,
-    0,
-  );
+  const totalProductCost = 0;
   const totalAppCost = mockAppCostRecords.reduce(
     (acc, app) => acc + app.cost,
     0,
@@ -207,11 +203,7 @@ export default function Page() {
         </div>
 
         {/* Client Tabs for Data Tables */}
-        <EcDashboardTabs
-          adSpendRecords={mockAdSpendRecords}
-          productCostRecords={mockProductCostRecords}
-          appCostRecords={mockAppCostRecords}
-        />
+        <EcDashboardTabs />
       </main>
     </>
   );

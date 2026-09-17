@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { formatVietnamDate } from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
 
 const INITIAL_SYNC_DATE = "2026-01-01";
@@ -190,6 +191,9 @@ function toRawOrder(order: ShopifyOrderNode): Prisma.RawOrderCreateManyInput {
     orderTotalBeforeRefund: decimal(order.totalPriceSet.shopMoney.amount),
     orderTotal: decimal(order.currentTotalPriceSet.shopMoney.amount),
     refundAmount,
+    calcOrderNetAfterRefund: decimal(order.totalPriceSet.shopMoney.amount).sub(
+      refundAmount,
+    ),
     refundDate: asDate(latestRefund?.createdAt),
     items: order.lineItems.nodes.reduce(
       (total, item) => total + item.quantity,
@@ -296,7 +300,8 @@ async function runSync(): Promise<SyncResult> {
       select: { orderDate: true },
     });
     const fromDate =
-      latestOrder?.orderDate.toISOString().slice(0, 10) ?? INITIAL_SYNC_DATE;
+      (latestOrder ? formatVietnamDate(latestOrder.orderDate) : null) ??
+      INITIAL_SYNC_DATE;
     const query = `created_at:>=${fromDate}`;
     let after: string | null = null;
     let pageCount = 0;
