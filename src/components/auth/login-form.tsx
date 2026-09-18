@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { loginAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,15 +37,10 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await loginAction({ email, password });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Đăng nhập không thành công");
+      if (!res.success) {
+        throw new Error(res.error || "Đăng nhập không thành công");
       }
 
       setIsSuccess(true);

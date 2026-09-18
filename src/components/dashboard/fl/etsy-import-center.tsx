@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { importEtsyAction } from "@/actions/etsy";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,18 +51,6 @@ interface ImportResult {
   insertedRows: number;
   skippedRows: number;
   message: string;
-}
-
-interface ImportResponse {
-  results: ImportResult[];
-  summary: {
-    files: number;
-    completed: number;
-    skipped: number;
-    failed: number;
-    insertedRows: number;
-  };
-  error?: string;
 }
 
 const reportLabels: Record<string, string> = {
@@ -150,13 +139,13 @@ export function EtsyImportCenter({
       const formData = new FormData();
       formData.set("shopCode", shopCode);
       for (const file of files) formData.append("files", file);
-      const response = await fetch("/api/etsy/import", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = (await response.json()) as ImportResponse;
-      if (!response.ok)
-        throw new Error(payload.error ?? "Không thể import dữ liệu.");
+
+      const res = await importEtsyAction(formData);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? "Không thể import dữ liệu.");
+      }
+
+      const payload = res.data;
       setResults(payload.results);
       setMessage(
         payload.summary.failed > 0

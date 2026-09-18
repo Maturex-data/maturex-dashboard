@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { registerAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,15 +57,10 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const res = await registerAction({ name, email, password });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Đăng ký không thành công");
+      if (!res.success) {
+        throw new Error(res.error || "Đăng ký không thành công");
       }
 
       setIsSuccess(true);

@@ -2,13 +2,8 @@
 
 import { RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
+import { syncShopifyAction } from "@/actions/shopify";
 import { Button } from "@/components/ui/button";
-
-type SyncResponse = {
-  addedCount: number;
-  pageCount: number;
-  skippedCount: number;
-};
 
 export function ShopifySyncButton() {
   const [isSyncing, setIsSyncing] = useState(false);
@@ -19,15 +14,13 @@ export function ShopifySyncButton() {
     setMessage(null);
 
     try {
-      const response = await fetch("/api/shopify/sync", { method: "POST" });
-      const payload = (await response.json()) as SyncResponse & {
-        error?: string;
-      };
+      const res = await syncShopifyAction();
 
-      if (!response.ok) {
-        throw new Error(payload.error || "Shopify sync failed.");
+      if (!res.success || !res.data) {
+        throw new Error(res.error || "Shopify sync failed.");
       }
 
+      const payload = res.data;
       setMessage(
         `${payload.addedCount} added, ${payload.skippedCount} skipped across ${payload.pageCount} pages.`,
       );

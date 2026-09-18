@@ -8,6 +8,7 @@ import {
   LogOutIcon,
   SparklesIcon,
 } from "lucide-react";
+import { logoutAction } from "@/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -122,8 +123,7 @@ export function NavUser({
             <DropdownMenuSeparator className="my-1" />
             <DropdownMenuItem
               onClick={async () => {
-                await fetch("/api/auth/logout", { method: "POST" });
-                window.location.href = "/auth/login";
+                await logoutAction();
               }}
               className="gap-2 p-2 rounded-lg text-xs cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
             >
