@@ -45,5 +45,6 @@ next-env.d.ts
 
 
 .agents
-/scripts
+/scripts/*
+!/scripts/import-etsy-data.mjs
 /exports

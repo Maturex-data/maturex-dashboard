@@ -72,3 +72,28 @@ export type User = Prisma.UserModel
  * 
  */
 export type RefreshToken = Prisma.RefreshTokenModel
+/**
+ * Model EtsyShop
+ * 
+ */
+export type EtsyShop = Prisma.EtsyShopModel
+/**
+ * Model EtsyImportBatch
+ * 
+ */
+export type EtsyImportBatch = Prisma.EtsyImportBatchModel
+/**
+ * Model EtsyOrder
+ * 
+ */
+export type EtsyOrder = Prisma.EtsyOrderModel
+/**
+ * Model EtsyOrderItem
+ * 
+ */
+export type EtsyOrderItem = Prisma.EtsyOrderItemModel
+/**
+ * Model EtsyStatement
+ * 
+ */
+export type EtsyStatement = Prisma.EtsyStatementModel

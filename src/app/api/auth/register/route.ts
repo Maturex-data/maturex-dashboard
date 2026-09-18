@@ -1,10 +1,4 @@
-import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  ACCESS_COOKIE_NAME,
-  ACCESS_TOKEN_MAX_AGE_SECONDS,
-  signAccessToken,
-} from "@/lib/jwt-service";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 
@@ -45,36 +39,15 @@ export async function POST(req: NextRequest) {
     // Hash password with scrypt
     const passwordHash = await hashPassword(password);
 
-    // Create new user in Neon Postgres
+    // Create new user in Neon Postgres with role 'user'
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash,
-        role: "admin",
+        role: "user",
         team: "maturex",
       },
-    });
-
-    const accessToken = await signAccessToken({
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    });
-
-    const isSecure = req.nextUrl.protocol === "https:";
-    const cookieStore = await cookies();
-
-    // Set httpOnly Access Token cookie
-    cookieStore.set({
-      name: ACCESS_COOKIE_NAME,
-      value: accessToken,
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: "lax",
-      path: "/",
-      maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
     });
 
     return NextResponse.json(
@@ -86,7 +59,8 @@ export async function POST(req: NextRequest) {
           name: user.name,
           role: user.role,
         },
-        message: "Tạo tài khoản thành công!",
+        message:
+          "Đăng ký thành công! Vui lòng liên hệ Admin để được cấp quyền truy cập.",
       },
       { status: 201 },
     );

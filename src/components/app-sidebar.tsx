@@ -9,6 +9,7 @@ import {
   ShoppingBagIcon,
   SparklesIcon,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import type * as React from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -124,6 +125,27 @@ const data = {
   ],
 };
 
+const flowaNav = [
+  {
+    title: "Dữ liệu Etsy",
+    url: "#",
+    icon: <ShoppingBagIcon />,
+    isActive: true,
+    badge: "Manual",
+    items: [
+      {
+        title: "Import dữ liệu",
+        url: "/flowa",
+        isActive: true,
+      },
+      {
+        title: "Lịch sử import",
+        url: "/flowa#import-history",
+      },
+    ],
+  },
+];
+
 export function AppSidebar({
   user,
   ...props
@@ -135,6 +157,8 @@ export function AppSidebar({
   };
 }) {
   const currentUser = user || data.user;
+  const pathname = usePathname();
+  const navigation = pathname.startsWith("/flowa") ? flowaNav : data.navMain;
 
   return (
     <Sidebar
@@ -146,7 +170,7 @@ export function AppSidebar({
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent className="px-2">
-        <NavMain items={data.navMain} />
+        <NavMain items={navigation} />
       </SidebarContent>
       <SidebarFooter className="p-3">
         <NavUser user={currentUser} />

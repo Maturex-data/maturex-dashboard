@@ -69,8 +69,8 @@ export function RegisterForm() {
 
       setIsSuccess(true);
       setTimeout(() => {
-        window.location.href = "/";
-      }, 700);
+        window.location.href = "/auth/login";
+      }, 2500);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi yêu cầu.";
@@ -234,7 +234,7 @@ export function RegisterForm() {
             {isSuccess ? (
               <>
                 <CheckCircle2Icon className="size-4 text-white" />
-                Đăng ký thành công! Đang chuyển trang...
+                Đăng ký thành công! Chờ Admin duyệt...
               </>
             ) : isLoading ? (
               <>

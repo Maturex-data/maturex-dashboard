@@ -29,7 +29,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. Handle protected API routes: return 401 JSON if unauthenticated
+  // 4. Handle protected API routes: return 401/403 JSON if unauthenticated or not admin
   if (pathname.startsWith("/api/")) {
     if (!user) {
       return NextResponse.json(
@@ -37,11 +37,17 @@ export async function proxy(req: NextRequest) {
         { status: 401 },
       );
     }
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden. Admin privileges required." },
+        { status: 403 },
+      );
+    }
     return NextResponse.next();
   }
 
-  // 5. If not authenticated and attempting to access protected dashboard routes, redirect to login
-  if (!user && !pathname.startsWith("/auth")) {
+  // 5. If not authenticated or not admin, redirect to login
+  if ((!user || user.role !== "admin") && !pathname.startsWith("/auth")) {
     const loginUrl = new URL("/auth/login", req.url);
     if (pathname !== "/") {
       loginUrl.searchParams.set("callbackUrl", pathname);

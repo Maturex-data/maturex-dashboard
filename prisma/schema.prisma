@@ -205,3 +205,181 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model EtsyShop {
+  id            String            @id @default(cuid())
+  code          String            @unique @db.VarChar(50)
+  name          String            @db.VarChar(100)
+  active        Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  importBatches EtsyImportBatch[]
+  orders        EtsyOrder[]
+  orderItems    EtsyOrderItem[]
+  statements    EtsyStatement[]
+
+  @@map("etsy_shops")
+}
+
+model EtsyImportBatch {
+  id             String          @id @default(cuid())
+  shopId         String          @map("shop_id")
+  shop           EtsyShop        @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  reportType     String          @map("report_type") @db.VarChar(50)
+  sourceFileName String          @map("source_file_name") @db.Text
+  sourceMonth    DateTime        @map("source_month") @db.Date
+  fileHash       String          @map("file_hash") @db.VarChar(64)
+  status         String          @default("PROCESSING") @db.VarChar(30)
+  totalRows      Int             @default(0) @map("total_rows")
+  insertedRows   Int             @default(0) @map("inserted_rows")
+  updatedRows    Int             @default(0) @map("updated_rows")
+  skippedRows    Int             @default(0) @map("skipped_rows")
+  failedRows     Int             @default(0) @map("failed_rows")
+  errorDetails   Json?           @map("error_details")
+  startedAt      DateTime        @default(now()) @map("started_at")
+  completedAt    DateTime?       @map("completed_at")
+  orders         EtsyOrder[]
+  orderItems     EtsyOrderItem[]
+  statements     EtsyStatement[]
+
+  @@unique([shopId, reportType, fileHash])
+  @@index([shopId, sourceMonth])
+  @@index([status, startedAt])
+  @@map("etsy_import_batches")
+}
+
+model EtsyOrder {
+  id                         String          @id @default(cuid())
+  shopId                     String          @map("shop_id")
+  shop                       EtsyShop        @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  importBatchId              String          @map("import_batch_id")
+  importBatch                EtsyImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Restrict)
+  orderId                    String          @map("order_id") @db.VarChar(100)
+  saleDate                   DateTime        @map("sale_date") @db.Date
+  buyerUserId                String?         @map("buyer_user_id") @db.Text
+  fullName                   String?         @map("full_name") @db.Text
+  firstName                  String?         @map("first_name") @db.Text
+  lastName                   String?         @map("last_name") @db.Text
+  numberOfItems              Int?            @map("number_of_items")
+  paymentMethod              String?         @map("payment_method") @db.Text
+  dateShipped                DateTime?       @map("date_shipped") @db.Date
+  street1                    String?         @map("street_1") @db.Text
+  street2                    String?         @map("street_2") @db.Text
+  shipCity                   String?         @map("ship_city") @db.Text
+  shipState                  String?         @map("ship_state") @db.Text
+  shipZipcode                String?         @map("ship_zipcode") @db.Text
+  shipCountry                String?         @map("ship_country") @db.Text
+  currency                   String?         @db.VarChar(10)
+  orderValue                 Decimal?        @map("order_value") @db.Decimal(18, 4)
+  couponCode                 String?         @map("coupon_code") @db.Text
+  couponDetails              String?         @map("coupon_details") @db.Text
+  discountAmount             Decimal?        @map("discount_amount") @db.Decimal(18, 4)
+  shippingDiscount           Decimal?        @map("shipping_discount") @db.Decimal(18, 4)
+  shipping                   Decimal?        @db.Decimal(18, 4)
+  salesTax                   Decimal?        @map("sales_tax") @db.Decimal(18, 4)
+  orderTotal                 Decimal?        @map("order_total") @db.Decimal(18, 4)
+  status                     String?         @db.Text
+  cardProcessingFees         Decimal?        @map("card_processing_fees") @db.Decimal(18, 4)
+  orderNet                   Decimal?        @map("order_net") @db.Decimal(18, 4)
+  adjustedOrderTotal         Decimal?        @map("adjusted_order_total") @db.Decimal(18, 4)
+  adjustedCardProcessingFees Decimal?        @map("adjusted_card_processing_fees") @db.Decimal(18, 4)
+  adjustedNetOrderAmount     Decimal?        @map("adjusted_net_order_amount") @db.Decimal(18, 4)
+  buyer                      String?         @db.Text
+  orderType                  String?         @map("order_type") @db.Text
+  paymentType                String?         @map("payment_type") @db.Text
+  inPersonDiscount           Decimal?        @map("in_person_discount") @db.Decimal(18, 4)
+  inPersonLocation           String?         @map("in_person_location") @db.Text
+  sku                        String?         @db.Text
+  rawPayload                 Json            @map("raw_payload")
+  createdAt                  DateTime        @default(now()) @map("created_at")
+  updatedAt                  DateTime        @updatedAt @map("updated_at")
+  orderItems                 EtsyOrderItem[]
+
+  @@unique([shopId, orderId])
+  @@index([shopId, saleDate])
+  @@index([importBatchId])
+  @@map("etsy_orders")
+}
+
+model EtsyOrderItem {
+  id               String          @id @default(cuid())
+  shopId           String          @map("shop_id")
+  shop             EtsyShop        @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  importBatchId    String          @map("import_batch_id")
+  importBatch      EtsyImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Restrict)
+  etsyOrderId      String?         @map("etsy_order_id")
+  etsyOrder        EtsyOrder?      @relation(fields: [etsyOrderId], references: [id], onDelete: SetNull)
+  orderId          String          @map("order_id") @db.VarChar(100)
+  sourceKey        String          @map("source_key") @db.VarChar(64)
+  transactionId    String?         @map("transaction_id") @db.VarChar(100)
+  listingId        String?         @map("listing_id") @db.VarChar(100)
+  saleDate         DateTime        @map("sale_date") @db.Date
+  itemName         String?         @map("item_name") @db.Text
+  buyer            String?         @db.Text
+  quantity         Int?
+  price            Decimal?        @db.Decimal(18, 4)
+  couponCode       String?         @map("coupon_code") @db.Text
+  couponDetails    String?         @map("coupon_details") @db.Text
+  discountAmount   Decimal?        @map("discount_amount") @db.Decimal(18, 4)
+  shippingDiscount Decimal?        @map("shipping_discount") @db.Decimal(18, 4)
+  orderShipping    Decimal?        @map("order_shipping") @db.Decimal(18, 4)
+  orderSalesTax    Decimal?        @map("order_sales_tax") @db.Decimal(18, 4)
+  itemTotal        Decimal?        @map("item_total") @db.Decimal(18, 4)
+  currency         String?         @db.VarChar(10)
+  datePaid         DateTime?       @map("date_paid") @db.Date
+  dateShipped      DateTime?       @map("date_shipped") @db.Date
+  shipName         String?         @map("ship_name") @db.Text
+  shipAddress1     String?         @map("ship_address_1") @db.Text
+  shipAddress2     String?         @map("ship_address_2") @db.Text
+  shipCity         String?         @map("ship_city") @db.Text
+  shipState        String?         @map("ship_state") @db.Text
+  shipZipcode      String?         @map("ship_zipcode") @db.Text
+  shipCountry      String?         @map("ship_country") @db.Text
+  variations       String?         @db.Text
+  orderType        String?         @map("order_type") @db.Text
+  listingsType     String?         @map("listings_type") @db.Text
+  paymentType      String?         @map("payment_type") @db.Text
+  inPersonDiscount Decimal?        @map("in_person_discount") @db.Decimal(18, 4)
+  inPersonLocation String?         @map("in_person_location") @db.Text
+  vatPaidByBuyer   Decimal?        @map("vat_paid_by_buyer") @db.Decimal(18, 4)
+  sku              String?         @db.Text
+  matchStatus      String          @default("MATCHED") @map("match_status") @db.VarChar(30)
+  rawPayload       Json            @map("raw_payload")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  @@unique([shopId, sourceKey])
+  @@index([shopId, saleDate])
+  @@index([orderId])
+  @@index([etsyOrderId])
+  @@index([importBatchId])
+  @@map("etsy_order_items")
+}
+
+model EtsyStatement {
+  id               String          @id @default(cuid())
+  shopId           String          @map("shop_id")
+  shop             EtsyShop        @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  importBatchId    String          @map("import_batch_id")
+  importBatch      EtsyImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Restrict)
+  sourceKey        String          @map("source_key") @db.VarChar(64)
+  statementDate    DateTime        @map("statement_date") @db.Date
+  type             String          @db.VarChar(50)
+  title            String?         @db.Text
+  info             String?         @db.Text
+  currency         String?         @db.VarChar(10)
+  amount           Decimal?        @db.Decimal(18, 4)
+  feesAndTaxes     Decimal?        @map("fees_and_taxes") @db.Decimal(18, 4)
+  net              Decimal?        @db.Decimal(18, 4)
+  taxDetails       String?         @map("tax_details") @db.Text
+  extractedOrderId String?         @map("extracted_order_id") @db.VarChar(100)
+  rawPayload       Json            @map("raw_payload")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  @@unique([shopId, sourceKey])
+  @@index([shopId, statementDate])
+  @@index([shopId, type, statementDate])
+  @@index([extractedOrderId])
+  @@index([importBatchId])
+  @@map("etsy_statements")
+}

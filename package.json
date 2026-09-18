@@ -15,7 +15,8 @@
     "export:airwallex:account-activity:xlsx": "npm run export:airwallex:account-activity && /Users/tatuanthanh/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/create-airwallex-statement-xlsx.py",
     "export:airwallex:cards": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
     "export:airwallex:card-6171": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
-    "export:fastway": "node scripts/export-fastway-data.mjs"
+    "export:fastway": "node scripts/export-fastway-data.mjs",
+    "import:etsy": "node --env-file=.env scripts/import-etsy-data.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -27,6 +28,7 @@
     "cn": "^0.3.0",
     "lucide-react": "^1.46.0",
     "next": "16.3.5",
+    "postgres": "^3.4.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.8.0",

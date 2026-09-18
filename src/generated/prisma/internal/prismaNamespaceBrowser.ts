@@ -61,7 +61,12 @@ export const ModelName = {
   MetaDailyFinancial: 'MetaDailyFinancial',
   AirwallexAccountActivity: 'AirwallexAccountActivity',
   User: 'User',
-  RefreshToken: 'RefreshToken'
+  RefreshToken: 'RefreshToken',
+  EtsyShop: 'EtsyShop',
+  EtsyImportBatch: 'EtsyImportBatch',
+  EtsyOrder: 'EtsyOrder',
+  EtsyOrderItem: 'EtsyOrderItem',
+  EtsyStatement: 'EtsyStatement'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -270,6 +275,158 @@ export const RefreshTokenScalarFieldEnum = {
 } as const
 
 export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
+
+
+export const EtsyShopScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EtsyShopScalarFieldEnum = (typeof EtsyShopScalarFieldEnum)[keyof typeof EtsyShopScalarFieldEnum]
+
+
+export const EtsyImportBatchScalarFieldEnum = {
+  id: 'id',
+  shopId: 'shopId',
+  reportType: 'reportType',
+  sourceFileName: 'sourceFileName',
+  sourceMonth: 'sourceMonth',
+  fileHash: 'fileHash',
+  status: 'status',
+  totalRows: 'totalRows',
+  insertedRows: 'insertedRows',
+  updatedRows: 'updatedRows',
+  skippedRows: 'skippedRows',
+  failedRows: 'failedRows',
+  errorDetails: 'errorDetails',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt'
+} as const
+
+export type EtsyImportBatchScalarFieldEnum = (typeof EtsyImportBatchScalarFieldEnum)[keyof typeof EtsyImportBatchScalarFieldEnum]
+
+
+export const EtsyOrderScalarFieldEnum = {
+  id: 'id',
+  shopId: 'shopId',
+  importBatchId: 'importBatchId',
+  orderId: 'orderId',
+  saleDate: 'saleDate',
+  buyerUserId: 'buyerUserId',
+  fullName: 'fullName',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  numberOfItems: 'numberOfItems',
+  paymentMethod: 'paymentMethod',
+  dateShipped: 'dateShipped',
+  street1: 'street1',
+  street2: 'street2',
+  shipCity: 'shipCity',
+  shipState: 'shipState',
+  shipZipcode: 'shipZipcode',
+  shipCountry: 'shipCountry',
+  currency: 'currency',
+  orderValue: 'orderValue',
+  couponCode: 'couponCode',
+  couponDetails: 'couponDetails',
+  discountAmount: 'discountAmount',
+  shippingDiscount: 'shippingDiscount',
+  shipping: 'shipping',
+  salesTax: 'salesTax',
+  orderTotal: 'orderTotal',
+  status: 'status',
+  cardProcessingFees: 'cardProcessingFees',
+  orderNet: 'orderNet',
+  adjustedOrderTotal: 'adjustedOrderTotal',
+  adjustedCardProcessingFees: 'adjustedCardProcessingFees',
+  adjustedNetOrderAmount: 'adjustedNetOrderAmount',
+  buyer: 'buyer',
+  orderType: 'orderType',
+  paymentType: 'paymentType',
+  inPersonDiscount: 'inPersonDiscount',
+  inPersonLocation: 'inPersonLocation',
+  sku: 'sku',
+  rawPayload: 'rawPayload',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EtsyOrderScalarFieldEnum = (typeof EtsyOrderScalarFieldEnum)[keyof typeof EtsyOrderScalarFieldEnum]
+
+
+export const EtsyOrderItemScalarFieldEnum = {
+  id: 'id',
+  shopId: 'shopId',
+  importBatchId: 'importBatchId',
+  etsyOrderId: 'etsyOrderId',
+  orderId: 'orderId',
+  sourceKey: 'sourceKey',
+  transactionId: 'transactionId',
+  listingId: 'listingId',
+  saleDate: 'saleDate',
+  itemName: 'itemName',
+  buyer: 'buyer',
+  quantity: 'quantity',
+  price: 'price',
+  couponCode: 'couponCode',
+  couponDetails: 'couponDetails',
+  discountAmount: 'discountAmount',
+  shippingDiscount: 'shippingDiscount',
+  orderShipping: 'orderShipping',
+  orderSalesTax: 'orderSalesTax',
+  itemTotal: 'itemTotal',
+  currency: 'currency',
+  datePaid: 'datePaid',
+  dateShipped: 'dateShipped',
+  shipName: 'shipName',
+  shipAddress1: 'shipAddress1',
+  shipAddress2: 'shipAddress2',
+  shipCity: 'shipCity',
+  shipState: 'shipState',
+  shipZipcode: 'shipZipcode',
+  shipCountry: 'shipCountry',
+  variations: 'variations',
+  orderType: 'orderType',
+  listingsType: 'listingsType',
+  paymentType: 'paymentType',
+  inPersonDiscount: 'inPersonDiscount',
+  inPersonLocation: 'inPersonLocation',
+  vatPaidByBuyer: 'vatPaidByBuyer',
+  sku: 'sku',
+  matchStatus: 'matchStatus',
+  rawPayload: 'rawPayload',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EtsyOrderItemScalarFieldEnum = (typeof EtsyOrderItemScalarFieldEnum)[keyof typeof EtsyOrderItemScalarFieldEnum]
+
+
+export const EtsyStatementScalarFieldEnum = {
+  id: 'id',
+  shopId: 'shopId',
+  importBatchId: 'importBatchId',
+  sourceKey: 'sourceKey',
+  statementDate: 'statementDate',
+  type: 'type',
+  title: 'title',
+  info: 'info',
+  currency: 'currency',
+  amount: 'amount',
+  feesAndTaxes: 'feesAndTaxes',
+  net: 'net',
+  taxDetails: 'taxDetails',
+  extractedOrderId: 'extractedOrderId',
+  rawPayload: 'rawPayload',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EtsyStatementScalarFieldEnum = (typeof EtsyStatementScalarFieldEnum)[keyof typeof EtsyStatementScalarFieldEnum]
 
 
 export const SortOrder = {

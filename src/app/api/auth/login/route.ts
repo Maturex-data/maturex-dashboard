@@ -41,6 +41,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Only users with 'admin' role are permitted to login to the dashboard
+    if (user.role !== "admin") {
+      return NextResponse.json(
+        {
+          error:
+            "Tài khoản của bạn chưa được cấp quyền Admin. Vui lòng liên hệ quản trị viên.",
+        },
+        { status: 403 },
+      );
+    }
+
     // Verify password hash with scrypt
     const isPasswordValid = await verifyPassword(password, user.passwordHash);
     if (!isPasswordValid) {
