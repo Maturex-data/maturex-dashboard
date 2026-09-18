@@ -131,16 +131,16 @@ const flowaNav = [
     url: "#",
     icon: <ShoppingBagIcon />,
     isActive: true,
-    badge: "Manual",
+    badge: "Flowa",
     items: [
       {
-        title: "Import dữ liệu",
+        title: "Bảng dữ liệu bán hàng",
         url: "/flowa",
         isActive: true,
       },
       {
-        title: "Lịch sử import",
-        url: "/flowa#import-history",
+        title: "Import & Lịch sử file",
+        url: "/flowa/import",
       },
     ],
   },

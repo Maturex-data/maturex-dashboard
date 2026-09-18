@@ -4,55 +4,41 @@ import {
   FileSpreadsheetIcon,
   ShoppingBagIcon,
   SparklesIcon,
+  UploadCloudIcon,
 } from "lucide-react";
-import { EtsyImportCenter } from "@/components/dashboard/fl/etsy-import-center";
+import Link from "next/link";
+import { FlowaDataTable } from "@/components/dashboard/fl/flowa-data-table";
+import { Button } from "@/components/ui/button";
 import { ETSY_SHOPS } from "@/lib/etsy-import";
 import { prisma } from "@/lib/prisma";
 
-function formatMonth(value: Date): string {
-  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function formatImportTime(value: Date): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh",
-  }).format(value);
-}
-
 export default async function FlowaPage() {
-  const [
-    shops,
-    batches,
-    completedBatches,
-    orderCount,
-    itemCount,
-    statementCount,
-  ] = await Promise.all([
+  const [shops, orderCount, itemCount, statementCount] = await Promise.all([
     prisma.etsyShop.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
+      select: { code: true, name: true },
     }),
-    prisma.etsyImportBatch.findMany({
-      include: { shop: { select: { name: true } } },
-      orderBy: { startedAt: "desc" },
-      take: 20,
-    }),
-    prisma.etsyImportBatch.count({ where: { status: "COMPLETED" } }),
     prisma.etsyOrder.count(),
     prisma.etsyOrderItem.count(),
     prisma.etsyStatement.count(),
   ]);
+
   const shopOptions = shops.length > 0 ? shops : ETSY_SHOPS;
+
   const metrics = [
-    { label: "Shop Etsy", value: shopOptions.length, icon: ShoppingBagIcon },
-    { label: "Orders", value: orderCount, icon: FileSpreadsheetIcon },
-    { label: "Order items", value: itemCount, icon: DatabaseIcon },
-    { label: "Statements", value: statementCount, icon: FileClockIcon },
+    { label: "Shop đối tác", value: shopOptions.length, icon: ShoppingBagIcon },
+    {
+      label: "Đơn hàng (Orders)",
+      value: orderCount,
+      icon: FileSpreadsheetIcon,
+    },
+    { label: "Chi tiết SP (Items)", value: itemCount, icon: DatabaseIcon },
+    {
+      label: "Giao dịch (Statements)",
+      value: statementCount,
+      icon: FileClockIcon,
+    },
   ];
 
   return (
@@ -64,61 +50,66 @@ export default async function FlowaPage() {
           </div>
           <div>
             <p className="font-semibold leading-none">Flowa</p>
-            <p className="mt-1 text-xs text-muted-foreground">Etsy Data Hub</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Etsy Partner Data Hub
+            </p>
           </div>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {completedBatches} batch hoàn tất
-        </span>
+
+        <div className="flex items-center gap-3">
+          <Link href="/flowa/import">
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <UploadCloudIcon className="size-3.5" />
+              <span>Import & Lịch sử</span>
+            </Button>
+          </Link>
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col gap-5 overflow-x-hidden bg-zinc-50/40 p-6">
-        <section>
-          <p className="text-sm text-muted-foreground">Dữ liệu cửa hàng</p>
-          <h1 className="mt-1 font-semibold text-2xl tracking-tight">
-            Etsy Import Center
-          </h1>
+        {/* Title Header */}
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Dữ liệu đối tác bán hàng
+            </p>
+            <h1 className="mt-0.5 font-semibold text-2xl tracking-tight font-heading">
+              Báo Cáo Bán Hàng & Sao Kê Etsy
+            </h1>
+          </div>
         </section>
 
-        <section className="grid overflow-hidden rounded-lg border bg-background sm:grid-cols-2 xl:grid-cols-4">
+        {/* Metric KPI Strip */}
+        <section className="grid overflow-hidden rounded-xl border border-border/60 bg-background sm:grid-cols-2 xl:grid-cols-4 shadow-xs">
           {metrics.map((metric, index) => (
             <div
               className={`flex min-h-24 items-center justify-between px-5 py-4 ${
                 index < metrics.length - 1
-                  ? "border-b sm:border-r xl:border-b-0"
+                  ? "border-b sm:border-r xl:border-b-0 border-border/50"
                   : ""
               }`}
               key={metric.label}
             >
               <div>
-                <p className="text-sm text-muted-foreground">{metric.label}</p>
-                <p className="mt-2 font-semibold text-2xl tabular-nums">
+                <p className="text-xs text-muted-foreground font-medium">
+                  {metric.label}
+                </p>
+                <p className="mt-1.5 font-bold text-2xl tabular-nums tracking-tight font-mono text-foreground">
                   {metric.value.toLocaleString("vi-VN")}
                 </p>
               </div>
-              <metric.icon className="size-5 text-purple-500" />
+              <div className="size-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <metric.icon className="size-4" />
+              </div>
             </div>
           ))}
         </section>
 
-        <EtsyImportCenter
-          shops={shopOptions.map((shop) => ({
-            code: shop.code,
-            name: shop.name,
-          }))}
-          history={batches.map((batch) => ({
-            id: batch.id,
-            shopName: batch.shop.name,
-            reportType: batch.reportType,
-            sourceFileName: batch.sourceFileName,
-            sourceMonth: formatMonth(batch.sourceMonth),
-            status: batch.status,
-            totalRows: batch.totalRows,
-            insertedRows: batch.insertedRows,
-            skippedRows: batch.skippedRows,
-            importedAt: formatImportTime(batch.completedAt ?? batch.startedAt),
-          }))}
-        />
+        {/* Interactive Data Table Component */}
+        <FlowaDataTable shops={shopOptions} />
       </main>
     </>
   );
