@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
+import { sortMonthKeys } from "@/lib/etsy-months";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -11,6 +12,8 @@ export async function GET(req: NextRequest) {
     const month = searchParams.get("month");
     const type = searchParams.get("type");
     const search = searchParams.get("search")?.trim().toLowerCase();
+    const sort = searchParams.get("sort") || "statement_date";
+    const direction = searchParams.get("direction") === "asc" ? "asc" : "desc";
     const page = Math.max(1, Number(searchParams.get("page") || 1));
     const limit = Math.min(
       100,
@@ -47,20 +50,34 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const [total, rows, shops] = await Promise.all([
+    const [total, rows, shops, monthRows] = await Promise.all([
       prisma.etsyStatement.count({ where }),
       prisma.etsyStatement.findMany({
         where,
         include: {
           shop: { select: { code: true, name: true } },
         },
-        orderBy: [{ statementDate: "desc" }, { id: "desc" }],
+        orderBy: [
+          sort === "amount"
+            ? { amount: direction }
+            : sort === "fees_and_taxes"
+              ? { feesAndTaxes: direction }
+              : sort === "net"
+                ? { net: direction }
+                : { statementDate: direction },
+          { id: "desc" },
+        ],
         skip,
         take: limit,
       }),
       prisma.etsyShop.findMany({
         select: { code: true, name: true },
         orderBy: { name: "asc" },
+      }),
+      prisma.etsyStatement.findMany({
+        select: { statementDate: true },
+        distinct: ["statementDate"],
+        orderBy: { statementDate: "desc" },
       }),
     ]);
 
@@ -87,6 +104,7 @@ export async function GET(req: NextRequest) {
       limit,
       totalPages: Math.ceil(total / limit),
       shops,
+      availableMonths: sortMonthKeys(monthRows.map((row) => row.statementDate)),
     });
   } catch (error: unknown) {
     const message =

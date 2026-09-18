@@ -166,6 +166,7 @@ export function EtsyImportCenter({
             : `Đã thêm ${payload.summary.insertedRows.toLocaleString("vi-VN")} dòng mới.`,
       );
       if (payload.summary.failed === 0) setFiles([]);
+      window.dispatchEvent(new CustomEvent("etsy-cache-invalidated"));
       router.refresh();
     } catch (error) {
       setMessage(

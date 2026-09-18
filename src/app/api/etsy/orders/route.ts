@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
+import { sortMonthKeys } from "@/lib/etsy-months";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -10,6 +11,8 @@ export async function GET(req: NextRequest) {
     const shopCode = searchParams.get("shop");
     const month = searchParams.get("month"); // 'YYYY-MM'
     const search = searchParams.get("search")?.trim().toLowerCase();
+    const sort = searchParams.get("sort") || "sale_date";
+    const direction = searchParams.get("direction") === "asc" ? "asc" : "desc";
     const page = Math.max(1, Number(searchParams.get("page") || 1));
     const limit = Math.min(
       100,
@@ -43,20 +46,36 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const [total, rows, shops] = await Promise.all([
+    const [total, rows, shops, monthRows] = await Promise.all([
       prisma.etsyOrder.count({ where }),
       prisma.etsyOrder.findMany({
         where,
         include: {
           shop: { select: { code: true, name: true } },
         },
-        orderBy: [{ saleDate: "desc" }, { orderId: "desc" }],
+        orderBy: [
+          sort === "order_id"
+            ? { orderId: direction }
+            : sort === "order_value"
+              ? { orderValue: direction }
+              : sort === "order_total"
+                ? { orderTotal: direction }
+                : sort === "order_net"
+                  ? { orderNet: direction }
+                  : { saleDate: direction },
+          { id: "desc" },
+        ],
         skip,
         take: limit,
       }),
       prisma.etsyShop.findMany({
         select: { code: true, name: true },
         orderBy: { name: "asc" },
+      }),
+      prisma.etsyOrder.findMany({
+        select: { saleDate: true },
+        distinct: ["saleDate"],
+        orderBy: { saleDate: "desc" },
       }),
     ]);
 
@@ -68,6 +87,9 @@ export async function GET(req: NextRequest) {
         order_id: r.orderId,
         sale_date: r.saleDate ? r.saleDate.toISOString().slice(0, 10) : null,
         full_name: r.fullName || r.buyer || "—",
+        buyer_user_id: r.buyerUserId || "—",
+        first_name: r.firstName || "—",
+        last_name: r.lastName || "—",
         number_of_items: r.numberOfItems,
         currency: r.currency || "USD",
         order_value: r.orderValue ? r.orderValue.toString() : "0",
@@ -85,6 +107,22 @@ export async function GET(req: NextRequest) {
           : null,
         ship_country: r.shipCountry || "—",
         ship_city: r.shipCity || "—",
+        street_1: r.street1 || "—",
+        street_2: r.street2 || "—",
+        ship_state: r.shipState || "—",
+        ship_zipcode: r.shipZipcode || "—",
+        coupon_code: r.couponCode || "—",
+        coupon_details: r.couponDetails || "—",
+        shipping_discount: r.shippingDiscount?.toString() || "0",
+        adjusted_order_total: r.adjustedOrderTotal?.toString() || "0",
+        adjusted_card_processing_fees:
+          r.adjustedCardProcessingFees?.toString() || "0",
+        adjusted_net_order_amount: r.adjustedNetOrderAmount?.toString() || "0",
+        buyer: r.buyer || "—",
+        order_type: r.orderType || "—",
+        payment_type: r.paymentType || "—",
+        in_person_discount: r.inPersonDiscount?.toString() || "0",
+        in_person_location: r.inPersonLocation || "—",
         sku: r.sku || "—",
         payment_method: r.paymentMethod || "—",
       })),
@@ -93,6 +131,7 @@ export async function GET(req: NextRequest) {
       limit,
       totalPages: Math.ceil(total / limit),
       shops,
+      availableMonths: sortMonthKeys(monthRows.map((row) => row.saleDate)),
     });
   } catch (error: unknown) {
     const message =

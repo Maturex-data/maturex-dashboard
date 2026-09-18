@@ -35,7 +35,12 @@ export function TeamSwitcher({
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
 
   React.useEffect(() => {
-    const routeTeam = teams.find((team) => team.href === pathname);
+    const routeTeam = teams.find((team) => {
+      if (team.href === "/") {
+        return pathname === "/";
+      }
+      return pathname.startsWith(team.href);
+    });
     if (routeTeam) {
       setActiveTeam(routeTeam);
     }

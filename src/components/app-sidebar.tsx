@@ -8,6 +8,7 @@ import {
   Settings2Icon,
   ShoppingBagIcon,
   SparklesIcon,
+  UploadCloudIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -125,27 +126,6 @@ const data = {
   ],
 };
 
-const flowaNav = [
-  {
-    title: "Dữ liệu Etsy",
-    url: "#",
-    icon: <ShoppingBagIcon />,
-    isActive: true,
-    badge: "Flowa",
-    items: [
-      {
-        title: "Bảng dữ liệu bán hàng",
-        url: "/flowa",
-        isActive: true,
-      },
-      {
-        title: "Import & Lịch sử file",
-        url: "/flowa/import",
-      },
-    ],
-  },
-];
-
 export function AppSidebar({
   user,
   ...props
@@ -158,6 +138,22 @@ export function AppSidebar({
 }) {
   const currentUser = user || data.user;
   const pathname = usePathname();
+
+  const flowaNav = [
+    {
+      title: "Bảng dữ liệu Etsy",
+      url: "/flowa",
+      icon: <ShoppingBagIcon className="size-4 text-purple-500" />,
+      isActive: pathname === "/flowa",
+    },
+    {
+      title: "Import & Lịch sử file",
+      url: "/flowa/import",
+      icon: <UploadCloudIcon className="size-4 text-purple-500" />,
+      isActive: pathname === "/flowa/import",
+    },
+  ];
+
   const navigation = pathname.startsWith("/flowa") ? flowaNav : data.navMain;
 
   return (
