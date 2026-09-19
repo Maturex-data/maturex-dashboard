@@ -56,10 +56,12 @@ export const ModelName = {
   CogsRecord: 'CogsRecord',
   CogsSourceRecord: 'CogsSourceRecord',
   CogsSyncRun: 'CogsSyncRun',
+  CogsSyncSourceRun: 'CogsSyncSourceRun',
   ShopifyPaymentRecord: 'ShopifyPaymentRecord',
   ShopifyPaymentSyncRun: 'ShopifyPaymentSyncRun',
   MetaDailyFinancial: 'MetaDailyFinancial',
   AirwallexAccountActivity: 'AirwallexAccountActivity',
+  EcPnlMonthlyInput: 'EcPnlMonthlyInput',
   User: 'User',
   RefreshToken: 'RefreshToken',
   EtsyShop: 'EtsyShop',
@@ -160,7 +162,11 @@ export type CogsSourceRecordScalarFieldEnum = (typeof CogsSourceRecordScalarFiel
 export const CogsSyncRunScalarFieldEnum = {
   id: 'id',
   status: 'status',
+  syncType: 'syncType',
+  rangeFrom: 'rangeFrom',
+  rangeTo: 'rangeTo',
   startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
   completedAt: 'completedAt',
   sourceResults: 'sourceResults',
   addedCount: 'addedCount',
@@ -169,6 +175,26 @@ export const CogsSyncRunScalarFieldEnum = {
 } as const
 
 export type CogsSyncRunScalarFieldEnum = (typeof CogsSyncRunScalarFieldEnum)[keyof typeof CogsSyncRunScalarFieldEnum]
+
+
+export const CogsSyncSourceRunScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  source: 'source',
+  status: 'status',
+  pagesProcessed: 'pagesProcessed',
+  totalPages: 'totalPages',
+  rowsFetched: 'rowsFetched',
+  addedCount: 'addedCount',
+  skippedCount: 'skippedCount',
+  checkpoint: 'checkpoint',
+  startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
+  completedAt: 'completedAt',
+  errorMessage: 'errorMessage'
+} as const
+
+export type CogsSyncSourceRunScalarFieldEnum = (typeof CogsSyncSourceRunScalarFieldEnum)[keyof typeof CogsSyncSourceRunScalarFieldEnum]
 
 
 export const ShopifyPaymentRecordScalarFieldEnum = {
@@ -249,6 +275,23 @@ export const AirwallexAccountActivityScalarFieldEnum = {
 } as const
 
 export type AirwallexAccountActivityScalarFieldEnum = (typeof AirwallexAccountActivityScalarFieldEnum)[keyof typeof AirwallexAccountActivityScalarFieldEnum]
+
+
+export const EcPnlMonthlyInputScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  subscriptionCost: 'subscriptionCost',
+  confirmedToolsCost: 'confirmedToolsCost',
+  vietnamToolsCost: 'vietnamToolsCost',
+  personnelCost: 'personnelCost',
+  allocatedOverheadCost: 'allocatedOverheadCost',
+  welfareCost: 'welfareCost',
+  note: 'note',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcPnlMonthlyInputScalarFieldEnum = (typeof EcPnlMonthlyInputScalarFieldEnum)[keyof typeof EcPnlMonthlyInputScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

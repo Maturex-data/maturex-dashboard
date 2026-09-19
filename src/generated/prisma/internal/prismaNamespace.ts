@@ -402,10 +402,12 @@ export const ModelName = {
   CogsRecord: 'CogsRecord',
   CogsSourceRecord: 'CogsSourceRecord',
   CogsSyncRun: 'CogsSyncRun',
+  CogsSyncSourceRun: 'CogsSyncSourceRun',
   ShopifyPaymentRecord: 'ShopifyPaymentRecord',
   ShopifyPaymentSyncRun: 'ShopifyPaymentSyncRun',
   MetaDailyFinancial: 'MetaDailyFinancial',
   AirwallexAccountActivity: 'AirwallexAccountActivity',
+  EcPnlMonthlyInput: 'EcPnlMonthlyInput',
   User: 'User',
   RefreshToken: 'RefreshToken',
   EtsyShop: 'EtsyShop',
@@ -428,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement"
+    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -802,6 +804,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CogsSyncSourceRun: {
+      payload: Prisma.$CogsSyncSourceRunPayload<ExtArgs>
+      fields: Prisma.CogsSyncSourceRunFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CogsSyncSourceRunFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CogsSyncSourceRunFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        findFirst: {
+          args: Prisma.CogsSyncSourceRunFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CogsSyncSourceRunFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        findMany: {
+          args: Prisma.CogsSyncSourceRunFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>[]
+        }
+        create: {
+          args: Prisma.CogsSyncSourceRunCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        createMany: {
+          args: Prisma.CogsSyncSourceRunCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CogsSyncSourceRunCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>[]
+        }
+        delete: {
+          args: Prisma.CogsSyncSourceRunDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        update: {
+          args: Prisma.CogsSyncSourceRunUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        deleteMany: {
+          args: Prisma.CogsSyncSourceRunDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CogsSyncSourceRunUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CogsSyncSourceRunUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>[]
+        }
+        upsert: {
+          args: Prisma.CogsSyncSourceRunUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CogsSyncSourceRunPayload>
+        }
+        aggregate: {
+          args: Prisma.CogsSyncSourceRunAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCogsSyncSourceRun>
+        }
+        groupBy: {
+          args: Prisma.CogsSyncSourceRunGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CogsSyncSourceRunGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CogsSyncSourceRunCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CogsSyncSourceRunCountAggregateOutputType> | number
+        }
+      }
+    }
     ShopifyPaymentRecord: {
       payload: Prisma.$ShopifyPaymentRecordPayload<ExtArgs>
       fields: Prisma.ShopifyPaymentRecordFieldRefs
@@ -1095,6 +1171,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AirwallexAccountActivityCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AirwallexAccountActivityCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcPnlMonthlyInput: {
+      payload: Prisma.$EcPnlMonthlyInputPayload<ExtArgs>
+      fields: Prisma.EcPnlMonthlyInputFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcPnlMonthlyInputFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcPnlMonthlyInputFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        findFirst: {
+          args: Prisma.EcPnlMonthlyInputFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcPnlMonthlyInputFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        findMany: {
+          args: Prisma.EcPnlMonthlyInputFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>[]
+        }
+        create: {
+          args: Prisma.EcPnlMonthlyInputCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        createMany: {
+          args: Prisma.EcPnlMonthlyInputCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcPnlMonthlyInputCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>[]
+        }
+        delete: {
+          args: Prisma.EcPnlMonthlyInputDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        update: {
+          args: Prisma.EcPnlMonthlyInputUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcPnlMonthlyInputDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcPnlMonthlyInputUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcPnlMonthlyInputUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcPnlMonthlyInputUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcPnlMonthlyInputPayload>
+        }
+        aggregate: {
+          args: Prisma.EcPnlMonthlyInputAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcPnlMonthlyInput>
+        }
+        groupBy: {
+          args: Prisma.EcPnlMonthlyInputGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcPnlMonthlyInputGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcPnlMonthlyInputCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcPnlMonthlyInputCountAggregateOutputType> | number
         }
       }
     }
@@ -1730,7 +1880,11 @@ export type CogsSourceRecordScalarFieldEnum = (typeof CogsSourceRecordScalarFiel
 export const CogsSyncRunScalarFieldEnum = {
   id: 'id',
   status: 'status',
+  syncType: 'syncType',
+  rangeFrom: 'rangeFrom',
+  rangeTo: 'rangeTo',
   startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
   completedAt: 'completedAt',
   sourceResults: 'sourceResults',
   addedCount: 'addedCount',
@@ -1739,6 +1893,26 @@ export const CogsSyncRunScalarFieldEnum = {
 } as const
 
 export type CogsSyncRunScalarFieldEnum = (typeof CogsSyncRunScalarFieldEnum)[keyof typeof CogsSyncRunScalarFieldEnum]
+
+
+export const CogsSyncSourceRunScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  source: 'source',
+  status: 'status',
+  pagesProcessed: 'pagesProcessed',
+  totalPages: 'totalPages',
+  rowsFetched: 'rowsFetched',
+  addedCount: 'addedCount',
+  skippedCount: 'skippedCount',
+  checkpoint: 'checkpoint',
+  startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
+  completedAt: 'completedAt',
+  errorMessage: 'errorMessage'
+} as const
+
+export type CogsSyncSourceRunScalarFieldEnum = (typeof CogsSyncSourceRunScalarFieldEnum)[keyof typeof CogsSyncSourceRunScalarFieldEnum]
 
 
 export const ShopifyPaymentRecordScalarFieldEnum = {
@@ -1819,6 +1993,23 @@ export const AirwallexAccountActivityScalarFieldEnum = {
 } as const
 
 export type AirwallexAccountActivityScalarFieldEnum = (typeof AirwallexAccountActivityScalarFieldEnum)[keyof typeof AirwallexAccountActivityScalarFieldEnum]
+
+
+export const EcPnlMonthlyInputScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  subscriptionCost: 'subscriptionCost',
+  confirmedToolsCost: 'confirmedToolsCost',
+  vietnamToolsCost: 'vietnamToolsCost',
+  personnelCost: 'personnelCost',
+  allocatedOverheadCost: 'allocatedOverheadCost',
+  welfareCost: 'welfareCost',
+  note: 'note',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcPnlMonthlyInputScalarFieldEnum = (typeof EcPnlMonthlyInputScalarFieldEnum)[keyof typeof EcPnlMonthlyInputScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {
@@ -2313,10 +2504,12 @@ export type GlobalOmitConfig = {
   cogsRecord?: Prisma.CogsRecordOmit
   cogsSourceRecord?: Prisma.CogsSourceRecordOmit
   cogsSyncRun?: Prisma.CogsSyncRunOmit
+  cogsSyncSourceRun?: Prisma.CogsSyncSourceRunOmit
   shopifyPaymentRecord?: Prisma.ShopifyPaymentRecordOmit
   shopifyPaymentSyncRun?: Prisma.ShopifyPaymentSyncRunOmit
   metaDailyFinancial?: Prisma.MetaDailyFinancialOmit
   airwallexAccountActivity?: Prisma.AirwallexAccountActivityOmit
+  ecPnlMonthlyInput?: Prisma.EcPnlMonthlyInputOmit
   user?: Prisma.UserOmit
   refreshToken?: Prisma.RefreshTokenOmit
   etsyShop?: Prisma.EtsyShopOmit

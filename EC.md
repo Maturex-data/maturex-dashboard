@@ -429,6 +429,86 @@ Endpoint Search Order không trả currency cho từng order. Vì vậy cột `C
 được giữ trống nếu response không có `currency`/`currencyCode`; không tự gán
 USD hoặc VND.
 
+## 12. Printful COGS
+
+Printful được đồng bộ qua `PRINTFUL_API_TOKEN` trong `.env`. API đọc danh sách
+orders theo phân trang từ `GET https://api.printful.com/orders`.
+
+Khi sync vào `RAW.COGS`, mỗi item là một dòng. Các phí cấp order như shipping,
+digitization, tax, VAT và fulfillment fee được phân bổ theo tỷ trọng
+`item.price * quantity`; dòng cuối cùng nhận phần chênh lệch làm tròn để tổng
+các dòng khớp `costs.total`. Phần phân bổ được lưu trong `raw_payload` với nhãn
+`cost_allocation`. Nếu toàn bộ item có giá bằng 0, chi phí được chia đều theo
+số lượng item để không phát sinh phép chia cho 0; dòng cuối vẫn nhận chênh lệch
+làm tròn.
+
+Mapping chính:
+
+- `supplier`: `Printful`
+- `date`: `created` của order
+- `reference_order_id`: `external_id`, bỏ hậu tố phân bản dạng `_2` khi ghép với
+  Shopify
+- `supplier_order_id`: Printful `id`
+- `total cost` và `est.cost`: chi phí đã phân bổ từ `costs.total`
+
+API order không cung cấp subscription/billing account-level; các khoản đó vẫn
+phải import thủ công từ Printful Wallet.
+
+## 13. COGS Sync History Design
+
+### Mục tiêu
+
+`Sync All` là luồng backfill/đối soát lịch sử, không phải thao tác sync hằng
+ngày. Luồng này cần giảm request lặp, hiển thị tiến độ ngay trên dashboard và
+khôi phục được khi một nhà cung cấp bị lỗi. Sync thường ngày chỉ đọc dữ liệu
+mới kể từ lần đồng bộ thành công gần nhất.
+
+### Quyết định
+
+- Một lượt lịch sử là một job với một khoảng ngày, ví dụ `2026-01-01` đến thời
+  điểm chạy; không tạo 12 job theo từng tháng.
+- Mỗi nguồn (Printify, Printful, PGPrint, Luxury Pro) quét khoảng lịch sử một
+  lần. Dữ liệu được phân tháng sau khi đã ghi vào database.
+- Các nguồn chạy song song, nhưng mỗi nguồn tự giới hạn số request để tôn trọng
+  rate limit của API đối tác.
+- Tiến độ và checkpoint phải lưu trong Neon. Refresh trang vẫn xem được số
+  trang/dòng đã xử lý và phần lỗi.
+- Lỗi một nguồn không dừng các nguồn khác. Retry chỉ chạy lại nguồn hoặc đoạn
+  lỗi; `itemKey` cùng `skipDuplicates` bảo đảm không tạo dữ liệu trùng.
+- Mỗi thời điểm chỉ cho phép một COGS sync job chạy để tránh rate limit và xung
+  đột ghi dữ liệu.
+
+### Mô hình đã triển khai
+
+`CogsSyncRun` lưu loại chạy `LATEST`/`HISTORY`, khoảng ngày, heartbeat, trạng
+thái tổng và số liệu tổng. `CogsSyncSourceRun` lưu checkpoint/cursor, số trang
+đã đọc, số dòng mới, số dòng bỏ qua, lỗi cuối và thời điểm hoàn thành cho từng
+nhà cung cấp.
+
+UI tạo job và nhận `jobId` ngay, sau đó đọc trạng thái job để hiển thị tiến độ
+theo nguồn. Các trạng thái: `QUEUED`, `RUNNING`, `COMPLETED`,
+`PARTIAL_FAILED`, `FAILED`. Nút retry chỉ chạy lại source run thất bại. Advisory
+lock trong PostgreSQL ngăn hai history job chạy cùng lúc. Job không cập nhật
+heartbeat trong 15 phút được đánh dấu stale và giải phóng khóa logic.
+
+Giai đoạn hiện tại chạy nền bằng Next.js `after()` với `maxDuration = 800`.
+Điều này phù hợp khi chạy local hoặc hạ tầng cho phép runtime dài. Khi deploy
+lên nền tảng serverless có giới hạn thấp hơn, chuyển hàm thực thi job sang
+worker/queue; schema, API trạng thái và UI không cần thay đổi.
+
+Sync theo tháng vẫn quét lại toàn bộ tháng được chọn để nhận cả các order cũ
+vừa được nhà cung cấp cập nhật. `Sync All` mới là luồng tối ưu: mỗi nguồn chỉ
+quét một lần từ `2026-01-01` đến thời điểm chạy.
+
+### Kiểm thử bắt buộc
+
+- Sync lại cùng dữ liệu không phát sinh bản ghi mới.
+- Lỗi một nguồn không cản ba nguồn còn lại hoàn thành.
+- Refresh khi job đang chạy vẫn xem được tiến độ đã lưu.
+- Retry chỉ gọi lại phần thất bại.
+- Sync lịch sử không quét lại cùng một nguồn theo từng tháng.
+- Sync thường ngày chỉ đọc phần dữ liệu mới sau checkpoint.
+
 ## Tài liệu tham khảo
 
 - [Shopify Admin GraphQL API](https://shopify.dev/docs/api/admin-graphql/latest)
@@ -439,3 +519,4 @@ USD hoặc VND.
 - [Airwallex Card Transactions](https://www.airwallex.com/docs/api/issuing/card_transactions)
 - [PGPrints API Authentication](https://pgprints.gitbook.io/api/authentication)
 - [PGPrints Search Order](https://pgprints.gitbook.io/api/reference/api-reference/search-order-get-tracking-and-others)
+- [Printful API Documentation](https://developers.printful.com/docs/)

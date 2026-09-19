@@ -147,12 +147,15 @@ export function EcDashboardTabs() {
                 </CardTitle>
                 <CardDescription className="mt-1 text-xs">
                   Tổng hợp chi phí in ấn, phôi và vận chuyển thực tế từ
-                  Printify, PG Print 1 và Sheet LPro.
+                  Printify, Printful, PG Print 1 và Sheet LPro.
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-border/60 bg-background text-muted-foreground">
                   Printify
+                </span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-border/60 bg-background text-muted-foreground">
+                  Printful
                 </span>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded border border-border/60 bg-background text-muted-foreground">
                   PG Print 1

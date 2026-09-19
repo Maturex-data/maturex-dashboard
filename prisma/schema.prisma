@@ -84,15 +84,43 @@ model CogsSourceRecord {
 model CogsSyncRun {
   id            String    @id @default(cuid())
   status        String
+  syncType      String    @default("LATEST") @map("sync_type")
+  rangeFrom     DateTime? @map("range_from") @db.Date
+  rangeTo       DateTime? @map("range_to") @db.Date
   startedAt     DateTime  @default(now()) @map("started_at")
+  heartbeatAt   DateTime  @default(now()) @map("heartbeat_at")
   completedAt   DateTime? @map("completed_at")
   sourceResults Json?     @map("source_results")
   addedCount    Int       @default(0) @map("added_count")
   skippedCount  Int       @default(0) @map("skipped_count")
   errorMessage  String?   @map("error_message") @db.Text
+  sourceRuns    CogsSyncSourceRun[]
 
   @@index([startedAt])
+  @@index([status, heartbeatAt])
   @@map("cogs_sync_runs")
+}
+
+model CogsSyncSourceRun {
+  id             String      @id @default(cuid())
+  runId          String      @map("run_id")
+  source         String
+  status         String      @default("QUEUED")
+  pagesProcessed Int         @default(0) @map("pages_processed")
+  totalPages     Int?        @map("total_pages")
+  rowsFetched    Int         @default(0) @map("rows_fetched")
+  addedCount     Int         @default(0) @map("added_count")
+  skippedCount   Int         @default(0) @map("skipped_count")
+  checkpoint     Json?
+  startedAt      DateTime?   @map("started_at")
+  heartbeatAt    DateTime    @default(now()) @map("heartbeat_at")
+  completedAt    DateTime?   @map("completed_at")
+  errorMessage   String?     @map("error_message") @db.Text
+  run            CogsSyncRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, source])
+  @@index([runId, status])
+  @@map("cogs_sync_source_runs")
 }
 
 model ShopifyPaymentRecord {

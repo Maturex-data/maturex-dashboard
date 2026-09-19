@@ -39,7 +39,11 @@ export type CogsSyncRunSumAggregateOutputType = {
 export type CogsSyncRunMinAggregateOutputType = {
   id: string | null
   status: string | null
+  syncType: string | null
+  rangeFrom: Date | null
+  rangeTo: Date | null
   startedAt: Date | null
+  heartbeatAt: Date | null
   completedAt: Date | null
   addedCount: number | null
   skippedCount: number | null
@@ -49,7 +53,11 @@ export type CogsSyncRunMinAggregateOutputType = {
 export type CogsSyncRunMaxAggregateOutputType = {
   id: string | null
   status: string | null
+  syncType: string | null
+  rangeFrom: Date | null
+  rangeTo: Date | null
   startedAt: Date | null
+  heartbeatAt: Date | null
   completedAt: Date | null
   addedCount: number | null
   skippedCount: number | null
@@ -59,7 +67,11 @@ export type CogsSyncRunMaxAggregateOutputType = {
 export type CogsSyncRunCountAggregateOutputType = {
   id: number
   status: number
+  syncType: number
+  rangeFrom: number
+  rangeTo: number
   startedAt: number
+  heartbeatAt: number
   completedAt: number
   sourceResults: number
   addedCount: number
@@ -82,7 +94,11 @@ export type CogsSyncRunSumAggregateInputType = {
 export type CogsSyncRunMinAggregateInputType = {
   id?: true
   status?: true
+  syncType?: true
+  rangeFrom?: true
+  rangeTo?: true
   startedAt?: true
+  heartbeatAt?: true
   completedAt?: true
   addedCount?: true
   skippedCount?: true
@@ -92,7 +108,11 @@ export type CogsSyncRunMinAggregateInputType = {
 export type CogsSyncRunMaxAggregateInputType = {
   id?: true
   status?: true
+  syncType?: true
+  rangeFrom?: true
+  rangeTo?: true
   startedAt?: true
+  heartbeatAt?: true
   completedAt?: true
   addedCount?: true
   skippedCount?: true
@@ -102,7 +122,11 @@ export type CogsSyncRunMaxAggregateInputType = {
 export type CogsSyncRunCountAggregateInputType = {
   id?: true
   status?: true
+  syncType?: true
+  rangeFrom?: true
+  rangeTo?: true
   startedAt?: true
+  heartbeatAt?: true
   completedAt?: true
   sourceResults?: true
   addedCount?: true
@@ -200,7 +224,11 @@ export type CogsSyncRunGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type CogsSyncRunGroupByOutputType = {
   id: string
   status: string
+  syncType: string
+  rangeFrom: Date | null
+  rangeTo: Date | null
   startedAt: Date
+  heartbeatAt: Date
   completedAt: Date | null
   sourceResults: runtime.JsonValue | null
   addedCount: number
@@ -234,23 +262,33 @@ export type CogsSyncRunWhereInput = {
   NOT?: Prisma.CogsSyncRunWhereInput | Prisma.CogsSyncRunWhereInput[]
   id?: Prisma.StringFilter<"CogsSyncRun"> | string
   status?: Prisma.StringFilter<"CogsSyncRun"> | string
+  syncType?: Prisma.StringFilter<"CogsSyncRun"> | string
+  rangeFrom?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
+  rangeTo?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
   startedAt?: Prisma.DateTimeFilter<"CogsSyncRun"> | Date | string
+  heartbeatAt?: Prisma.DateTimeFilter<"CogsSyncRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
   sourceResults?: Prisma.JsonNullableFilter<"CogsSyncRun">
   addedCount?: Prisma.IntFilter<"CogsSyncRun"> | number
   skippedCount?: Prisma.IntFilter<"CogsSyncRun"> | number
   errorMessage?: Prisma.StringNullableFilter<"CogsSyncRun"> | string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunListRelationFilter
 }
 
 export type CogsSyncRunOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  syncType?: Prisma.SortOrder
+  rangeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  rangeTo?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sourceResults?: Prisma.SortOrderInput | Prisma.SortOrder
   addedCount?: Prisma.SortOrder
   skippedCount?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceRuns?: Prisma.CogsSyncSourceRunOrderByRelationAggregateInput
 }
 
 export type CogsSyncRunWhereUniqueInput = Prisma.AtLeast<{
@@ -259,18 +297,27 @@ export type CogsSyncRunWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CogsSyncRunWhereInput[]
   NOT?: Prisma.CogsSyncRunWhereInput | Prisma.CogsSyncRunWhereInput[]
   status?: Prisma.StringFilter<"CogsSyncRun"> | string
+  syncType?: Prisma.StringFilter<"CogsSyncRun"> | string
+  rangeFrom?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
+  rangeTo?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
   startedAt?: Prisma.DateTimeFilter<"CogsSyncRun"> | Date | string
+  heartbeatAt?: Prisma.DateTimeFilter<"CogsSyncRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"CogsSyncRun"> | Date | string | null
   sourceResults?: Prisma.JsonNullableFilter<"CogsSyncRun">
   addedCount?: Prisma.IntFilter<"CogsSyncRun"> | number
   skippedCount?: Prisma.IntFilter<"CogsSyncRun"> | number
   errorMessage?: Prisma.StringNullableFilter<"CogsSyncRun"> | string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunListRelationFilter
 }, "id">
 
 export type CogsSyncRunOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  syncType?: Prisma.SortOrder
+  rangeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  rangeTo?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sourceResults?: Prisma.SortOrderInput | Prisma.SortOrder
   addedCount?: Prisma.SortOrder
@@ -289,7 +336,11 @@ export type CogsSyncRunScalarWhereWithAggregatesInput = {
   NOT?: Prisma.CogsSyncRunScalarWhereWithAggregatesInput | Prisma.CogsSyncRunScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"CogsSyncRun"> | string
   status?: Prisma.StringWithAggregatesFilter<"CogsSyncRun"> | string
+  syncType?: Prisma.StringWithAggregatesFilter<"CogsSyncRun"> | string
+  rangeFrom?: Prisma.DateTimeNullableWithAggregatesFilter<"CogsSyncRun"> | Date | string | null
+  rangeTo?: Prisma.DateTimeNullableWithAggregatesFilter<"CogsSyncRun"> | Date | string | null
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"CogsSyncRun"> | Date | string
+  heartbeatAt?: Prisma.DateTimeWithAggregatesFilter<"CogsSyncRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CogsSyncRun"> | Date | string | null
   sourceResults?: Prisma.JsonNullableWithAggregatesFilter<"CogsSyncRun">
   addedCount?: Prisma.IntWithAggregatesFilter<"CogsSyncRun"> | number
@@ -300,51 +351,75 @@ export type CogsSyncRunScalarWhereWithAggregatesInput = {
 export type CogsSyncRunCreateInput = {
   id?: string
   status: string
+  syncType?: string
+  rangeFrom?: Date | string | null
+  rangeTo?: Date | string | null
   startedAt?: Date | string
+  heartbeatAt?: Date | string
   completedAt?: Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: number
   skippedCount?: number
   errorMessage?: string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunCreateNestedManyWithoutRunInput
 }
 
 export type CogsSyncRunUncheckedCreateInput = {
   id?: string
   status: string
+  syncType?: string
+  rangeFrom?: Date | string | null
+  rangeTo?: Date | string | null
   startedAt?: Date | string
+  heartbeatAt?: Date | string
   completedAt?: Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: number
   skippedCount?: number
   errorMessage?: string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type CogsSyncRunUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: Prisma.IntFieldUpdateOperationsInput | number
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunUpdateManyWithoutRunNestedInput
 }
 
 export type CogsSyncRunUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: Prisma.IntFieldUpdateOperationsInput | number
   skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
   errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceRuns?: Prisma.CogsSyncSourceRunUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type CogsSyncRunCreateManyInput = {
   id?: string
   status: string
+  syncType?: string
+  rangeFrom?: Date | string | null
+  rangeTo?: Date | string | null
   startedAt?: Date | string
+  heartbeatAt?: Date | string
   completedAt?: Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: number
@@ -355,7 +430,11 @@ export type CogsSyncRunCreateManyInput = {
 export type CogsSyncRunUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -366,7 +445,11 @@ export type CogsSyncRunUpdateManyMutationInput = {
 export type CogsSyncRunUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   addedCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -377,7 +460,11 @@ export type CogsSyncRunUncheckedUpdateManyInput = {
 export type CogsSyncRunCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  syncType?: Prisma.SortOrder
+  rangeFrom?: Prisma.SortOrder
+  rangeTo?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   sourceResults?: Prisma.SortOrder
   addedCount?: Prisma.SortOrder
@@ -393,7 +480,11 @@ export type CogsSyncRunAvgOrderByAggregateInput = {
 export type CogsSyncRunMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  syncType?: Prisma.SortOrder
+  rangeFrom?: Prisma.SortOrder
+  rangeTo?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   addedCount?: Prisma.SortOrder
   skippedCount?: Prisma.SortOrder
@@ -403,7 +494,11 @@ export type CogsSyncRunMaxOrderByAggregateInput = {
 export type CogsSyncRunMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  syncType?: Prisma.SortOrder
+  rangeFrom?: Prisma.SortOrder
+  rangeTo?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
+  heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   addedCount?: Prisma.SortOrder
   skippedCount?: Prisma.SortOrder
@@ -415,23 +510,157 @@ export type CogsSyncRunSumOrderByAggregateInput = {
   skippedCount?: Prisma.SortOrder
 }
 
+export type CogsSyncRunScalarRelationFilter = {
+  is?: Prisma.CogsSyncRunWhereInput
+  isNot?: Prisma.CogsSyncRunWhereInput
+}
+
+export type CogsSyncRunCreateNestedOneWithoutSourceRunsInput = {
+  create?: Prisma.XOR<Prisma.CogsSyncRunCreateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedCreateWithoutSourceRunsInput>
+  connectOrCreate?: Prisma.CogsSyncRunCreateOrConnectWithoutSourceRunsInput
+  connect?: Prisma.CogsSyncRunWhereUniqueInput
+}
+
+export type CogsSyncRunUpdateOneRequiredWithoutSourceRunsNestedInput = {
+  create?: Prisma.XOR<Prisma.CogsSyncRunCreateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedCreateWithoutSourceRunsInput>
+  connectOrCreate?: Prisma.CogsSyncRunCreateOrConnectWithoutSourceRunsInput
+  upsert?: Prisma.CogsSyncRunUpsertWithoutSourceRunsInput
+  connect?: Prisma.CogsSyncRunWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CogsSyncRunUpdateToOneWithWhereWithoutSourceRunsInput, Prisma.CogsSyncRunUpdateWithoutSourceRunsInput>, Prisma.CogsSyncRunUncheckedUpdateWithoutSourceRunsInput>
+}
+
+export type CogsSyncRunCreateWithoutSourceRunsInput = {
+  id?: string
+  status: string
+  syncType?: string
+  rangeFrom?: Date | string | null
+  rangeTo?: Date | string | null
+  startedAt?: Date | string
+  heartbeatAt?: Date | string
+  completedAt?: Date | string | null
+  sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  addedCount?: number
+  skippedCount?: number
+  errorMessage?: string | null
+}
+
+export type CogsSyncRunUncheckedCreateWithoutSourceRunsInput = {
+  id?: string
+  status: string
+  syncType?: string
+  rangeFrom?: Date | string | null
+  rangeTo?: Date | string | null
+  startedAt?: Date | string
+  heartbeatAt?: Date | string
+  completedAt?: Date | string | null
+  sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  addedCount?: number
+  skippedCount?: number
+  errorMessage?: string | null
+}
+
+export type CogsSyncRunCreateOrConnectWithoutSourceRunsInput = {
+  where: Prisma.CogsSyncRunWhereUniqueInput
+  create: Prisma.XOR<Prisma.CogsSyncRunCreateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedCreateWithoutSourceRunsInput>
+}
+
+export type CogsSyncRunUpsertWithoutSourceRunsInput = {
+  update: Prisma.XOR<Prisma.CogsSyncRunUpdateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedUpdateWithoutSourceRunsInput>
+  create: Prisma.XOR<Prisma.CogsSyncRunCreateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedCreateWithoutSourceRunsInput>
+  where?: Prisma.CogsSyncRunWhereInput
+}
+
+export type CogsSyncRunUpdateToOneWithWhereWithoutSourceRunsInput = {
+  where?: Prisma.CogsSyncRunWhereInput
+  data: Prisma.XOR<Prisma.CogsSyncRunUpdateWithoutSourceRunsInput, Prisma.CogsSyncRunUncheckedUpdateWithoutSourceRunsInput>
+}
+
+export type CogsSyncRunUpdateWithoutSourceRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  addedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type CogsSyncRunUncheckedUpdateWithoutSourceRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  syncType?: Prisma.StringFieldUpdateOperationsInput | string
+  rangeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rangeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sourceResults?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  addedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  skippedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+
+/**
+ * Count Type CogsSyncRunCountOutputType
+ */
+
+export type CogsSyncRunCountOutputType = {
+  sourceRuns: number
+}
+
+export type CogsSyncRunCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  sourceRuns?: boolean | CogsSyncRunCountOutputTypeCountSourceRunsArgs
+}
+
+/**
+ * CogsSyncRunCountOutputType without action
+ */
+export type CogsSyncRunCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CogsSyncRunCountOutputType
+   */
+  select?: Prisma.CogsSyncRunCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * CogsSyncRunCountOutputType without action
+ */
+export type CogsSyncRunCountOutputTypeCountSourceRunsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CogsSyncSourceRunWhereInput
+}
 
 
 export type CogsSyncRunSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   status?: boolean
+  syncType?: boolean
+  rangeFrom?: boolean
+  rangeTo?: boolean
   startedAt?: boolean
+  heartbeatAt?: boolean
   completedAt?: boolean
   sourceResults?: boolean
   addedCount?: boolean
   skippedCount?: boolean
   errorMessage?: boolean
+  sourceRuns?: boolean | Prisma.CogsSyncRun$sourceRunsArgs<ExtArgs>
+  _count?: boolean | Prisma.CogsSyncRunCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["cogsSyncRun"]>
 
 export type CogsSyncRunSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   status?: boolean
+  syncType?: boolean
+  rangeFrom?: boolean
+  rangeTo?: boolean
   startedAt?: boolean
+  heartbeatAt?: boolean
   completedAt?: boolean
   sourceResults?: boolean
   addedCount?: boolean
@@ -442,7 +671,11 @@ export type CogsSyncRunSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type CogsSyncRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   status?: boolean
+  syncType?: boolean
+  rangeFrom?: boolean
+  rangeTo?: boolean
   startedAt?: boolean
+  heartbeatAt?: boolean
   completedAt?: boolean
   sourceResults?: boolean
   addedCount?: boolean
@@ -453,7 +686,11 @@ export type CogsSyncRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type CogsSyncRunSelectScalar = {
   id?: boolean
   status?: boolean
+  syncType?: boolean
+  rangeFrom?: boolean
+  rangeTo?: boolean
   startedAt?: boolean
+  heartbeatAt?: boolean
   completedAt?: boolean
   sourceResults?: boolean
   addedCount?: boolean
@@ -461,15 +698,27 @@ export type CogsSyncRunSelectScalar = {
   errorMessage?: boolean
 }
 
-export type CogsSyncRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "status" | "startedAt" | "completedAt" | "sourceResults" | "addedCount" | "skippedCount" | "errorMessage", ExtArgs["result"]["cogsSyncRun"]>
+export type CogsSyncRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "status" | "syncType" | "rangeFrom" | "rangeTo" | "startedAt" | "heartbeatAt" | "completedAt" | "sourceResults" | "addedCount" | "skippedCount" | "errorMessage", ExtArgs["result"]["cogsSyncRun"]>
+export type CogsSyncRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  sourceRuns?: boolean | Prisma.CogsSyncRun$sourceRunsArgs<ExtArgs>
+  _count?: boolean | Prisma.CogsSyncRunCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type CogsSyncRunIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type CogsSyncRunIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $CogsSyncRunPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CogsSyncRun"
-  objects: {}
+  objects: {
+    sourceRuns: Prisma.$CogsSyncSourceRunPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     status: string
+    syncType: string
+    rangeFrom: Date | null
+    rangeTo: Date | null
     startedAt: Date
+    heartbeatAt: Date
     completedAt: Date | null
     sourceResults: runtime.JsonValue | null
     addedCount: number
@@ -869,6 +1118,7 @@ readonly fields: CogsSyncRunFieldRefs;
  */
 export interface Prisma__CogsSyncRunClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  sourceRuns<T extends Prisma.CogsSyncRun$sourceRunsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CogsSyncRun$sourceRunsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CogsSyncSourceRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -900,7 +1150,11 @@ export interface Prisma__CogsSyncRunClient<T, Null = never, ExtArgs extends runt
 export interface CogsSyncRunFieldRefs {
   readonly id: Prisma.FieldRef<"CogsSyncRun", 'String'>
   readonly status: Prisma.FieldRef<"CogsSyncRun", 'String'>
+  readonly syncType: Prisma.FieldRef<"CogsSyncRun", 'String'>
+  readonly rangeFrom: Prisma.FieldRef<"CogsSyncRun", 'DateTime'>
+  readonly rangeTo: Prisma.FieldRef<"CogsSyncRun", 'DateTime'>
   readonly startedAt: Prisma.FieldRef<"CogsSyncRun", 'DateTime'>
+  readonly heartbeatAt: Prisma.FieldRef<"CogsSyncRun", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"CogsSyncRun", 'DateTime'>
   readonly sourceResults: Prisma.FieldRef<"CogsSyncRun", 'Json'>
   readonly addedCount: Prisma.FieldRef<"CogsSyncRun", 'Int'>
@@ -923,6 +1177,10 @@ export type CogsSyncRunFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * Filter, which CogsSyncRun to fetch.
    */
   where: Prisma.CogsSyncRunWhereUniqueInput
@@ -941,6 +1199,10 @@ export type CogsSyncRunFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * Filter, which CogsSyncRun to fetch.
    */
   where: Prisma.CogsSyncRunWhereUniqueInput
@@ -958,6 +1220,10 @@ export type CogsSyncRunFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the CogsSyncRun
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
   /**
    * Filter, which CogsSyncRun to fetch.
    */
@@ -1007,6 +1273,10 @@ export type CogsSyncRunFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * Filter, which CogsSyncRun to fetch.
    */
   where?: Prisma.CogsSyncRunWhereInput
@@ -1054,6 +1324,10 @@ export type CogsSyncRunFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the CogsSyncRun
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
   /**
    * Filter, which CogsSyncRuns to fetch.
    */
@@ -1103,6 +1377,10 @@ export type CogsSyncRunCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * The data needed to create a CogsSyncRun.
    */
   data: Prisma.XOR<Prisma.CogsSyncRunCreateInput, Prisma.CogsSyncRunUncheckedCreateInput>
@@ -1150,6 +1428,10 @@ export type CogsSyncRunUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the CogsSyncRun
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
   /**
    * The data needed to update a CogsSyncRun.
    */
@@ -1217,6 +1499,10 @@ export type CogsSyncRunUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * The filter to search for the CogsSyncRun to update in case it exists.
    */
   where: Prisma.CogsSyncRunWhereUniqueInput
@@ -1243,6 +1529,10 @@ export type CogsSyncRunDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
+  /**
    * Filter which CogsSyncRun to delete.
    */
   where: Prisma.CogsSyncRunWhereUniqueInput
@@ -1263,6 +1553,30 @@ export type CogsSyncRunDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
+ * CogsSyncRun.sourceRuns
+ */
+export type CogsSyncRun$sourceRunsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CogsSyncSourceRun
+   */
+  select?: Prisma.CogsSyncSourceRunSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CogsSyncSourceRun
+   */
+  omit?: Prisma.CogsSyncSourceRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncSourceRunInclude<ExtArgs> | null
+  where?: Prisma.CogsSyncSourceRunWhereInput
+  orderBy?: Prisma.CogsSyncSourceRunOrderByWithRelationInput | Prisma.CogsSyncSourceRunOrderByWithRelationInput[]
+  cursor?: Prisma.CogsSyncSourceRunWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CogsSyncSourceRunScalarFieldEnum | Prisma.CogsSyncSourceRunScalarFieldEnum[]
+}
+
+/**
  * CogsSyncRun without action
  */
 export type CogsSyncRunDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1274,4 +1588,8 @@ export type CogsSyncRunDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the CogsSyncRun
    */
   omit?: Prisma.CogsSyncRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CogsSyncRunInclude<ExtArgs> | null
 }

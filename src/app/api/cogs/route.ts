@@ -1,7 +1,18 @@
-import { cogsMonthRange, listCogs, syncCogs } from "@/lib/cogs-sync";
+import { after } from "next/server";
+import {
+  cogsHistoryRange,
+  cogsMonthRange,
+  createCogsSyncJob,
+  executeCogsSyncJob,
+  getCogsSyncJob,
+  listCogs,
+  retryCogsSyncJob,
+  syncCogs,
+} from "@/lib/cogs-sync";
 import { formatVietnamDate } from "@/lib/date-time";
 
 export const runtime = "nodejs";
+export const maxDuration = 800;
 
 function output(row: Awaited<ReturnType<typeof listCogs>>[number]) {
   return {
@@ -16,23 +27,44 @@ function output(row: Awaited<ReturnType<typeof listCogs>>[number]) {
 }
 
 export async function GET(request: Request): Promise<Response> {
-  const month = new URL(request.url).searchParams.get("month") || undefined;
+  const searchParams = new URL(request.url).searchParams;
+  const jobId = searchParams.get("jobId") || undefined;
+  if (jobId || searchParams.get("syncStatus") === "latest") {
+    const job = await getCogsSyncJob(jobId);
+    return Response.json({ job });
+  }
+  const month = searchParams.get("month") || undefined;
   const rows = await listCogs(month);
   return Response.json({ rows: rows.map(output) });
 }
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const source = new URL(request.url).searchParams.get("source");
-    const month = new URL(request.url).searchParams.get("month") || undefined;
+    const searchParams = new URL(request.url).searchParams;
+    const action = searchParams.get("action");
+    const jobId = searchParams.get("jobId");
+    if (action === "retry" && jobId) {
+      const retried = await retryCogsSyncJob(jobId);
+      if (retried) after(() => executeCogsSyncJob(jobId, true));
+      return Response.json({ jobId, retried });
+    }
+    if (searchParams.get("mode") === "history") {
+      const job = await createCogsSyncJob(cogsHistoryRange(), "HISTORY");
+      if (!job.reused) after(() => executeCogsSyncJob(job.id));
+      return Response.json({ jobId: job.id, reused: job.reused });
+    }
+    const source = searchParams.get("source");
+    const month = searchParams.get("month") || undefined;
     const selectedSource =
       source === "pgprint"
         ? "PGPrint"
         : source === "printify"
           ? "Printify"
-          : source === "luxury-pro"
-            ? "Luxury Pro"
-            : undefined;
+          : source === "printful"
+            ? "Printful"
+            : source === "luxury-pro"
+              ? "Luxury Pro"
+              : undefined;
     return Response.json(await syncCogs(selectedSource, cogsMonthRange(month)));
   } catch (error) {
     return Response.json(

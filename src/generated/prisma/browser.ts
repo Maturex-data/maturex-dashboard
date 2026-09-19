@@ -43,6 +43,11 @@ export type CogsSourceRecord = Prisma.CogsSourceRecordModel
  */
 export type CogsSyncRun = Prisma.CogsSyncRunModel
 /**
+ * Model CogsSyncSourceRun
+ * 
+ */
+export type CogsSyncSourceRun = Prisma.CogsSyncSourceRunModel
+/**
  * Model ShopifyPaymentRecord
  * 
  */
@@ -62,6 +67,11 @@ export type MetaDailyFinancial = Prisma.MetaDailyFinancialModel
  * 
  */
 export type AirwallexAccountActivity = Prisma.AirwallexAccountActivityModel
+/**
+ * Model EcPnlMonthlyInput
+ * 
+ */
+export type EcPnlMonthlyInput = Prisma.EcPnlMonthlyInputModel
 /**
  * Model User
  * 
