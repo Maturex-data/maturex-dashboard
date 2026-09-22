@@ -26,6 +26,7 @@ export type ShopifyOrderNode = {
   tags: string[];
   lineItems: {
     nodes: Array<{
+      name: string;
       quantity: number;
       originalTotalSet: Money;
     }>;
@@ -85,6 +86,7 @@ const ORDERS_QUERY = `
         tags
         lineItems(first: 250) {
           nodes {
+            name
             quantity
             originalTotalSet { shopMoney { amount } }
           }

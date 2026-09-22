@@ -56,15 +56,20 @@ function decryptGoogleToken(value: string): StoredGoogleToken {
 }
 
 export function googleAuthorizationUrl(state: string): string {
+  const redirectUri = googleCallbackUrl();
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", config("GOOGLE_DRIVE_CLIENT_ID"));
-  url.searchParams.set("redirect_uri", config("GOOGLE_DRIVE_REDIRECT_URI"));
+  url.searchParams.set("redirect_uri", redirectUri.toString());
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", DRIVE_SCOPE);
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("prompt", "consent");
   url.searchParams.set("state", state);
   return url.toString();
+}
+
+export function googleCallbackUrl(): URL {
+  return new URL(config("GOOGLE_DRIVE_REDIRECT_URI"));
 }
 
 export async function exchangeGoogleCode(
@@ -192,7 +197,9 @@ async function refreshGoogleAccessToken(token: StoredGoogleToken): Promise<{
   };
 }
 
-export async function getGoogleDriveAccess(): Promise<{
+export async function getGoogleDriveAccess(options?: {
+  forceRefresh?: boolean;
+}): Promise<{
   accessToken: string;
   rootFolderId: string;
 }> {
@@ -207,6 +214,7 @@ export async function getGoogleDriveAccess(): Promise<{
   // Use cached access token if it has at least 5 minutes before expiration
   const safetyBufferMs = 5 * 60 * 1000;
   const isStillValid =
+    !options?.forceRefresh &&
     token.access_token &&
     connection.tokenExpiresAt &&
     connection.tokenExpiresAt.getTime() - Date.now() > safetyBufferMs;
@@ -338,6 +346,25 @@ export async function saveGoogleConnection(
       connectedAt: new Date(),
     },
   });
+}
+
+export const REPORT_SPREADSHEET_ID =
+  process.env.EC_REPORT_SPREADSHEET_ID ||
+  "19QrKNM6Tzn433gRo4neKcT3e6UtRcFaJ7Hj8lvtP5g8";
+
+export async function getGoogleDriveFileName(
+  fileId = REPORT_SPREADSHEET_ID,
+): Promise<string | null> {
+  try {
+    const { accessToken } = await getGoogleDriveAccess();
+    const url = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}`);
+    url.searchParams.set("fields", "id,name");
+    const response = await driveRequest(accessToken, url);
+    const data = (await response.json()) as { name?: string };
+    return data.name || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getGoogleDriveConnection() {

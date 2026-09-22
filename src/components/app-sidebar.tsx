@@ -103,6 +103,12 @@ export function AppSidebar({
       icon: <UploadCloudIcon className="size-4 text-purple-500" />,
       isActive: pathname === "/flowa/import",
     },
+    {
+      title: "Flowa Drive Sync",
+      url: "/flowa/drive-sync",
+      icon: <CloudIcon className="size-4 text-purple-500" />,
+      isActive: pathname === "/flowa/drive-sync",
+    },
   ];
 
   const ecNav = data.navMain.map((item) => ({

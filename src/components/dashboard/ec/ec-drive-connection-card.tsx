@@ -1,12 +1,18 @@
+"use client";
+
 import {
+  ArrowRightIcon,
   CloudIcon,
   ExternalLinkIcon,
   LinkIcon,
   UnplugIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { SectionCard } from "@/components/shared/section-card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export type DriveConnectionInfo = {
   email: string | null;
@@ -19,11 +25,92 @@ export function EcDriveConnectionCard({
   connection,
   disconnecting,
   onDisconnect,
+  targetFileName,
 }: {
   connection: DriveConnectionInfo | null;
   disconnecting: boolean;
   onDisconnect: () => void;
+  targetFileName?: string | null;
 }) {
+  const router = useRouter();
+  const displayName = targetFileName || "EcomCreate_TheDeerly_PL_FINAL";
+  const [connecting, setConnecting] = useState(false);
+  const [awaitingCallback, setAwaitingCallback] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState("");
+  const [callbackTarget, setCallbackTarget] = useState<{
+    origin: string;
+    path: string;
+  } | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  async function startConnection(): Promise<void> {
+    setConnecting(true);
+    setConnectionError(null);
+    try {
+      const response = await fetch("/api/ec/drive/connect", { method: "POST" });
+      const body = (await response.json()) as {
+        authorizationUrl?: string;
+        callbackOrigin?: string;
+        callbackPath?: string;
+        error?: string;
+      };
+      if (
+        !response.ok ||
+        !body.authorizationUrl ||
+        !body.callbackOrigin ||
+        !body.callbackPath
+      ) {
+        throw new Error(
+          body.error || "Không thể bắt đầu kết nối Google Drive.",
+        );
+      }
+      window.open(body.authorizationUrl, "maturex-google-drive", "noopener");
+      setCallbackTarget({
+        origin: body.callbackOrigin,
+        path: body.callbackPath,
+      });
+      setAwaitingCallback(true);
+    } catch (error) {
+      setConnectionError(
+        error instanceof Error
+          ? error.message
+          : "Không thể bắt đầu kết nối Google Drive.",
+      );
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  async function completeConnection(): Promise<void> {
+    try {
+      const callback = new URL(callbackUrl);
+      if (
+        callback.origin !== callbackTarget?.origin ||
+        callback.pathname !== callbackTarget.path
+      ) {
+        throw new Error("URL callback không thuộc ứng dụng hiện tại.");
+      }
+      const response = await fetch("/api/ec/drive/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callbackUrl: callback.toString() }),
+      });
+      const body = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(
+          body.error || "Không thể hoàn tất kết nối Google Drive.",
+        );
+      }
+      setAwaitingCallback(false);
+      setCallbackUrl("");
+      router.refresh();
+    } catch (error) {
+      setConnectionError(
+        error instanceof Error ? error.message : "URL callback không hợp lệ.",
+      );
+    }
+  }
+
   return (
     <div className="relative overflow-hidden rounded-2xl">
       {/* Subtle emerald glow in the top right corner */}
@@ -59,7 +146,7 @@ export function EcDriveConnectionCard({
               </span>
               <span className="text-muted-foreground/40 font-bold">/</span>
               <span className="font-medium text-emerald-600/90 dark:text-emerald-400">
-                EcomCreate_TheDeerly_PL_FINAL
+                {displayName}
               </span>
             </span>
           ) : (
@@ -101,17 +188,49 @@ export function EcDriveConnectionCard({
               </>
             ) : (
               <Button
-                onClick={() => window.location.assign("/api/ec/drive/connect")}
+                disabled={connecting}
+                onClick={startConnection}
                 size="sm"
                 className="h-9 gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 active:scale-[0.98] transition-all"
               >
-                <LinkIcon className="size-3.5" />
-                <span>Kết nối Google Drive</span>
+                <LinkIcon
+                  className={`size-3.5 ${connecting ? "animate-spin" : ""}`}
+                />
+                <span>
+                  {connecting ? "Đang mở Google…" : "Kết nối Google Drive"}
+                </span>
               </Button>
             )}
           </div>
         }
-      />
+      >
+        {!connection && awaitingCallback ? (
+          <div className="border-t border-emerald-500/15 px-5 pb-5 pt-4">
+            <div className="flex flex-col gap-2.5 sm:flex-row">
+              <Input
+                aria-label="Google OAuth callback URL"
+                onChange={(event) => setCallbackUrl(event.target.value)}
+                placeholder="Dán URL callback từ Google"
+                value={callbackUrl}
+              />
+              <Button
+                disabled={!callbackUrl}
+                onClick={completeConnection}
+                size="sm"
+                className="h-9 shrink-0 gap-1.5 bg-emerald-600 text-xs font-semibold hover:bg-emerald-700"
+              >
+                Hoàn tất
+                <ArrowRightIcon className="size-3.5" />
+              </Button>
+            </div>
+            {connectionError ? (
+              <p className="mt-2 text-xs font-medium text-destructive">
+                {connectionError}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </SectionCard>
     </div>
   );
 }

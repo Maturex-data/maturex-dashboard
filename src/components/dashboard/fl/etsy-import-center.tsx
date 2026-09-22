@@ -4,6 +4,7 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   FileSpreadsheetIcon,
+  FolderIcon,
   Loader2Icon,
   RotateCcwIcon,
   UploadCloudIcon,
@@ -14,14 +15,7 @@ import { useRef, useState } from "react";
 import { importEtsyAction } from "@/actions/etsy";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { detectShopFromPath } from "@/lib/etsy-constants";
 import { cn } from "@/lib/utils";
 
 interface ShopOption {
@@ -29,21 +23,10 @@ interface ShopOption {
   name: string;
 }
 
-interface ImportHistoryRow {
-  id: string;
-  shopName: string;
-  reportType: string;
-  sourceFileName: string;
-  sourceMonth: string;
-  status: string;
-  totalRows: number;
-  insertedRows: number;
-  skippedRows: number;
-  importedAt: string;
-}
-
 interface ImportResult {
   fileName: string;
+  relativePath?: string;
+  shopCode?: string;
   reportType: string;
   sourceMonth: string | null;
   status: "COMPLETED" | "SKIPPED" | "FAILED";
@@ -57,11 +40,13 @@ const reportLabels: Record<string, string> = {
   ORDERS: "Orders",
   ORDER_ITEMS: "Order items",
   STATEMENTS: "Statement",
+  COGS: "COGS / Giá vốn",
+  COGS_CLAIM: "Claim / Bồi thường",
   UNKNOWN: "Chưa nhận diện",
 };
 
-function fileKey(file: File): string {
-  return `${file.name}-${file.size}-${file.lastModified}`;
+function fileKey(item: StoredImportFile): string {
+  return `${item.relativePath || item.file.name}-${item.file.size}-${item.file.lastModified}`;
 }
 
 function fileSize(bytes: number): string {
@@ -72,14 +57,14 @@ function fileSize(bytes: number): string {
 
 function guessedReport(fileName: string): string {
   const normalized = fileName.toLowerCase();
+  if (normalized.includes("order_management") || normalized.includes("cogs"))
+    return "COGS / Giá vốn";
+  if (normalized.includes("issue") || normalized.includes("claim"))
+    return "Claim / Bồi thường";
   if (normalized.includes("soldorderitems")) return "Order items";
   if (normalized.includes("soldorders")) return "Orders";
   if (normalized.includes("statement")) return "Statement";
   return "Kiểm tra khi import";
-}
-
-function acceptedFiles(files: File[]): File[] {
-  return files.filter((file) => /\.(csv|xlsx)$/i.test(file.name));
 }
 
 function statusBadge(status: string) {
@@ -98,39 +83,101 @@ function statusBadge(status: string) {
   return <Badge variant="outline">{status}</Badge>;
 }
 
-export function EtsyImportCenter({
-  shops,
-  history,
-}: {
-  shops: ShopOption[];
-  history: ImportHistoryRow[];
-}) {
+interface StoredImportFile {
+  file: File;
+  relativePath: string;
+}
+
+export function EtsyImportCenter({ shops }: { shops: ShopOption[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [shopCode, setShopCode] = useState(shops[0]?.code ?? "");
-  const [files, setFiles] = useState<File[]>([]);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const [shopCode, setShopCode] = useState("AUTO");
+  const [files, setFiles] = useState<StoredImportFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<ImportResult[]>([]);
 
-  function addFiles(nextFiles: File[]) {
-    const merged = new Map(files.map((file) => [fileKey(file), file]));
-    for (const file of acceptedFiles(nextFiles))
-      merged.set(fileKey(file), file);
-    setFiles([...merged.values()].slice(0, 12));
+  function addStoredFiles(nextItems: StoredImportFile[]) {
+    const merged = new Map(files.map((item) => [fileKey(item), item]));
+    for (const item of nextItems) {
+      if (/\.(csv|xlsx)$/i.test(item.file.name)) {
+        merged.set(fileKey(item), item);
+      }
+    }
+    setFiles([...merged.values()].slice(0, 100));
     setResults([]);
     setMessage("");
   }
 
-  function removeFile(target: File) {
+  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+
+    const items = event.dataTransfer.items;
+    const collected: StoredImportFile[] = [];
+
+    // Check if DataTransferItem with webkitGetAsEntry is supported
+    if (items && items.length > 0 && "webkitGetAsEntry" in items[0]) {
+      const queue: { entry: FileSystemEntry; path: string }[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const entry = items[i].webkitGetAsEntry();
+        if (entry) queue.push({ entry, path: "" });
+      }
+
+      while (queue.length > 0) {
+        const next = queue.shift();
+        if (!next) break;
+        const { entry, path } = next;
+
+        if (entry.isFile) {
+          const fileEntry = entry as FileSystemFileEntry;
+          await new Promise<void>((resolve) => {
+            fileEntry.file((file: File) => {
+              collected.push({
+                file,
+                relativePath: path ? `${path}/${file.name}` : file.name,
+              });
+              resolve();
+            });
+          });
+        } else if (entry.isDirectory) {
+          const dirEntry = entry as FileSystemDirectoryEntry;
+          const reader = dirEntry.createReader();
+          await new Promise<void>((resolve) => {
+            reader.readEntries((entries: FileSystemEntry[]) => {
+              for (const child of entries) {
+                queue.push({
+                  entry: child,
+                  path: path ? `${path}/${entry.name}` : entry.name,
+                });
+              }
+              resolve();
+            });
+          });
+        }
+      }
+    } else {
+      for (const file of Array.from(event.dataTransfer.files)) {
+        collected.push({
+          file,
+          relativePath: file.webkitRelativePath || file.name,
+        });
+      }
+    }
+
+    addStoredFiles(collected);
+  }
+
+  function removeFile(target: StoredImportFile) {
     setFiles((current) =>
-      current.filter((file) => fileKey(file) !== fileKey(target)),
+      current.filter((item) => fileKey(item) !== fileKey(target)),
     );
   }
 
   async function importFiles() {
-    if (!shopCode || files.length === 0) return;
+    if (files.length === 0) return;
     setLoading(true);
     setMessage("");
     setResults([]);
@@ -138,7 +185,13 @@ export function EtsyImportCenter({
     try {
       const formData = new FormData();
       formData.set("shopCode", shopCode);
-      for (const file of files) formData.append("files", file);
+      const relativePaths: string[] = [];
+
+      for (const item of files) {
+        formData.append("files", item.file);
+        relativePaths.push(item.relativePath);
+      }
+      formData.set("relativePaths", JSON.stringify(relativePaths));
 
       const res = await importEtsyAction(formData);
       if (!res.success || !res.data) {
@@ -151,8 +204,8 @@ export function EtsyImportCenter({
         payload.summary.failed > 0
           ? `${payload.summary.failed} file cần kiểm tra lại.`
           : payload.summary.insertedRows === 0 && payload.summary.skipped > 0
-            ? `${payload.summary.skipped} file đã tồn tại, không ghi trùng.`
-            : `Đã thêm ${payload.summary.insertedRows.toLocaleString("vi-VN")} dòng mới.`,
+            ? `${payload.summary.skipped} file chưa có tab đích trong Google Sheet Flowa.`
+            : `Đã nạp ${payload.summary.insertedRows.toLocaleString("vi-VN")} dòng vào Google Sheet Flowa.`,
       );
       if (payload.summary.failed === 0) setFiles([]);
       window.dispatchEvent(new CustomEvent("etsy-cache-invalidated"));
@@ -171,15 +224,24 @@ export function EtsyImportCenter({
       <section className="overflow-hidden rounded-lg border bg-background">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
           <div>
-            <h2 className="font-semibold">Import dữ liệu Etsy</h2>
+            <h2 className="font-semibold flex items-center gap-2">
+              <span>Import dữ liệu Etsy</span>
+              <Badge
+                variant="outline"
+                className="text-purple-600 border-purple-500/30 bg-purple-500/10"
+              >
+                Tự động nhận diện thư mục
+              </Badge>
+            </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Orders, Order Items và Payment Statement
+              File được nạp trực tiếp vào Google Sheet Flowa; các công thức báo
+              cáo trên Sheet sẽ tự tính lại.
             </p>
           </div>
-          <Badge variant="outline">CSV / XLSX</Badge>
+          <Badge variant="outline">CSV / XLSX / Folder</Badge>
         </div>
 
-        <div className="grid lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid lg:grid-cols-[270px_minmax(0,1fr)]">
           <div className="space-y-4 border-b p-5 lg:border-r lg:border-b-0">
             <label
               className="block space-y-2 font-medium text-sm"
@@ -193,9 +255,12 @@ export function EtsyImportCenter({
                 onChange={(event) => setShopCode(event.target.value)}
                 disabled={loading}
               >
+                <option value="AUTO">
+                  ✨ Tự động nhận diện shop theo thư mục / tên file
+                </option>
                 {shops.map((shop) => (
                   <option key={shop.code} value={shop.code}>
-                    {shop.name}
+                    {shop.name} ({shop.code})
                   </option>
                 ))}
               </select>
@@ -205,20 +270,22 @@ export function EtsyImportCenter({
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-muted-foreground">File đã chọn</span>
                 <span className="font-medium tabular-nums">
-                  {files.length}/12
+                  {files.length}/100
                 </span>
               </div>
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-muted-foreground">Dung lượng</span>
                 <span className="font-medium tabular-nums">
-                  {fileSize(files.reduce((sum, file) => sum + file.size, 0))}
+                  {fileSize(
+                    files.reduce((sum, item) => sum + item.file.size, 0),
+                  )}
                 </span>
               </div>
             </div>
 
             <Button
-              className="h-10 w-full"
-              disabled={loading || files.length === 0 || !shopCode}
+              className="h-10 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+              disabled={loading || files.length === 0}
               onClick={importFiles}
             >
               {loading ? (
@@ -226,76 +293,152 @@ export function EtsyImportCenter({
               ) : (
                 <UploadCloudIcon />
               )}
-              {loading ? "Đang nhập..." : `Import ${files.length || ""} file`}
+              {loading
+                ? "Đang nạp Google Sheet..."
+                : `Nạp ${files.length || ""} file vào Google Sheet`}
             </Button>
           </div>
 
           <div className="min-w-0 p-5">
+            {/* File input */}
             <input
               ref={inputRef}
               type="file"
               accept=".csv,.xlsx"
               multiple
               className="hidden"
-              onChange={(event) =>
-                addFiles(Array.from(event.target.files ?? []))
-              }
+              onChange={(event) => {
+                const selected = Array.from(event.target.files ?? []).map(
+                  (file) => ({
+                    file,
+                    relativePath: file.webkitRelativePath || file.name,
+                  }),
+                );
+                addStoredFiles(selected);
+              }}
             />
-            <button
-              type="button"
+
+            {/* Folder input */}
+            <input
+              ref={folderInputRef}
+              type="file"
+              // @ts-expect-error webkitdirectory is standard for folder inputs
+              webkitdirectory=""
+              directory=""
+              multiple
+              className="hidden"
+              onChange={(event) => {
+                const selected = Array.from(event.target.files ?? []).map(
+                  (file) => ({
+                    file,
+                    relativePath: file.webkitRelativePath || file.name,
+                  }),
+                );
+                addStoredFiles(selected);
+              }}
+            />
+
+            <section
+              aria-label="Khu vực tải lên tệp tin"
               className={cn(
-                "flex min-h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed px-6 py-7 text-center transition-colors",
+                "flex min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed px-6 py-7 text-center transition-all",
                 dragging
-                  ? "border-purple-500 bg-purple-50"
+                  ? "border-purple-500 bg-purple-50/80 ring-2 ring-purple-500/20"
                   : "border-zinc-300 bg-zinc-50/60 hover:border-zinc-400 hover:bg-zinc-50",
               )}
-              onClick={() => inputRef.current?.click()}
               onDragEnter={(event) => {
                 event.preventDefault();
                 setDragging(true);
               }}
               onDragOver={(event) => event.preventDefault()}
               onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragging(false);
-                addFiles(Array.from(event.dataTransfer.files));
-              }}
-              disabled={loading}
+              onDrop={handleDrop}
             >
-              <span className="mb-3 flex size-10 items-center justify-center rounded-lg border bg-white text-purple-600 shadow-xs">
-                <UploadCloudIcon className="size-5" />
+              <span className="mb-3 flex size-12 items-center justify-center rounded-xl border bg-white text-purple-600 shadow-xs">
+                <UploadCloudIcon className="size-6" />
               </span>
-              <span className="font-medium text-sm">Thả file Etsy tại đây</span>
+              <span className="font-semibold text-sm text-foreground">
+                Kéo thả cả thư mục (Folder) hoặc các file Etsy vào đây
+              </span>
               <span className="mt-1 text-xs text-muted-foreground">
-                hoặc bấm để chọn file
+                Hệ thống tự động quét đệ quy các thư mục con và phân tích đúng
+                Shop (97Decor, Artisanhand, Timond...)
               </span>
-            </button>
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-50"
+                  onClick={() => folderInputRef.current?.click()}
+                  disabled={loading}
+                >
+                  <FolderIcon className="size-3.5 text-purple-600" />
+                  <span>Chọn cả thư mục</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={loading}
+                >
+                  <FileSpreadsheetIcon className="size-3.5" />
+                  <span>Chọn từng file lẻ</span>
+                </Button>
+              </div>
+            </section>
 
             {files.length > 0 ? (
               <div className="mt-4 max-h-56 overflow-y-auto rounded-lg border">
-                {files.map((file) => (
+                {files.map((item) => (
                   <div
-                    key={fileKey(file)}
-                    className="grid grid-cols-[minmax(0,1fr)_110px_64px_32px] items-center gap-3 border-b px-3 py-2.5 last:border-b-0"
+                    key={fileKey(item)}
+                    className="grid grid-cols-[minmax(0,1fr)_120px_64px_32px] items-center gap-3 border-b px-3 py-2.5 last:border-b-0"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <FileSpreadsheetIcon className="size-4 shrink-0 text-emerald-600" />
-                      <span className="truncate text-sm" title={file.name}>
-                        {file.name}
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span
+                          className="truncate text-sm font-medium"
+                          title={item.file.name}
+                        >
+                          {item.file.name}
+                        </span>
+                        {item.relativePath &&
+                          item.relativePath !== item.file.name && (
+                            <span
+                              className="truncate text-[11px] text-muted-foreground/70"
+                              title={item.relativePath}
+                            >
+                              📁 {item.relativePath}
+                            </span>
+                          )}
+                      </div>
                     </div>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {guessedReport(file.name)}
-                    </span>
+                    <div className="flex flex-col items-end sm:items-start truncate text-xs text-muted-foreground">
+                      <span>{guessedReport(item.file.name)}</span>
+                      {detectShopFromPath(
+                        item.relativePath || item.file.name,
+                      ) && (
+                        <span className="text-[10px] text-purple-600 font-semibold">
+                          Shop:{" "}
+                          {detectShopFromPath(
+                            item.relativePath || item.file.name,
+                          )}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-right text-xs tabular-nums text-muted-foreground">
-                      {fileSize(file.size)}
+                      {fileSize(item.file.size)}
                     </span>
                     <Button
                       size="icon-xs"
                       variant="ghost"
-                      aria-label={`Xóa ${file.name}`}
-                      onClick={() => removeFile(file)}
+                      aria-label={`Xóa ${item.file.name}`}
+                      onClick={() => removeFile(item)}
                     >
                       <XIcon />
                     </Button>
@@ -330,13 +473,29 @@ export function EtsyImportCenter({
             </Button>
           </div>
           <div className="divide-y">
-            {results.map((result) => (
+            {results.map((result, index) => (
               <div
-                key={`${result.fileName}-${result.reportType}`}
+                key={`${result.relativePath || result.fileName}-${result.shopCode || ""}-${result.reportType}-${index}`}
                 className="grid gap-2 px-5 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_100px_100px] md:items-center"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{result.fileName}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-medium">{result.fileName}</p>
+                    {result.shopCode && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-purple-600 border-purple-500/30"
+                      >
+                        {result.shopCode}
+                      </Badge>
+                    )}
+                  </div>
+                  {result.relativePath &&
+                    result.relativePath !== result.fileName && (
+                      <p className="truncate text-[11px] text-muted-foreground/70">
+                        📁 {result.relativePath}
+                      </p>
+                    )}
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {result.message}
                   </p>
@@ -353,75 +512,6 @@ export function EtsyImportCenter({
           </div>
         </section>
       ) : null}
-
-      <section
-        id="import-history"
-        className="overflow-hidden rounded-lg border bg-background"
-      >
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <div>
-            <h2 className="font-semibold">Lịch sử import</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              20 batch gần nhất
-            </p>
-          </div>
-          <Badge variant="secondary">{history.length} batch</Badge>
-        </div>
-        <div className="max-h-96 overflow-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10 bg-zinc-50">
-              <TableRow>
-                <TableHead>Shop</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Tháng</TableHead>
-                <TableHead>File</TableHead>
-                <TableHead className="text-right">Dòng mới</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Thời gian</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-28 text-center text-muted-foreground"
-                  >
-                    Chưa có lịch sử import.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                history.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      {row.shopName}
-                    </TableCell>
-                    <TableCell>
-                      {reportLabels[row.reportType] ?? row.reportType}
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {row.sourceMonth}
-                    </TableCell>
-                    <TableCell
-                      className="max-w-64 truncate"
-                      title={row.sourceFileName}
-                    >
-                      {row.sourceFileName}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.insertedRows.toLocaleString("vi-VN")}
-                    </TableCell>
-                    <TableCell>{statusBadge(row.status)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {row.importedAt}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
     </div>
   );
 }

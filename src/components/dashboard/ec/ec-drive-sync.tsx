@@ -80,10 +80,12 @@ export function EcDriveSync({
   connection,
   runs,
   notice,
+  targetFileName,
 }: {
   connection: DriveConnectionInfo | null;
   runs: DriveRun[];
   notice?: { type: "success" | "error"; message: string };
+  targetFileName?: string | null;
 }) {
   const router = useRouter();
   const [disconnecting, setDisconnecting] = useState(false);
@@ -218,6 +220,7 @@ export function EcDriveSync({
         connection={connection}
         disconnecting={disconnecting}
         onDisconnect={disconnect}
+        targetFileName={targetFileName}
       />
 
       {/* Main Workspace Grid: Controls & History */}

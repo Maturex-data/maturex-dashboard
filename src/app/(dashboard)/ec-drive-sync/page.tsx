@@ -1,7 +1,10 @@
 import { CloudIcon } from "lucide-react";
 import { EcDriveSync } from "@/components/dashboard/ec/ec-drive-sync";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { getGoogleDriveConnection } from "@/lib/ec-drive";
+import {
+  getGoogleDriveConnection,
+  getGoogleDriveFileName,
+} from "@/lib/ec-drive";
 import { prisma } from "@/lib/prisma";
 
 export default async function EcDriveSyncPage({
@@ -9,27 +12,32 @@ export default async function EcDriveSyncPage({
 }: {
   searchParams: Promise<{ drive_connected?: string; drive_error?: string }>;
 }) {
-  const [{ drive_connected: connected, drive_error: error }, connection, runs] =
-    await Promise.all([
-      searchParams,
-      getGoogleDriveConnection(),
-      prisma.ecDriveSyncRun.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 30,
-        select: {
-          id: true,
-          shop: true,
-          source: true,
-          status: true,
-          rangeFrom: true,
-          rangeTo: true,
-          rowCount: true,
-          driveFileUrl: true,
-          errorMessage: true,
-          createdAt: true,
-        },
-      }),
-    ]);
+  const [
+    { drive_connected: connected, drive_error: error },
+    connection,
+    runs,
+    targetFileName,
+  ] = await Promise.all([
+    searchParams,
+    getGoogleDriveConnection(),
+    prisma.ecDriveSyncRun.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: {
+        id: true,
+        shop: true,
+        source: true,
+        status: true,
+        rangeFrom: true,
+        rangeTo: true,
+        rowCount: true,
+        driveFileUrl: true,
+        errorMessage: true,
+        createdAt: true,
+      },
+    }),
+    getGoogleDriveFileName(),
+  ]);
   const notice = connected
     ? {
         type: "success" as const,
@@ -71,7 +79,12 @@ export default async function EcDriveSyncPage({
           </div>
         </div>
 
-        <EcDriveSync connection={connection} notice={notice} runs={runs} />
+        <EcDriveSync
+          connection={connection}
+          notice={notice}
+          runs={runs}
+          targetFileName={targetFileName}
+        />
       </main>
     </>
   );

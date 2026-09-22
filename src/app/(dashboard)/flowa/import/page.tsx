@@ -4,39 +4,8 @@ import { EtsyImportCenter } from "@/components/dashboard/fl/etsy-import-center";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ETSY_SHOPS } from "@/lib/etsy-import";
-import { prisma } from "@/lib/prisma";
-
-function formatMonth(value: Date): string {
-  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function formatImportTime(value: Date): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Ho_Chi_Minh",
-  }).format(value);
-}
 
 export default async function FlowaImportPage() {
-  const [shops, batches, completedBatches] = await Promise.all([
-    prisma.etsyShop.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.etsyImportBatch.findMany({
-      include: { shop: { select: { name: true } } },
-      orderBy: { startedAt: "desc" },
-      take: 20,
-    }),
-    prisma.etsyImportBatch.count({ where: { status: "COMPLETED" } }),
-  ]);
-
-  const shopOptions = shops.length > 0 ? shops : ETSY_SHOPS;
-
   return (
     <>
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 bg-background/80 px-4 sm:px-6 backdrop-blur-md sticky top-0 z-20 gap-2">
@@ -58,7 +27,7 @@ export default async function FlowaImportPage() {
             </span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-muted-foreground truncate">
-              Import & Lịch sử
+              Nạp dữ liệu Google Sheet
             </span>
           </div>
         </div>
@@ -79,9 +48,6 @@ export default async function FlowaImportPage() {
               <span>Xem bảng dữ liệu</span>
             </Button>
           </Link>
-          <span className="text-xs text-muted-foreground font-mono ml-1">
-            {completedBatches} batch hoàn tất
-          </span>
         </div>
       </header>
 
@@ -90,29 +56,12 @@ export default async function FlowaImportPage() {
           <div>
             <p className="text-sm text-muted-foreground">Trung tâm tải lên</p>
             <h1 className="mt-1 font-semibold text-2xl tracking-tight">
-              Etsy Import Center
+              Flowa Sheet Import
             </h1>
           </div>
         </section>
 
-        <EtsyImportCenter
-          shops={shopOptions.map((shop) => ({
-            code: shop.code,
-            name: shop.name,
-          }))}
-          history={batches.map((batch) => ({
-            id: batch.id,
-            shopName: batch.shop.name,
-            reportType: batch.reportType,
-            sourceFileName: batch.sourceFileName,
-            sourceMonth: formatMonth(batch.sourceMonth),
-            status: batch.status,
-            totalRows: batch.totalRows,
-            insertedRows: batch.insertedRows,
-            skippedRows: batch.skippedRows,
-            importedAt: formatImportTime(batch.completedAt ?? batch.startedAt),
-          }))}
-        />
+        <EtsyImportCenter shops={[...ETSY_SHOPS]} />
       </main>
     </>
   );

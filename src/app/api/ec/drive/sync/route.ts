@@ -18,8 +18,8 @@ const REPORT_SPREADSHEET_ID =
   "19QrKNM6Tzn433gRo4neKcT3e6UtRcFaJ7Hj8lvtP5g8";
 
 const REPORT_SHEETS = {
-  Orders: { lastColumn: "L", dateIndex: 3, source: "all-data / RAW.ORDER" },
-  COGS: { lastColumn: "K", dateIndex: 3, source: "all-data / RAW.COGS" },
+  Orders: { lastColumn: "M", dateIndex: 3, source: "all-data / RAW.ORDER" },
+  COGS: { lastColumn: "L", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
     lastColumn: "P",
@@ -45,6 +45,43 @@ function text(value: unknown): string {
   return typeof value === "string" || typeof value === "number"
     ? String(value)
     : "";
+}
+
+function firstText(...values: unknown[]): string {
+  return values.map(text).find(Boolean) || "";
+}
+
+function cogsItemName(row: { supplier: string; rawPayload: unknown }): string {
+  const payload = record(row.rawPayload);
+  const item = record(payload.item);
+  const order = record(payload.order);
+  const product = record(item.product);
+  const metadata = record(item.metadata);
+
+  if (row.supplier === "Luxury Pro") {
+    return [text(payload.product_type), text(payload.size), text(payload.sku)]
+      .filter(Boolean)
+      .join(" - ");
+  }
+
+  return firstText(
+    item.name,
+    item.title,
+    item.product_name,
+    item.productName,
+    item.display_name,
+    metadata.title,
+    metadata.name,
+    product.name,
+    product.title,
+    payload.product_name,
+    payload.product,
+    payload.item_name,
+    payload.title,
+    order.product_name,
+    order.productName,
+    order.title,
+  );
 }
 
 function monthOf(date: Date): string {
@@ -135,6 +172,10 @@ async function valuesFor(
             total + Number(item.originalTotalSet.shopMoney.amount),
           0,
         );
+        const itemNames = row.lineItems.nodes
+          .map((item) => item.name.trim())
+          .filter(Boolean)
+          .join(" | ");
         return [
           monthOf(orderDate),
           index + 2,
@@ -148,6 +189,7 @@ async function valuesFor(
           refundAmount,
           orderTotalBeforeRefund,
           REPORT_SHEETS.Orders.source,
+          itemNames,
         ];
       });
     }
@@ -159,6 +201,7 @@ async function valuesFor(
         row.supplier,
         formatVietnamDate(row.date),
         row.referenceOrderId,
+        cogsItemName(row),
         row.supplierOrderId,
         row.totalCost,
         row.estimatedCost,
@@ -264,7 +307,7 @@ async function writeSheet(
     const date = new Date(
       dateValue.includes("T") ? dateValue : `${dateValue}T00:00:00.000Z`,
     );
-    return Number.isNaN(date.getTime()) || date < from || date >= to;
+    return !Number.isNaN(date.getTime()) && (date < from || date >= to);
   });
   const numbered = [...preserved, ...values]
     .sort((left, right) =>
@@ -357,7 +400,17 @@ async function syncReportSheet(
 ): Promise<void> {
   try {
     const values = await valuesFor(sheet, from, to);
-    await writeSheet(accessToken, sheet, values, from, to);
+    try {
+      await writeSheet(accessToken, sheet, values, from, to);
+    } catch (error) {
+      const isExpiredGoogleToken =
+        error instanceof Error &&
+        error.message.startsWith("Google Sheets API 401:");
+      if (!isExpiredGoogleToken) throw error;
+
+      const refreshed = await getGoogleDriveAccess({ forceRefresh: true });
+      await writeSheet(refreshed.accessToken, sheet, values, from, to);
+    }
     await prisma.ecDriveSyncRun.update({
       where: { id: runId },
       data: {
