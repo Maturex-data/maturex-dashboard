@@ -12,7 +12,7 @@ type Money = {
   };
 };
 
-type ShopifyOrderNode = {
+export type ShopifyOrderNode = {
   id: string;
   name: string;
   createdAt: string;
@@ -262,6 +262,28 @@ async function fetchOrdersPage(
   }
 
   throw new Error("Shopify sync retry limit reached.");
+}
+
+export async function fetchShopifyOrdersFromApi(range: {
+  from: Date;
+  to: Date;
+}): Promise<ShopifyOrderNode[]> {
+  const fromDay = formatVietnamDate(range.from);
+  const untilDay = formatVietnamDate(new Date(range.to.getTime() - 1));
+  const query = `created_at:>=${range.from.toISOString()} created_at:<${range.to.toISOString()}`;
+  const orders: ShopifyOrderNode[] = [];
+  let after: string | null = null;
+
+  do {
+    const page = await fetchOrdersPage(after, query);
+    orders.push(...page.nodes);
+    after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (after);
+
+  return orders.filter((order) => {
+    const orderDay = formatVietnamDate(new Date(order.createdAt));
+    return orderDay >= fromDay && orderDay <= untilDay;
+  });
 }
 
 let activeSync: Promise<SyncResult> | null = null;

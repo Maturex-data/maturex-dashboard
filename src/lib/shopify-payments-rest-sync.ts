@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 const LIMIT = 250;
 type JsonRecord = Record<string, unknown>;
+export type ShopifyPaymentTransaction = JsonRecord;
 const text = (value: unknown): string | null =>
   value === null || value === undefined || value === "" ? null : String(value);
 const decimal = (value: unknown): Prisma.Decimal =>
@@ -61,6 +62,22 @@ async function collection(
     url = page.next;
   }
   return rows;
+}
+
+export async function fetchShopifyPaymentTransactionsFromApi(range: {
+  from: Date;
+  to: Date;
+}): Promise<ShopifyPaymentTransaction[]> {
+  const rows = await collection(
+    `shopify_payments/balance/transactions.json?processed_at_min=${encodeURIComponent(range.from.toISOString())}&processed_at_max=${encodeURIComponent(new Date(range.to.getTime() - 1).toISOString())}&limit=${LIMIT}`,
+    "transactions",
+  );
+  return rows.filter((row) => {
+    const value = row.processed_at || row.date || row.initiated_at;
+    if (!value) return false;
+    const transactionDate = new Date(String(value));
+    return transactionDate >= range.from && transactionDate < range.to;
+  });
 }
 
 function base(

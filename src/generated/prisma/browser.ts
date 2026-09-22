@@ -73,6 +73,16 @@ export type AirwallexAccountActivity = Prisma.AirwallexAccountActivityModel
  */
 export type EcPnlMonthlyInput = Prisma.EcPnlMonthlyInputModel
 /**
+ * Model EcDriveConnection
+ * 
+ */
+export type EcDriveConnection = Prisma.EcDriveConnectionModel
+/**
+ * Model EcDriveSyncRun
+ * 
+ */
+export type EcDriveSyncRun = Prisma.EcDriveSyncRunModel
+/**
  * Model User
  * 
  */

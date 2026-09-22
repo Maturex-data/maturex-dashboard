@@ -1345,14 +1345,6 @@ export type EtsyOrderUncheckedUpdateManyWithoutImportBatchNestedInput = {
   deleteMany?: Prisma.EtsyOrderScalarWhereInput | Prisma.EtsyOrderScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type EtsyOrderCreateNestedOneWithoutOrderItemsInput = {
   create?: Prisma.XOR<Prisma.EtsyOrderCreateWithoutOrderItemsInput, Prisma.EtsyOrderUncheckedCreateWithoutOrderItemsInput>
   connectOrCreate?: Prisma.EtsyOrderCreateOrConnectWithoutOrderItemsInput

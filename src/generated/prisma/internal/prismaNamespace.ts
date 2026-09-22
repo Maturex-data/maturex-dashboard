@@ -408,6 +408,8 @@ export const ModelName = {
   MetaDailyFinancial: 'MetaDailyFinancial',
   AirwallexAccountActivity: 'AirwallexAccountActivity',
   EcPnlMonthlyInput: 'EcPnlMonthlyInput',
+  EcDriveConnection: 'EcDriveConnection',
+  EcDriveSyncRun: 'EcDriveSyncRun',
   User: 'User',
   RefreshToken: 'RefreshToken',
   EtsyShop: 'EtsyShop',
@@ -430,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement"
+    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "ecDriveConnection" | "ecDriveSyncRun" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1248,6 +1250,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EcDriveConnection: {
+      payload: Prisma.$EcDriveConnectionPayload<ExtArgs>
+      fields: Prisma.EcDriveConnectionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcDriveConnectionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcDriveConnectionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        findFirst: {
+          args: Prisma.EcDriveConnectionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcDriveConnectionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        findMany: {
+          args: Prisma.EcDriveConnectionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>[]
+        }
+        create: {
+          args: Prisma.EcDriveConnectionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        createMany: {
+          args: Prisma.EcDriveConnectionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcDriveConnectionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>[]
+        }
+        delete: {
+          args: Prisma.EcDriveConnectionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        update: {
+          args: Prisma.EcDriveConnectionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcDriveConnectionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcDriveConnectionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcDriveConnectionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcDriveConnectionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveConnectionPayload>
+        }
+        aggregate: {
+          args: Prisma.EcDriveConnectionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcDriveConnection>
+        }
+        groupBy: {
+          args: Prisma.EcDriveConnectionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcDriveConnectionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcDriveConnectionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcDriveConnectionCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcDriveSyncRun: {
+      payload: Prisma.$EcDriveSyncRunPayload<ExtArgs>
+      fields: Prisma.EcDriveSyncRunFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcDriveSyncRunFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcDriveSyncRunFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        findFirst: {
+          args: Prisma.EcDriveSyncRunFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcDriveSyncRunFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        findMany: {
+          args: Prisma.EcDriveSyncRunFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>[]
+        }
+        create: {
+          args: Prisma.EcDriveSyncRunCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        createMany: {
+          args: Prisma.EcDriveSyncRunCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcDriveSyncRunCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>[]
+        }
+        delete: {
+          args: Prisma.EcDriveSyncRunDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        update: {
+          args: Prisma.EcDriveSyncRunUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcDriveSyncRunDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcDriveSyncRunUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcDriveSyncRunUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcDriveSyncRunUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcDriveSyncRunPayload>
+        }
+        aggregate: {
+          args: Prisma.EcDriveSyncRunAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcDriveSyncRun>
+        }
+        groupBy: {
+          args: Prisma.EcDriveSyncRunGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcDriveSyncRunGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcDriveSyncRunCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcDriveSyncRunCountAggregateOutputType> | number
+        }
+      }
+    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -2012,6 +2162,45 @@ export const EcPnlMonthlyInputScalarFieldEnum = {
 export type EcPnlMonthlyInputScalarFieldEnum = (typeof EcPnlMonthlyInputScalarFieldEnum)[keyof typeof EcPnlMonthlyInputScalarFieldEnum]
 
 
+export const EcDriveConnectionScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  email: 'email',
+  encryptedToken: 'encryptedToken',
+  rootFolderId: 'rootFolderId',
+  rootFolderName: 'rootFolderName',
+  scope: 'scope',
+  tokenExpiresAt: 'tokenExpiresAt',
+  connectedByUserId: 'connectedByUserId',
+  connectedAt: 'connectedAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcDriveConnectionScalarFieldEnum = (typeof EcDriveConnectionScalarFieldEnum)[keyof typeof EcDriveConnectionScalarFieldEnum]
+
+
+export const EcDriveSyncRunScalarFieldEnum = {
+  id: 'id',
+  shop: 'shop',
+  source: 'source',
+  rangeFrom: 'rangeFrom',
+  rangeTo: 'rangeTo',
+  status: 'status',
+  requestedBy: 'requestedBy',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  rowCount: 'rowCount',
+  driveFileId: 'driveFileId',
+  driveFileName: 'driveFileName',
+  driveFileUrl: 'driveFileUrl',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcDriveSyncRunScalarFieldEnum = (typeof EcDriveSyncRunScalarFieldEnum)[keyof typeof EcDriveSyncRunScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -2510,6 +2699,8 @@ export type GlobalOmitConfig = {
   metaDailyFinancial?: Prisma.MetaDailyFinancialOmit
   airwallexAccountActivity?: Prisma.AirwallexAccountActivityOmit
   ecPnlMonthlyInput?: Prisma.EcPnlMonthlyInputOmit
+  ecDriveConnection?: Prisma.EcDriveConnectionOmit
+  ecDriveSyncRun?: Prisma.EcDriveSyncRunOmit
   user?: Prisma.UserOmit
   refreshToken?: Prisma.RefreshTokenOmit
   etsyShop?: Prisma.EtsyShopOmit

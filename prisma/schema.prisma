@@ -206,6 +206,62 @@ model AirwallexAccountActivity {
   @@map("airwallex_account_activity")
 }
 
+model EcPnlMonthlyInput {
+  id                    String   @id @default(cuid())
+  month                 DateTime @unique @db.Date
+  subscriptionCost      Decimal  @default(0) @map("subscription_cost") @db.Decimal(18, 4)
+  confirmedToolsCost    Decimal  @default(0) @map("confirmed_tools_cost") @db.Decimal(18, 4)
+  vietnamToolsCost      Decimal  @default(0) @map("vietnam_tools_cost") @db.Decimal(18, 4)
+  personnelCost         Decimal  @default(0) @map("personnel_cost") @db.Decimal(18, 4)
+  allocatedOverheadCost Decimal  @default(0) @map("allocated_overhead_cost") @db.Decimal(18, 4)
+  welfareCost           Decimal  @default(0) @map("welfare_cost") @db.Decimal(18, 4)
+  note                   String?  @db.Text
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@index([month])
+  @@map("ec_pnl_monthly_inputs")
+}
+
+model EcDriveConnection {
+  id                 String   @id @default(cuid())
+  provider           String   @unique @default("GOOGLE_DRIVE")
+  email              String?  @db.VarChar(254)
+  encryptedToken     String   @map("encrypted_token") @db.Text
+  rootFolderId       String?  @map("root_folder_id") @db.Text
+  rootFolderName     String   @default("MatureX - EC Raw Data") @map("root_folder_name") @db.Text
+  scope              String?  @db.Text
+  tokenExpiresAt     DateTime? @map("token_expires_at")
+  connectedByUserId  String?  @map("connected_by_user_id")
+  connectedAt        DateTime @default(now()) @map("connected_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("ec_drive_connections")
+}
+
+model EcDriveSyncRun {
+  id              String    @id @default(cuid())
+  shop            String    @db.VarChar(120)
+  source          String    @db.VarChar(60)
+  rangeFrom       DateTime  @map("range_from") @db.Date
+  rangeTo         DateTime  @map("range_to") @db.Date
+  status          String    @default("QUEUED") @db.VarChar(30)
+  requestedBy     String?   @map("requested_by") @db.VarChar(254)
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  rowCount        Int       @default(0) @map("row_count")
+  driveFileId     String?   @map("drive_file_id") @db.Text
+  driveFileName   String?   @map("drive_file_name") @db.Text
+  driveFileUrl    String?   @map("drive_file_url") @db.Text
+  errorMessage    String?   @map("error_message") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([shop, source, rangeFrom, rangeTo])
+  @@index([status, createdAt])
+  @@map("ec_drive_sync_runs")
+}
+
 model User {
   id           String         @id @default(cuid())
   name         String         @db.VarChar(100)

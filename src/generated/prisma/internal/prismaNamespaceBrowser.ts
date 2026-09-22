@@ -62,6 +62,8 @@ export const ModelName = {
   MetaDailyFinancial: 'MetaDailyFinancial',
   AirwallexAccountActivity: 'AirwallexAccountActivity',
   EcPnlMonthlyInput: 'EcPnlMonthlyInput',
+  EcDriveConnection: 'EcDriveConnection',
+  EcDriveSyncRun: 'EcDriveSyncRun',
   User: 'User',
   RefreshToken: 'RefreshToken',
   EtsyShop: 'EtsyShop',
@@ -292,6 +294,45 @@ export const EcPnlMonthlyInputScalarFieldEnum = {
 } as const
 
 export type EcPnlMonthlyInputScalarFieldEnum = (typeof EcPnlMonthlyInputScalarFieldEnum)[keyof typeof EcPnlMonthlyInputScalarFieldEnum]
+
+
+export const EcDriveConnectionScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  email: 'email',
+  encryptedToken: 'encryptedToken',
+  rootFolderId: 'rootFolderId',
+  rootFolderName: 'rootFolderName',
+  scope: 'scope',
+  tokenExpiresAt: 'tokenExpiresAt',
+  connectedByUserId: 'connectedByUserId',
+  connectedAt: 'connectedAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcDriveConnectionScalarFieldEnum = (typeof EcDriveConnectionScalarFieldEnum)[keyof typeof EcDriveConnectionScalarFieldEnum]
+
+
+export const EcDriveSyncRunScalarFieldEnum = {
+  id: 'id',
+  shop: 'shop',
+  source: 'source',
+  rangeFrom: 'rangeFrom',
+  rangeTo: 'rangeTo',
+  status: 'status',
+  requestedBy: 'requestedBy',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  rowCount: 'rowCount',
+  driveFileId: 'driveFileId',
+  driveFileName: 'driveFileName',
+  driveFileUrl: 'driveFileUrl',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcDriveSyncRunScalarFieldEnum = (typeof EcDriveSyncRunScalarFieldEnum)[keyof typeof EcDriveSyncRunScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

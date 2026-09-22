@@ -2,10 +2,10 @@
 
 import {
   BarChart3Icon,
+  ChartNoAxesCombinedIcon,
+  CloudIcon,
   CreditCardIcon,
   LayersIcon,
-  PackageIcon,
-  Settings2Icon,
   ShoppingBagIcon,
   SparklesIcon,
   UploadCloudIcon,
@@ -57,71 +57,22 @@ const data = {
   ],
   navMain: [
     {
-      title: "Báo Cáo Tài Chính",
-      url: "#",
+      title: "Tổng quan dữ liệu",
+      url: "/",
       icon: <BarChart3Icon />,
-      isActive: true,
-      badge: "Active",
-      items: [
-        {
-          title: "Dữ liệu EC Tổng quan",
-          url: "/",
-          isActive: true,
-          badge: "Realtime",
-        },
-        {
-          title: "Shopify Orders & Payout",
-          url: "#",
-        },
-        {
-          title: "Chi phí Meta Ads",
-          url: "#",
-        },
-        {
-          title: "Product Cost (COGS)",
-          url: "#",
-        },
-        {
-          title: "Airwallex Thu & Chi",
-          url: "#",
-        },
-      ],
+      badge: "Realtime",
     },
     {
-      title: "Cung ứng & Fulfillment",
-      url: "#",
-      icon: <PackageIcon />,
-      items: [
-        {
-          title: "Printify Portal",
-          url: "#",
-          badge: "API",
-        },
-        {
-          title: "PG Print 1",
-          url: "#",
-        },
-        {
-          title: "Google Sheet LPro",
-          url: "#",
-          badge: "Sync",
-        },
-      ],
+      title: "Báo cáo kinh doanh",
+      url: "/business-report",
+      icon: <ChartNoAxesCombinedIcon />,
+      badge: "P&L",
     },
     {
-      title: "Cài đặt Workspace",
-      url: "#",
-      icon: <Settings2Icon />,
-      items: [
-        {
-          title: "Tài khoản & Phân quyền",
-          url: "#",
-        },
-        {
-          title: "API Cổng thanh toán",
-          url: "#",
-        },
-      ],
+      title: "EC Drive Sync",
+      url: "/ec-drive-sync",
+      icon: <CloudIcon />,
+      badge: "Raw data",
     },
   ],
 };
@@ -154,7 +105,11 @@ export function AppSidebar({
     },
   ];
 
-  const navigation = pathname.startsWith("/flowa") ? flowaNav : data.navMain;
+  const ecNav = data.navMain.map((item) => ({
+    ...item,
+    isActive: pathname === item.url,
+  }));
+  const navigation = pathname.startsWith("/flowa") ? flowaNav : ecNav;
 
   return (
     <Sidebar

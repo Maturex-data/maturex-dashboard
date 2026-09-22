@@ -39,7 +39,7 @@ export function cogsHistoryRange(now = new Date()): DateRange {
   return { from: new Date(HISTORY_FROM), to: now };
 }
 
-type CogsRow = {
+export type CogsRow = {
   supplier: string;
   date: Date;
   referenceOrderId: string | null;
@@ -517,6 +517,18 @@ function sourceEntries(selectedSource?: CogsSource) {
   return selectedSource
     ? COGS_SOURCES.filter(([source]) => source === selectedSource)
     : [...COGS_SOURCES];
+}
+
+export async function fetchCogsFromSourceApis(
+  range: DateRange,
+): Promise<CogsRow[]> {
+  const results = await Promise.all(
+    COGS_SOURCES.map(async ([source, fetcher]) => ({
+      source,
+      rows: await fetcher(range),
+    })),
+  );
+  return results.flatMap((result) => result.rows);
 }
 
 export async function syncCogs(

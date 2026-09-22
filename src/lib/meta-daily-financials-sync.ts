@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 const API_VERSION = process.env.META_API_VERSION || "v24.0";
 
 type DateRange = { from: string; until: string };
+export type MetaApiDateRange = { from: Date; to: Date };
 
 function previousMonthRange(now = new Date()): DateRange {
   const range = previousVietnamMonthRange(now);
@@ -91,6 +92,20 @@ async function fetchInsights(
         : null;
   }
   return rows;
+}
+
+export async function fetchMetaDailyFinancialsFromApi(
+  range: MetaApiDateRange,
+): Promise<{ accountId: string; rows: JsonRecord[] }> {
+  const until = new Date(range.to.getTime() - 1);
+  return {
+    accountId: accountId(),
+    rows: await fetchInsights(
+      accountId(),
+      formatVietnamDate(range.from),
+      formatVietnamDate(until),
+    ),
+  };
 }
 
 function toDate(value: unknown): Date {
