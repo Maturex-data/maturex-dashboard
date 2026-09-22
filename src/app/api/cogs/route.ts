@@ -12,7 +12,7 @@ import {
 import { formatVietnamDate } from "@/lib/date-time";
 
 export const runtime = "nodejs";
-export const maxDuration = 800;
+export const maxDuration = 300;
 
 function output(row: Awaited<ReturnType<typeof listCogs>>[number]) {
   return {
