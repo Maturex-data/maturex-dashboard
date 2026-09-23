@@ -141,3 +141,33 @@ export type EtsyOrderItem = Prisma.EtsyOrderItemModel
  * 
  */
 export type EtsyStatement = Prisma.EtsyStatementModel
+/**
+ * Model EcSheetImportRun
+ * 
+ */
+export type EcSheetImportRun = Prisma.EcSheetImportRunModel
+/**
+ * Model EcSheetActiveSnapshot
+ * 
+ */
+export type EcSheetActiveSnapshot = Prisma.EcSheetActiveSnapshotModel
+/**
+ * Model EcSheetOrder
+ * 
+ */
+export type EcSheetOrder = Prisma.EcSheetOrderModel
+/**
+ * Model EcSheetCogs
+ * 
+ */
+export type EcSheetCogs = Prisma.EcSheetCogsModel
+/**
+ * Model EcSheetAd
+ * 
+ */
+export type EcSheetAd = Prisma.EcSheetAdModel
+/**
+ * Model EcSheetPayout
+ * 
+ */
+export type EcSheetPayout = Prisma.EcSheetPayoutModel

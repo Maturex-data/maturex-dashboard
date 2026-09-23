@@ -1,28 +1,13 @@
 import { FileChartColumnIncreasingIcon } from "lucide-react";
-import {
-  EcBusinessReport,
-  type EcPnlApiResponse,
-} from "@/components/dashboard/ec/ec-business-report";
+import { GoogleBusinessReport } from "@/components/dashboard/ec/google-business-report";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { vietnamMonthOptions } from "@/lib/date-time";
-import { getEcPnlMonth } from "@/lib/ec-pnl";
+import { getEcBusinessReportSheetTables } from "@/lib/ec-business-report-sheet";
+import { REPORT_SPREADSHEET_ID } from "@/lib/ec-drive";
 
-function previousMonth(month: string): string {
-  const [year, monthNumber] = month.split("-").map(Number);
-  return new Date(Date.UTC(year, monthNumber - 2, 1)).toISOString().slice(0, 7);
-}
+export const dynamic = "force-dynamic";
 
 export default async function BusinessReportPage() {
-  const months = vietnamMonthOptions().reverse();
-  const latestMonth = months.at(-1) ?? "2026-01";
-  const firstMonth = previousMonth(latestMonth);
-  const initialData: EcPnlApiResponse = {
-    months,
-    reports: await Promise.all([
-      getEcPnlMonth(firstMonth),
-      getEcPnlMonth(latestMonth),
-    ]),
-  };
+  const tables = await getEcBusinessReportSheetTables();
 
   return (
     <>
@@ -37,9 +22,9 @@ export default async function BusinessReportPage() {
           </span>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-5 p-3 sm:p-6">
+      <main className="flex w-full min-w-0 flex-1 flex-col gap-5 p-3 sm:p-6">
         <div className="flex items-start gap-3 border-b border-border/60 pb-5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#d9e2f2] bg-[#eaf2ff] text-[#10205e]">
             <FileChartColumnIncreasingIcon className="size-4" />
           </span>
           <div>
@@ -47,12 +32,15 @@ export default async function BusinessReportPage() {
               Báo cáo kinh doanh EC
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Kết quả hoạt động kinh doanh TheDeerly, đối chiếu theo tháng.
+              Dữ liệu hiển thị trực tiếp từ Google Sheet kế toán TheDeerly.
             </p>
           </div>
         </div>
         <section className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-xs">
-          <EcBusinessReport initialData={initialData} />
+          <GoogleBusinessReport
+            spreadsheetId={REPORT_SPREADSHEET_ID}
+            tables={tables}
+          />
         </section>
       </main>
     </>

@@ -52,7 +52,7 @@ export function NavUser({
             render={
               <SidebarMenuButton
                 size="lg"
-                className="h-12 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 data-open:bg-muted/60 transition-all p-2 gap-2.5"
+                className="h-12 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 data-open:bg-muted/60 transition-all p-2 gap-2.5 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
               />
             }
           >
@@ -62,7 +62,7 @@ export function NavUser({
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+            <div className="grid flex-1 text-left text-xs leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
               <span className="truncate font-semibold text-foreground">
                 {user.name}
               </span>
@@ -70,7 +70,7 @@ export function NavUser({
                 {user.email}
               </span>
             </div>
-            <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0" />
+            <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0 group-data-[collapsible=icon]:hidden" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 p-1.5"

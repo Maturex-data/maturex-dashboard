@@ -70,7 +70,13 @@ export const ModelName = {
   EtsyImportBatch: 'EtsyImportBatch',
   EtsyOrder: 'EtsyOrder',
   EtsyOrderItem: 'EtsyOrderItem',
-  EtsyStatement: 'EtsyStatement'
+  EtsyStatement: 'EtsyStatement',
+  EcSheetImportRun: 'EcSheetImportRun',
+  EcSheetActiveSnapshot: 'EcSheetActiveSnapshot',
+  EcSheetOrder: 'EcSheetOrder',
+  EcSheetCogs: 'EcSheetCogs',
+  EcSheetAd: 'EcSheetAd',
+  EcSheetPayout: 'EcSheetPayout'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -511,6 +517,134 @@ export const EtsyStatementScalarFieldEnum = {
 } as const
 
 export type EtsyStatementScalarFieldEnum = (typeof EtsyStatementScalarFieldEnum)[keyof typeof EtsyStatementScalarFieldEnum]
+
+
+export const EcSheetImportRunScalarFieldEnum = {
+  id: 'id',
+  spreadsheetId: 'spreadsheetId',
+  status: 'status',
+  startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
+  completedAt: 'completedAt',
+  totalRows: 'totalRows',
+  insertedRows: 'insertedRows',
+  ordersCount: 'ordersCount',
+  cogsCount: 'cogsCount',
+  adsCount: 'adsCount',
+  payoutsCount: 'payoutsCount',
+  checksums: 'checksums',
+  sheetStats: 'sheetStats',
+  errorMessage: 'errorMessage',
+  errorDetails: 'errorDetails',
+  actor: 'actor'
+} as const
+
+export type EcSheetImportRunScalarFieldEnum = (typeof EcSheetImportRunScalarFieldEnum)[keyof typeof EcSheetImportRunScalarFieldEnum]
+
+
+export const EcSheetActiveSnapshotScalarFieldEnum = {
+  id: 'id',
+  activeRunId: 'activeRunId',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcSheetActiveSnapshotScalarFieldEnum = (typeof EcSheetActiveSnapshotScalarFieldEnum)[keyof typeof EcSheetActiveSnapshotScalarFieldEnum]
+
+
+export const EcSheetOrderScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  orderName: 'orderName',
+  orderDate: 'orderDate',
+  grossSales: 'grossSales',
+  discounts: 'discounts',
+  shippingCharged: 'shippingCharged',
+  originalTax: 'originalTax',
+  correctedNet: 'correctedNet',
+  refundSnapshot: 'refundSnapshot',
+  beforeRefund: 'beforeRefund',
+  source: 'source',
+  itemName: 'itemName',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetOrderScalarFieldEnum = (typeof EcSheetOrderScalarFieldEnum)[keyof typeof EcSheetOrderScalarFieldEnum]
+
+
+export const EcSheetCogsScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  supplier: 'supplier',
+  costDate: 'costDate',
+  referenceOrderId: 'referenceOrderId',
+  itemsName: 'itemsName',
+  supplierOrderId: 'supplierOrderId',
+  totalCost: 'totalCost',
+  estimatedCost: 'estimatedCost',
+  rowKey: 'rowKey',
+  treatment: 'treatment',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetCogsScalarFieldEnum = (typeof EcSheetCogsScalarFieldEnum)[keyof typeof EcSheetCogsScalarFieldEnum]
+
+
+export const EcSheetAdScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  externalId: 'externalId',
+  date: 'date',
+  accountId: 'accountId',
+  campaignId: 'campaignId',
+  campaignName: 'campaignName',
+  currency: 'currency',
+  spend: 'spend',
+  granularity: 'granularity',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetAdScalarFieldEnum = (typeof EcSheetAdScalarFieldEnum)[keyof typeof EcSheetAdScalarFieldEnum]
+
+
+export const EcSheetPayoutScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  monthLocal: 'monthLocal',
+  sourceRow: 'sourceRow',
+  balanceTransactionId: 'balanceTransactionId',
+  payoutId: 'payoutId',
+  type: 'type',
+  currency: 'currency',
+  gross: 'gross',
+  fee: 'fee',
+  net: 'net',
+  processedUtc: 'processedUtc',
+  processedGmt7: 'processedGmt7',
+  processedVietnam: 'processedVietnam',
+  reason: 'reason',
+  sourceId: 'sourceId',
+  orderId: 'orderId',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetPayoutScalarFieldEnum = (typeof EcSheetPayoutScalarFieldEnum)[keyof typeof EcSheetPayoutScalarFieldEnum]
 
 
 export const SortOrder = {

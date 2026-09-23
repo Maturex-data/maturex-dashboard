@@ -77,14 +77,14 @@ export function TeamSwitcher({
             render={
               <SidebarMenuButton
                 size="lg"
-                className="h-12 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 data-open:bg-muted/60 transition-all p-2 gap-2.5"
+                className="h-12 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 data-open:bg-muted/60 transition-all p-2 gap-2.5 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
               />
             }
           >
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-xs border border-white/10 shrink-0">
               {activeTeam.logo}
             </div>
-            <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+            <div className="grid flex-1 text-left text-xs leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
               <div className="flex items-center gap-1.5">
                 <span className="truncate font-semibold text-foreground">
                   {activeTeam.name}
@@ -95,7 +95,7 @@ export function TeamSwitcher({
                 {activeTeam.plan}
               </span>
             </div>
-            <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0" />
+            <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0 group-data-[collapsible=icon]:hidden" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-60 p-1.5"
