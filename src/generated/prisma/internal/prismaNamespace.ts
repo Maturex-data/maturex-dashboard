@@ -416,7 +416,13 @@ export const ModelName = {
   EtsyImportBatch: 'EtsyImportBatch',
   EtsyOrder: 'EtsyOrder',
   EtsyOrderItem: 'EtsyOrderItem',
-  EtsyStatement: 'EtsyStatement'
+  EtsyStatement: 'EtsyStatement',
+  EcSheetImportRun: 'EcSheetImportRun',
+  EcSheetActiveSnapshot: 'EcSheetActiveSnapshot',
+  EcSheetOrder: 'EcSheetOrder',
+  EcSheetCogs: 'EcSheetCogs',
+  EcSheetAd: 'EcSheetAd',
+  EcSheetPayout: 'EcSheetPayout'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -432,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "ecDriveConnection" | "ecDriveSyncRun" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement"
+    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "ecDriveConnection" | "ecDriveSyncRun" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement" | "ecSheetImportRun" | "ecSheetActiveSnapshot" | "ecSheetOrder" | "ecSheetCogs" | "ecSheetAd" | "ecSheetPayout"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1916,6 +1922,450 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EcSheetImportRun: {
+      payload: Prisma.$EcSheetImportRunPayload<ExtArgs>
+      fields: Prisma.EcSheetImportRunFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetImportRunFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetImportRunFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetImportRunFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetImportRunFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetImportRunFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetImportRunCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetImportRunCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetImportRunCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetImportRunDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        update: {
+          args: Prisma.EcSheetImportRunUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetImportRunDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetImportRunUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetImportRunUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetImportRunUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportRunPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetImportRunAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetImportRun>
+        }
+        groupBy: {
+          args: Prisma.EcSheetImportRunGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetImportRunGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetImportRunCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetImportRunCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcSheetActiveSnapshot: {
+      payload: Prisma.$EcSheetActiveSnapshotPayload<ExtArgs>
+      fields: Prisma.EcSheetActiveSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetActiveSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetActiveSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetActiveSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetActiveSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetActiveSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetActiveSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetActiveSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetActiveSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetActiveSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        update: {
+          args: Prisma.EcSheetActiveSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetActiveSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetActiveSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetActiveSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetActiveSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetActiveSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetActiveSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetActiveSnapshot>
+        }
+        groupBy: {
+          args: Prisma.EcSheetActiveSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetActiveSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetActiveSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetActiveSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcSheetOrder: {
+      payload: Prisma.$EcSheetOrderPayload<ExtArgs>
+      fields: Prisma.EcSheetOrderFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetOrderFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetOrderFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetOrderFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetOrderFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetOrderFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetOrderCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetOrderCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetOrderCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetOrderDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        update: {
+          args: Prisma.EcSheetOrderUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetOrderDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetOrderUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetOrderUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetOrderUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetOrderPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetOrderAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetOrder>
+        }
+        groupBy: {
+          args: Prisma.EcSheetOrderGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetOrderGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetOrderCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetOrderCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcSheetCogs: {
+      payload: Prisma.$EcSheetCogsPayload<ExtArgs>
+      fields: Prisma.EcSheetCogsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetCogsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetCogsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetCogsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetCogsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetCogsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetCogsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetCogsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetCogsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetCogsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        update: {
+          args: Prisma.EcSheetCogsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetCogsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetCogsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetCogsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetCogsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetCogsPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetCogsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetCogs>
+        }
+        groupBy: {
+          args: Prisma.EcSheetCogsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetCogsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetCogsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetCogsCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcSheetAd: {
+      payload: Prisma.$EcSheetAdPayload<ExtArgs>
+      fields: Prisma.EcSheetAdFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetAdFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetAdFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetAdFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetAdFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetAdFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetAdCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetAdCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetAdCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetAdDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        update: {
+          args: Prisma.EcSheetAdUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetAdDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetAdUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetAdUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetAdUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetAdPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetAdAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetAd>
+        }
+        groupBy: {
+          args: Prisma.EcSheetAdGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetAdGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetAdCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetAdCountAggregateOutputType> | number
+        }
+      }
+    }
+    EcSheetPayout: {
+      payload: Prisma.$EcSheetPayoutPayload<ExtArgs>
+      fields: Prisma.EcSheetPayoutFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetPayoutFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetPayoutFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetPayoutFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetPayoutFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetPayoutFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetPayoutCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetPayoutCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetPayoutCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetPayoutDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        update: {
+          args: Prisma.EcSheetPayoutUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetPayoutDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetPayoutUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetPayoutUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetPayoutUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetPayoutPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetPayoutAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetPayout>
+        }
+        groupBy: {
+          args: Prisma.EcSheetPayoutGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetPayoutGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetPayoutCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetPayoutCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2379,6 +2829,134 @@ export const EtsyStatementScalarFieldEnum = {
 export type EtsyStatementScalarFieldEnum = (typeof EtsyStatementScalarFieldEnum)[keyof typeof EtsyStatementScalarFieldEnum]
 
 
+export const EcSheetImportRunScalarFieldEnum = {
+  id: 'id',
+  spreadsheetId: 'spreadsheetId',
+  status: 'status',
+  startedAt: 'startedAt',
+  heartbeatAt: 'heartbeatAt',
+  completedAt: 'completedAt',
+  totalRows: 'totalRows',
+  insertedRows: 'insertedRows',
+  ordersCount: 'ordersCount',
+  cogsCount: 'cogsCount',
+  adsCount: 'adsCount',
+  payoutsCount: 'payoutsCount',
+  checksums: 'checksums',
+  sheetStats: 'sheetStats',
+  errorMessage: 'errorMessage',
+  errorDetails: 'errorDetails',
+  actor: 'actor'
+} as const
+
+export type EcSheetImportRunScalarFieldEnum = (typeof EcSheetImportRunScalarFieldEnum)[keyof typeof EcSheetImportRunScalarFieldEnum]
+
+
+export const EcSheetActiveSnapshotScalarFieldEnum = {
+  id: 'id',
+  activeRunId: 'activeRunId',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EcSheetActiveSnapshotScalarFieldEnum = (typeof EcSheetActiveSnapshotScalarFieldEnum)[keyof typeof EcSheetActiveSnapshotScalarFieldEnum]
+
+
+export const EcSheetOrderScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  orderName: 'orderName',
+  orderDate: 'orderDate',
+  grossSales: 'grossSales',
+  discounts: 'discounts',
+  shippingCharged: 'shippingCharged',
+  originalTax: 'originalTax',
+  correctedNet: 'correctedNet',
+  refundSnapshot: 'refundSnapshot',
+  beforeRefund: 'beforeRefund',
+  source: 'source',
+  itemName: 'itemName',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetOrderScalarFieldEnum = (typeof EcSheetOrderScalarFieldEnum)[keyof typeof EcSheetOrderScalarFieldEnum]
+
+
+export const EcSheetCogsScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  supplier: 'supplier',
+  costDate: 'costDate',
+  referenceOrderId: 'referenceOrderId',
+  itemsName: 'itemsName',
+  supplierOrderId: 'supplierOrderId',
+  totalCost: 'totalCost',
+  estimatedCost: 'estimatedCost',
+  rowKey: 'rowKey',
+  treatment: 'treatment',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetCogsScalarFieldEnum = (typeof EcSheetCogsScalarFieldEnum)[keyof typeof EcSheetCogsScalarFieldEnum]
+
+
+export const EcSheetAdScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  month: 'month',
+  sourceRow: 'sourceRow',
+  externalId: 'externalId',
+  date: 'date',
+  accountId: 'accountId',
+  campaignId: 'campaignId',
+  campaignName: 'campaignName',
+  currency: 'currency',
+  spend: 'spend',
+  granularity: 'granularity',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetAdScalarFieldEnum = (typeof EcSheetAdScalarFieldEnum)[keyof typeof EcSheetAdScalarFieldEnum]
+
+
+export const EcSheetPayoutScalarFieldEnum = {
+  id: 'id',
+  batchId: 'batchId',
+  shop: 'shop',
+  monthLocal: 'monthLocal',
+  sourceRow: 'sourceRow',
+  balanceTransactionId: 'balanceTransactionId',
+  payoutId: 'payoutId',
+  type: 'type',
+  currency: 'currency',
+  gross: 'gross',
+  fee: 'fee',
+  net: 'net',
+  processedUtc: 'processedUtc',
+  processedGmt7: 'processedGmt7',
+  processedVietnam: 'processedVietnam',
+  reason: 'reason',
+  sourceId: 'sourceId',
+  orderId: 'orderId',
+  source: 'source',
+  rawValues: 'rawValues',
+  createdAt: 'createdAt'
+} as const
+
+export type EcSheetPayoutScalarFieldEnum = (typeof EcSheetPayoutScalarFieldEnum)[keyof typeof EcSheetPayoutScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2708,6 +3286,12 @@ export type GlobalOmitConfig = {
   etsyOrder?: Prisma.EtsyOrderOmit
   etsyOrderItem?: Prisma.EtsyOrderItemOmit
   etsyStatement?: Prisma.EtsyStatementOmit
+  ecSheetImportRun?: Prisma.EcSheetImportRunOmit
+  ecSheetActiveSnapshot?: Prisma.EcSheetActiveSnapshotOmit
+  ecSheetOrder?: Prisma.EcSheetOrderOmit
+  ecSheetCogs?: Prisma.EcSheetCogsOmit
+  ecSheetAd?: Prisma.EcSheetAdOmit
+  ecSheetPayout?: Prisma.EcSheetPayoutOmit
 }
 
 /* Types for Logging */

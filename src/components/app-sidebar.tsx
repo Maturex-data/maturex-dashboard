@@ -123,13 +123,13 @@ export function AppSidebar({
       className="border-r border-border/60 bg-sidebar/50 backdrop-blur-xs"
       {...props}
     >
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="p-2">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent className="px-2">
+      <SidebarContent>
         <NavMain items={navigation} />
       </SidebarContent>
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-2">
         <NavUser user={currentUser} />
       </SidebarFooter>
       <SidebarRail />

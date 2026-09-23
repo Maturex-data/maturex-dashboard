@@ -467,3 +467,149 @@ model EtsyStatement {
   @@index([importBatchId])
   @@map("etsy_statements")
 }
+
+model EcSheetImportRun {
+  id           String                  @id @default(cuid())
+  spreadsheetId String                 @map("spreadsheet_id")
+  status       String                  @default("RUNNING")
+  startedAt    DateTime                @default(now()) @map("started_at")
+  heartbeatAt  DateTime                @default(now()) @map("heartbeat_at")
+  completedAt  DateTime?               @map("completed_at")
+  totalRows    Int                     @default(0) @map("total_rows")
+  insertedRows Int                     @default(0) @map("inserted_rows")
+  ordersCount  Int                     @default(0) @map("orders_count")
+  cogsCount    Int                     @default(0) @map("cogs_count")
+  adsCount     Int                     @default(0) @map("ads_count")
+  payoutsCount Int                     @default(0) @map("payouts_count")
+  checksums    Json?
+  sheetStats   Json?                   @map("sheet_stats")
+  errorMessage String?                 @map("error_message") @db.Text
+  errorDetails Json?                   @map("error_details")
+  actor        String?
+  orders       EcSheetOrder[]
+  cogs         EcSheetCogs[]
+  ads          EcSheetAd[]
+  payouts      EcSheetPayout[]
+  snapshots    EcSheetActiveSnapshot[]
+
+  @@index([startedAt])
+  @@index([status])
+  @@map("ec_sheet_import_runs")
+}
+
+model EcSheetActiveSnapshot {
+  id          Int              @id @default(1)
+  activeRunId String           @map("active_run_id")
+  activeRun   EcSheetImportRun @relation(fields: [activeRunId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@map("ec_sheet_active_snapshots")
+}
+
+model EcSheetOrder {
+  id              String           @id @default(cuid())
+  batchId         String           @map("batch_id")
+  batch           EcSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  shop            String           @default("EC")
+  month           String           @db.VarChar(7)
+  sourceRow       Int              @map("source_row")
+  orderName       String           @map("order_name") @db.VarChar(100)
+  orderDate       DateTime         @map("order_date") @db.Date
+  grossSales      Decimal          @map("gross_sales") @db.Decimal(18, 4)
+  discounts       Decimal          @db.Decimal(18, 4)
+  shippingCharged Decimal          @map("shipping_charged") @db.Decimal(18, 4)
+  originalTax     Decimal          @map("original_tax") @db.Decimal(18, 4)
+  correctedNet    Decimal          @map("corrected_net") @db.Decimal(18, 4)
+  refundSnapshot  Decimal          @map("refund_snapshot") @db.Decimal(18, 4)
+  beforeRefund    Decimal          @map("before_refund") @db.Decimal(18, 4)
+  source          String?          @db.VarChar(50)
+  itemName        String?          @map("item_name") @db.Text
+  rawValues       Json             @map("raw_values")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@unique([batchId, shop, orderName])
+  @@index([batchId, month])
+  @@index([batchId, orderDate])
+  @@map("ec_sheet_orders")
+}
+
+model EcSheetCogs {
+  id               String           @id @default(cuid())
+  batchId          String           @map("batch_id")
+  batch            EcSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  shop             String           @default("EC")
+  month            String           @db.VarChar(7)
+  sourceRow        Int              @map("source_row")
+  supplier         String           @db.VarChar(100)
+  costDate         DateTime         @map("cost_date") @db.Date
+  referenceOrderId String?          @map("reference_order_id") @db.VarChar(100)
+  itemsName        String?          @map("items_name") @db.Text
+  supplierOrderId  String?          @map("supplier_order_id") @db.VarChar(100)
+  totalCost        Decimal          @map("total_cost") @db.Decimal(18, 4)
+  estimatedCost    Decimal          @map("estimated_cost") @db.Decimal(18, 4)
+  rowKey           String           @map("row_key") @db.VarChar(200)
+  treatment        String           @db.VarChar(100)
+  source           String?          @db.VarChar(50)
+  rawValues        Json             @map("raw_values")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  @@unique([batchId, shop, rowKey])
+  @@index([batchId, month, supplier])
+  @@index([batchId, costDate])
+  @@map("ec_sheet_cogs")
+}
+
+model EcSheetAd {
+  id           String           @id @default(cuid())
+  batchId      String           @map("batch_id")
+  batch        EcSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  shop         String           @default("EC")
+  month        String           @db.VarChar(7)
+  sourceRow    Int              @map("source_row")
+  externalId   String           @map("external_id") @db.VarChar(100)
+  date         DateTime         @db.Date
+  accountId    String           @map("account_id") @db.VarChar(100)
+  campaignId   String?          @map("campaign_id") @db.VarChar(100)
+  campaignName String?          @map("campaign_name") @db.Text
+  currency     String           @db.VarChar(10)
+  spend        Decimal          @db.Decimal(18, 4)
+  granularity  String           @db.VarChar(50)
+  source       String?          @db.VarChar(50)
+  rawValues    Json             @map("raw_values")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@unique([batchId, shop, externalId])
+  @@index([batchId, accountId, date])
+  @@index([batchId, month])
+  @@map("ec_sheet_ads")
+}
+
+model EcSheetPayout {
+  id                   String           @id @default(cuid())
+  batchId              String           @map("batch_id")
+  batch                EcSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  shop                 String           @default("EC")
+  monthLocal           String           @map("month_local") @db.VarChar(7)
+  sourceRow            Int              @map("source_row")
+  balanceTransactionId String           @map("balance_transaction_id") @db.VarChar(100)
+  payoutId             String?          @map("payout_id") @db.VarChar(100)
+  type                 String           @db.VarChar(50)
+  currency             String           @db.VarChar(10)
+  gross                Decimal          @db.Decimal(18, 4)
+  fee                  Decimal          @db.Decimal(18, 4)
+  net                  Decimal          @db.Decimal(18, 4)
+  processedUtc         DateTime         @map("processed_utc")
+  processedGmt7        String           @map("processed_gmt7") @db.VarChar(30)
+  processedVietnam     String           @map("processed_vietnam") @db.VarChar(30)
+  reason               String?          @db.Text
+  sourceId             String?          @map("source_id") @db.VarChar(100)
+  orderId              String?          @map("order_id") @db.VarChar(100)
+  source               String?          @db.VarChar(50)
+  rawValues            Json             @map("raw_values")
+  createdAt            DateTime         @default(now()) @map("created_at")
+
+  @@unique([batchId, shop, balanceTransactionId])
+  @@index([batchId, monthLocal, type])
+  @@index([batchId, processedUtc])
+  @@map("ec_sheet_payouts")
+}
