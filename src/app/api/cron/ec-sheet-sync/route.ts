@@ -48,6 +48,8 @@ async function handleScheduledSync(request: Request) {
       runId: result.runId,
       outcome: result.status,
       isNoChange: Boolean(result.isNoChange),
+      fastChecked: Boolean(result.fastChecked),
+      driveModifiedTime: result.driveModifiedTime,
       totalRows: result.totalRows,
       insertedRows: result.insertedRows,
       elapsedMs: result.elapsedMs,

@@ -25,12 +25,14 @@ export async function POST(request: Request) {
 
     const body = (await request.json().catch(() => ({}))) as {
       spreadsheetId?: string;
+      forceRefresh?: boolean;
     };
 
     const result = await executeSheetImport({
       triggerType: "MANUAL",
       actor: user.email || user.name || "Admin",
       spreadsheetId: body.spreadsheetId,
+      forceRefresh: Boolean(body.forceRefresh),
     });
 
     return NextResponse.json({

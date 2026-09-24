@@ -6,6 +6,7 @@ import {
   GoogleRateLimitError,
   type SheetName,
   SheetValidationError,
+  type SpreadsheetMetadata,
   UpstreamSyncInProgressError,
 } from "./types";
 
@@ -25,6 +26,83 @@ export async function checkActiveEcDriveSync(): Promise<void> {
       `Một tác vụ EC Drive Sync (${activeSync.source}) đang ở trạng thái ${activeSync.status}. Vui lòng đợi tác vụ hoàn thành trước khi import để tránh sai lệch dữ liệu.`,
     );
   }
+}
+
+export async function fetchSpreadsheetMetadata(
+  spreadsheetId = REPORT_SPREADSHEET_ID,
+): Promise<SpreadsheetMetadata> {
+  // 1. Guard against concurrent /ec-drive-sync runs
+  await checkActiveEcDriveSync();
+
+  // 2. Obtain OAuth access token
+  let accessToken: string;
+  try {
+    const access = await getGoogleDriveAccess();
+    accessToken = access.accessToken;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new GoogleAuthError(
+      `Không thể lấy mã truy cập Google Drive: ${msg}. Vui lòng kết nối lại tài khoản Google trong phần Cài đặt.`,
+    );
+  }
+
+  // 3. Request metadata from Google Drive API (fields: id, name, modifiedTime, version, size)
+  const url = `https://www.googleapis.com/drive/v3/files/${spreadsheetId}?fields=id,name,modifiedTime,version,size`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (netErr) {
+    throw new Error(
+      `Lỗi kết nối mạng khi gọi Google Drive API metadata: ${netErr instanceof Error ? netErr.message : String(netErr)}`,
+    );
+  }
+
+  // If token expired, force refresh once
+  if (response.status === 401) {
+    try {
+      const refreshed = await getGoogleDriveAccess({ forceRefresh: true });
+      accessToken = refreshed.accessToken;
+      response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (refreshErr) {
+      throw new GoogleAuthError(
+        `Làm mới Google OAuth token thất bại: ${refreshErr instanceof Error ? refreshErr.message : String(refreshErr)}. Vui lòng kết nối lại Google Drive.`,
+      );
+    }
+  }
+
+  if (response.status === 401) {
+    throw new GoogleAuthError(
+      "Google OAuth token không hợp lệ hoặc đã bị thu hồi (401 Unauthorized). Vui lòng kết nối lại tài khoản Google trong phần Cài đặt.",
+    );
+  }
+  if (response.status === 403) {
+    throw new GooglePermissionError(
+      `Không có quyền đọc Google Drive metadata cho file "${spreadsheetId}" (403 Forbidden). Hãy kiểm tra quyền chia sẻ bảng tính.`,
+    );
+  }
+  if (response.status === 429) {
+    throw new GoogleRateLimitError(
+      "Google Drive API bị giới hạn tần suất (429 Too Many Requests). Vui lòng đợi và thử lại sau.",
+    );
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Google Drive API metadata thất bại (${response.status}): ${errorText.slice(0, 300)}`,
+    );
+  }
+
+  return (await response.json()) as SpreadsheetMetadata;
 }
 
 export async function fetchRawSheetsData(
