@@ -288,6 +288,23 @@ export async function fetchShopifyOrdersFromApi(range: {
   });
 }
 
+export async function fetchShopifyOrdersByUpdated(range: {
+  from: Date;
+  to: Date;
+}): Promise<ShopifyOrderNode[]> {
+  const query = `updated_at:>=${range.from.toISOString()} updated_at:<${range.to.toISOString()}`;
+  const orders: ShopifyOrderNode[] = [];
+  let after: string | null = null;
+
+  do {
+    const page = await fetchOrdersPage(after, query);
+    orders.push(...page.nodes);
+    after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (after);
+
+  return orders;
+}
+
 let activeSync: Promise<SyncResult> | null = null;
 
 export async function syncShopifyRawOrders(): Promise<SyncResult> {

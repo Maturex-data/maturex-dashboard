@@ -49,4 +49,5 @@ next-env.d.ts
 !/scripts/import-etsy-data.mjs
 !/scripts/test-sheet-sync-scheduled.mjs
 !/scripts/test-drive-metadata-sync.mjs
+!/scripts/sync-upstream.ts
 /exports
