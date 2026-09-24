@@ -4,10 +4,12 @@ import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/jwt-service";
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Bypass static assets, internal Next.js requests, public media and api auth routes
+  // 1. Bypass static assets, internal Next.js requests, public media, api auth routes, and secret-protected cron endpoints
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
+    pathname === "/api/cron/ec-sheet-sync" ||
+    pathname === "/api/ec/sheet-import/cron" ||
     pathname.startsWith("/favicon.ico") ||
     pathname.includes(".")
   ) {

@@ -16,7 +16,8 @@
     "export:airwallex:cards": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
     "export:airwallex:card-6171": "node --env-file=.env scripts/export-airwallex-card-statement.mjs",
     "export:fastway": "node scripts/export-fastway-data.mjs",
-    "import:etsy": "node --env-file=.env scripts/import-etsy-data.mjs"
+    "import:etsy": "node --env-file=.env scripts/import-etsy-data.mjs",
+    "test:sheet-sync": "node --env-file=.env scripts/test-sheet-sync-scheduled.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

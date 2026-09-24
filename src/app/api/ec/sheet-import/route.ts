@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { executeSheetImport } from "@/lib/ec/sheet-import";
+import { executeSheetImport, ImportError } from "@/lib/ec/sheet-import";
 import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/jwt-service";
 
 export const runtime = "nodejs";
@@ -14,7 +14,11 @@ export async function POST(request: Request) {
 
     if (!user || user.role !== "admin") {
       return NextResponse.json(
-        { error: "Bạn không có quyền thực hiện đồng bộ từ Google Sheet." },
+        {
+          success: false,
+          error: "Bạn không có quyền thực hiện đồng bộ từ Google Sheet.",
+          category: "AUTH_UNAUTHORIZED",
+        },
         { status: 401 },
       );
     }
@@ -24,23 +28,34 @@ export async function POST(request: Request) {
     };
 
     const result = await executeSheetImport({
+      triggerType: "MANUAL",
       actor: user.email || user.name || "Admin",
       spreadsheetId: body.spreadsheetId,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Đồng bộ thành công ${result.insertedRows.toLocaleString()} dòng từ Google Sheet!`,
+      message: result.message,
+      isNoChange: Boolean(result.isNoChange),
       data: result,
     });
   } catch (error) {
+    const category =
+      error instanceof ImportError ? error.category : "SYSTEM_ERROR";
+    const status = error instanceof ImportError ? error.status : 500;
     const message =
       error instanceof Error
         ? error.message
         : "Đồng bộ từ Google Sheet thất bại.";
+
     return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 },
+      {
+        success: false,
+        error: message,
+        category,
+        code: category,
+      },
+      { status },
     );
   }
 }

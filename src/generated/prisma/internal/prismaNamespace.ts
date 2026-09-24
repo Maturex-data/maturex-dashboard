@@ -418,6 +418,7 @@ export const ModelName = {
   EtsyOrderItem: 'EtsyOrderItem',
   EtsyStatement: 'EtsyStatement',
   EcSheetImportRun: 'EcSheetImportRun',
+  EcSheetImportLock: 'EcSheetImportLock',
   EcSheetActiveSnapshot: 'EcSheetActiveSnapshot',
   EcSheetOrder: 'EcSheetOrder',
   EcSheetCogs: 'EcSheetCogs',
@@ -438,7 +439,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "ecDriveConnection" | "ecDriveSyncRun" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement" | "ecSheetImportRun" | "ecSheetActiveSnapshot" | "ecSheetOrder" | "ecSheetCogs" | "ecSheetAd" | "ecSheetPayout"
+    modelProps: "rawOrder" | "shopifySyncRun" | "cogsRecord" | "cogsSourceRecord" | "cogsSyncRun" | "cogsSyncSourceRun" | "shopifyPaymentRecord" | "shopifyPaymentSyncRun" | "metaDailyFinancial" | "airwallexAccountActivity" | "ecPnlMonthlyInput" | "ecDriveConnection" | "ecDriveSyncRun" | "user" | "refreshToken" | "etsyShop" | "etsyImportBatch" | "etsyOrder" | "etsyOrderItem" | "etsyStatement" | "ecSheetImportRun" | "ecSheetImportLock" | "ecSheetActiveSnapshot" | "ecSheetOrder" | "ecSheetCogs" | "ecSheetAd" | "ecSheetPayout"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1996,6 +1997,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EcSheetImportLock: {
+      payload: Prisma.$EcSheetImportLockPayload<ExtArgs>
+      fields: Prisma.EcSheetImportLockFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EcSheetImportLockFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EcSheetImportLockFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        findFirst: {
+          args: Prisma.EcSheetImportLockFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EcSheetImportLockFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        findMany: {
+          args: Prisma.EcSheetImportLockFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>[]
+        }
+        create: {
+          args: Prisma.EcSheetImportLockCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        createMany: {
+          args: Prisma.EcSheetImportLockCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EcSheetImportLockCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>[]
+        }
+        delete: {
+          args: Prisma.EcSheetImportLockDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        update: {
+          args: Prisma.EcSheetImportLockUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        deleteMany: {
+          args: Prisma.EcSheetImportLockDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EcSheetImportLockUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EcSheetImportLockUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>[]
+        }
+        upsert: {
+          args: Prisma.EcSheetImportLockUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EcSheetImportLockPayload>
+        }
+        aggregate: {
+          args: Prisma.EcSheetImportLockAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEcSheetImportLock>
+        }
+        groupBy: {
+          args: Prisma.EcSheetImportLockGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetImportLockGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EcSheetImportLockCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EcSheetImportLockCountAggregateOutputType> | number
+        }
+      }
+    }
     EcSheetActiveSnapshot: {
       payload: Prisma.$EcSheetActiveSnapshotPayload<ExtArgs>
       fields: Prisma.EcSheetActiveSnapshotFieldRefs
@@ -2833,6 +2908,8 @@ export const EcSheetImportRunScalarFieldEnum = {
   id: 'id',
   spreadsheetId: 'spreadsheetId',
   status: 'status',
+  triggerType: 'triggerType',
+  errorCategory: 'errorCategory',
   startedAt: 'startedAt',
   heartbeatAt: 'heartbeatAt',
   completedAt: 'completedAt',
@@ -2852,9 +2929,21 @@ export const EcSheetImportRunScalarFieldEnum = {
 export type EcSheetImportRunScalarFieldEnum = (typeof EcSheetImportRunScalarFieldEnum)[keyof typeof EcSheetImportRunScalarFieldEnum]
 
 
+export const EcSheetImportLockScalarFieldEnum = {
+  id: 'id',
+  isLocked: 'isLocked',
+  lockedBy: 'lockedBy',
+  lockedAt: 'lockedAt',
+  heartbeatAt: 'heartbeatAt'
+} as const
+
+export type EcSheetImportLockScalarFieldEnum = (typeof EcSheetImportLockScalarFieldEnum)[keyof typeof EcSheetImportLockScalarFieldEnum]
+
+
 export const EcSheetActiveSnapshotScalarFieldEnum = {
   id: 'id',
   activeRunId: 'activeRunId',
+  lastCheckedAt: 'lastCheckedAt',
   updatedAt: 'updatedAt'
 } as const
 
@@ -3287,6 +3376,7 @@ export type GlobalOmitConfig = {
   etsyOrderItem?: Prisma.EtsyOrderItemOmit
   etsyStatement?: Prisma.EtsyStatementOmit
   ecSheetImportRun?: Prisma.EcSheetImportRunOmit
+  ecSheetImportLock?: Prisma.EcSheetImportLockOmit
   ecSheetActiveSnapshot?: Prisma.EcSheetActiveSnapshotOmit
   ecSheetOrder?: Prisma.EcSheetOrderOmit
   ecSheetCogs?: Prisma.EcSheetCogsOmit

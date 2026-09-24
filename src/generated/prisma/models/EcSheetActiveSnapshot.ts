@@ -37,18 +37,21 @@ export type EcSheetActiveSnapshotSumAggregateOutputType = {
 export type EcSheetActiveSnapshotMinAggregateOutputType = {
   id: number | null
   activeRunId: string | null
+  lastCheckedAt: Date | null
   updatedAt: Date | null
 }
 
 export type EcSheetActiveSnapshotMaxAggregateOutputType = {
   id: number | null
   activeRunId: string | null
+  lastCheckedAt: Date | null
   updatedAt: Date | null
 }
 
 export type EcSheetActiveSnapshotCountAggregateOutputType = {
   id: number
   activeRunId: number
+  lastCheckedAt: number
   updatedAt: number
   _all: number
 }
@@ -65,18 +68,21 @@ export type EcSheetActiveSnapshotSumAggregateInputType = {
 export type EcSheetActiveSnapshotMinAggregateInputType = {
   id?: true
   activeRunId?: true
+  lastCheckedAt?: true
   updatedAt?: true
 }
 
 export type EcSheetActiveSnapshotMaxAggregateInputType = {
   id?: true
   activeRunId?: true
+  lastCheckedAt?: true
   updatedAt?: true
 }
 
 export type EcSheetActiveSnapshotCountAggregateInputType = {
   id?: true
   activeRunId?: true
+  lastCheckedAt?: true
   updatedAt?: true
   _all?: true
 }
@@ -170,6 +176,7 @@ export type EcSheetActiveSnapshotGroupByArgs<ExtArgs extends runtime.Types.Exten
 export type EcSheetActiveSnapshotGroupByOutputType = {
   id: number
   activeRunId: string
+  lastCheckedAt: Date
   updatedAt: Date
   _count: EcSheetActiveSnapshotCountAggregateOutputType | null
   _avg: EcSheetActiveSnapshotAvgAggregateOutputType | null
@@ -199,6 +206,7 @@ export type EcSheetActiveSnapshotWhereInput = {
   NOT?: Prisma.EcSheetActiveSnapshotWhereInput | Prisma.EcSheetActiveSnapshotWhereInput[]
   id?: Prisma.IntFilter<"EcSheetActiveSnapshot"> | number
   activeRunId?: Prisma.StringFilter<"EcSheetActiveSnapshot"> | string
+  lastCheckedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
   activeRun?: Prisma.XOR<Prisma.EcSheetImportRunScalarRelationFilter, Prisma.EcSheetImportRunWhereInput>
 }
@@ -206,6 +214,7 @@ export type EcSheetActiveSnapshotWhereInput = {
 export type EcSheetActiveSnapshotOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   activeRunId?: Prisma.SortOrder
+  lastCheckedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   activeRun?: Prisma.EcSheetImportRunOrderByWithRelationInput
 }
@@ -216,6 +225,7 @@ export type EcSheetActiveSnapshotWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.EcSheetActiveSnapshotWhereInput[]
   NOT?: Prisma.EcSheetActiveSnapshotWhereInput | Prisma.EcSheetActiveSnapshotWhereInput[]
   activeRunId?: Prisma.StringFilter<"EcSheetActiveSnapshot"> | string
+  lastCheckedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
   activeRun?: Prisma.XOR<Prisma.EcSheetImportRunScalarRelationFilter, Prisma.EcSheetImportRunWhereInput>
 }, "id">
@@ -223,6 +233,7 @@ export type EcSheetActiveSnapshotWhereUniqueInput = Prisma.AtLeast<{
 export type EcSheetActiveSnapshotOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   activeRunId?: Prisma.SortOrder
+  lastCheckedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.EcSheetActiveSnapshotCountOrderByAggregateInput
   _avg?: Prisma.EcSheetActiveSnapshotAvgOrderByAggregateInput
@@ -237,11 +248,13 @@ export type EcSheetActiveSnapshotScalarWhereWithAggregatesInput = {
   NOT?: Prisma.EcSheetActiveSnapshotScalarWhereWithAggregatesInput | Prisma.EcSheetActiveSnapshotScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"EcSheetActiveSnapshot"> | number
   activeRunId?: Prisma.StringWithAggregatesFilter<"EcSheetActiveSnapshot"> | string
+  lastCheckedAt?: Prisma.DateTimeWithAggregatesFilter<"EcSheetActiveSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"EcSheetActiveSnapshot"> | Date | string
 }
 
 export type EcSheetActiveSnapshotCreateInput = {
   id?: number
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
   activeRun: Prisma.EcSheetImportRunCreateNestedOneWithoutSnapshotsInput
 }
@@ -249,11 +262,13 @@ export type EcSheetActiveSnapshotCreateInput = {
 export type EcSheetActiveSnapshotUncheckedCreateInput = {
   id?: number
   activeRunId: string
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type EcSheetActiveSnapshotUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   activeRun?: Prisma.EcSheetImportRunUpdateOneRequiredWithoutSnapshotsNestedInput
 }
@@ -261,23 +276,27 @@ export type EcSheetActiveSnapshotUpdateInput = {
 export type EcSheetActiveSnapshotUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   activeRunId?: Prisma.StringFieldUpdateOperationsInput | string
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EcSheetActiveSnapshotCreateManyInput = {
   id?: number
   activeRunId: string
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type EcSheetActiveSnapshotUpdateManyMutationInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EcSheetActiveSnapshotUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   activeRunId?: Prisma.StringFieldUpdateOperationsInput | string
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -294,6 +313,7 @@ export type EcSheetActiveSnapshotOrderByRelationAggregateInput = {
 export type EcSheetActiveSnapshotCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   activeRunId?: Prisma.SortOrder
+  lastCheckedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -304,12 +324,14 @@ export type EcSheetActiveSnapshotAvgOrderByAggregateInput = {
 export type EcSheetActiveSnapshotMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   activeRunId?: Prisma.SortOrder
+  lastCheckedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type EcSheetActiveSnapshotMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   activeRunId?: Prisma.SortOrder
+  lastCheckedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -361,11 +383,13 @@ export type EcSheetActiveSnapshotUncheckedUpdateManyWithoutActiveRunNestedInput 
 
 export type EcSheetActiveSnapshotCreateWithoutActiveRunInput = {
   id?: number
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type EcSheetActiveSnapshotUncheckedCreateWithoutActiveRunInput = {
   id?: number
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -401,26 +425,31 @@ export type EcSheetActiveSnapshotScalarWhereInput = {
   NOT?: Prisma.EcSheetActiveSnapshotScalarWhereInput | Prisma.EcSheetActiveSnapshotScalarWhereInput[]
   id?: Prisma.IntFilter<"EcSheetActiveSnapshot"> | number
   activeRunId?: Prisma.StringFilter<"EcSheetActiveSnapshot"> | string
+  lastCheckedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EcSheetActiveSnapshot"> | Date | string
 }
 
 export type EcSheetActiveSnapshotCreateManyActiveRunInput = {
   id?: number
+  lastCheckedAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type EcSheetActiveSnapshotUpdateWithoutActiveRunInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EcSheetActiveSnapshotUncheckedUpdateWithoutActiveRunInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EcSheetActiveSnapshotUncheckedUpdateManyWithoutActiveRunInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  lastCheckedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -429,6 +458,7 @@ export type EcSheetActiveSnapshotUncheckedUpdateManyWithoutActiveRunInput = {
 export type EcSheetActiveSnapshotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   activeRunId?: boolean
+  lastCheckedAt?: boolean
   updatedAt?: boolean
   activeRun?: boolean | Prisma.EcSheetImportRunDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ecSheetActiveSnapshot"]>
@@ -436,6 +466,7 @@ export type EcSheetActiveSnapshotSelect<ExtArgs extends runtime.Types.Extensions
 export type EcSheetActiveSnapshotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   activeRunId?: boolean
+  lastCheckedAt?: boolean
   updatedAt?: boolean
   activeRun?: boolean | Prisma.EcSheetImportRunDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ecSheetActiveSnapshot"]>
@@ -443,6 +474,7 @@ export type EcSheetActiveSnapshotSelectCreateManyAndReturn<ExtArgs extends runti
 export type EcSheetActiveSnapshotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   activeRunId?: boolean
+  lastCheckedAt?: boolean
   updatedAt?: boolean
   activeRun?: boolean | Prisma.EcSheetImportRunDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ecSheetActiveSnapshot"]>
@@ -450,10 +482,11 @@ export type EcSheetActiveSnapshotSelectUpdateManyAndReturn<ExtArgs extends runti
 export type EcSheetActiveSnapshotSelectScalar = {
   id?: boolean
   activeRunId?: boolean
+  lastCheckedAt?: boolean
   updatedAt?: boolean
 }
 
-export type EcSheetActiveSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "activeRunId" | "updatedAt", ExtArgs["result"]["ecSheetActiveSnapshot"]>
+export type EcSheetActiveSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "activeRunId" | "lastCheckedAt" | "updatedAt", ExtArgs["result"]["ecSheetActiveSnapshot"]>
 export type EcSheetActiveSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activeRun?: boolean | Prisma.EcSheetImportRunDefaultArgs<ExtArgs>
 }
@@ -472,6 +505,7 @@ export type $EcSheetActiveSnapshotPayload<ExtArgs extends runtime.Types.Extensio
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     activeRunId: string
+    lastCheckedAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["ecSheetActiveSnapshot"]>
   composites: {}
@@ -899,6 +933,7 @@ export interface Prisma__EcSheetActiveSnapshotClient<T, Null = never, ExtArgs ex
 export interface EcSheetActiveSnapshotFieldRefs {
   readonly id: Prisma.FieldRef<"EcSheetActiveSnapshot", 'Int'>
   readonly activeRunId: Prisma.FieldRef<"EcSheetActiveSnapshot", 'String'>
+  readonly lastCheckedAt: Prisma.FieldRef<"EcSheetActiveSnapshot", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"EcSheetActiveSnapshot", 'DateTime'>
 }
     

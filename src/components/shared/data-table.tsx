@@ -14,6 +14,7 @@ export interface ColumnDef<T> {
   accessor: (row: T, index: number) => ReactNode;
   headerClassName?: string;
   cellClassName?: string;
+  onHeaderClick?: () => void;
 }
 
 interface DataTableProps<T> {
@@ -53,6 +54,7 @@ export function DataTable<T>({
               return (
                 <TableHead
                   key={columnKey}
+                  onClick={col.onHeaderClick}
                   className={
                     col.headerClassName ||
                     "h-10 px-3 font-semibold text-muted-foreground"

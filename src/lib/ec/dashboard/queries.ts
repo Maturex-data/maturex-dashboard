@@ -53,6 +53,7 @@ export async function getSheetRows(
 ): Promise<SheetRowPaginatedResponse<unknown>> {
   const activeSnapshot = await prisma.ecSheetActiveSnapshot.findUnique({
     where: { id: 1 },
+    include: { activeRun: true },
   });
 
   const page = Math.max(1, params.page || 1);
@@ -73,48 +74,67 @@ export async function getSheetRows(
 
   const batchId = activeSnapshot.activeRunId;
 
-  // Find available months
-  let availableMonths: string[] = [];
-  if (params.sheet === "orders") {
-    const list = await prisma.ecSheetOrder.findMany({
-      where: { batchId },
-      distinct: ["month"],
-      select: { month: true },
-    });
-    availableMonths = list
-      .map((m) => m.month)
-      .sort()
-      .reverse();
-  } else if (params.sheet === "cogs") {
-    const list = await prisma.ecSheetCogs.findMany({
-      where: { batchId },
-      distinct: ["month"],
-      select: { month: true },
-    });
-    availableMonths = list
-      .map((m) => m.month)
-      .sort()
-      .reverse();
-  } else if (params.sheet === "ads") {
-    const list = await prisma.ecSheetAd.findMany({
-      where: { batchId },
-      distinct: ["month"],
-      select: { month: true },
-    });
-    availableMonths = list
-      .map((m) => m.month)
-      .sort()
-      .reverse();
-  } else {
-    const list = await prisma.ecSheetPayout.findMany({
-      where: { batchId },
-      distinct: ["monthLocal"],
-      select: { monthLocal: true },
-    });
-    availableMonths = list
-      .map((m) => m.monthLocal)
-      .sort()
-      .reverse();
+  // Extract available months directly from snapshot sheetStats if available (0ms DB query)
+  const stats = activeSnapshot.activeRun?.sheetStats as Record<
+    string,
+    { monthCounts?: Record<string, number> }
+  > | null;
+
+  const sheetKeyMap: Record<string, string> = {
+    orders: "Orders",
+    cogs: "COGS",
+    ads: "Ads",
+    payouts: "Payouts",
+  };
+  const statsKey = sheetKeyMap[params.sheet];
+  const cachedMonths = stats?.[statsKey]?.monthCounts
+    ? Object.keys(stats[statsKey].monthCounts).sort().reverse()
+    : null;
+
+  let availableMonths: string[] = cachedMonths || [];
+
+  if (availableMonths.length === 0) {
+    if (params.sheet === "orders") {
+      const list = await prisma.ecSheetOrder.findMany({
+        where: { batchId },
+        distinct: ["month"],
+        select: { month: true },
+      });
+      availableMonths = list
+        .map((m) => m.month)
+        .sort()
+        .reverse();
+    } else if (params.sheet === "cogs") {
+      const list = await prisma.ecSheetCogs.findMany({
+        where: { batchId },
+        distinct: ["month"],
+        select: { month: true },
+      });
+      availableMonths = list
+        .map((m) => m.month)
+        .sort()
+        .reverse();
+    } else if (params.sheet === "ads") {
+      const list = await prisma.ecSheetAd.findMany({
+        where: { batchId },
+        distinct: ["month"],
+        select: { month: true },
+      });
+      availableMonths = list
+        .map((m) => m.month)
+        .sort()
+        .reverse();
+    } else {
+      const list = await prisma.ecSheetPayout.findMany({
+        where: { batchId },
+        distinct: ["monthLocal"],
+        select: { monthLocal: true },
+      });
+      availableMonths = list
+        .map((m) => m.monthLocal)
+        .sort()
+        .reverse();
+    }
   }
 
   const selectedMonth =
@@ -181,15 +201,6 @@ export async function getSheetRows(
 
   // 2. COGS
   if (params.sheet === "cogs") {
-    // Collect distinct suppliers for filter
-    const suppliers = (
-      await prisma.ecSheetCogs.findMany({
-        where: { batchId },
-        distinct: ["supplier"],
-        select: { supplier: true },
-      })
-    ).map((s) => s.supplier);
-
     const where: Prisma.EcSheetCogsWhereInput = {
       batchId,
       ...(selectedMonth && selectedMonth !== "all"
@@ -216,7 +227,8 @@ export async function getSheetRows(
         : "costDate";
     const sortDir = params.dir === "asc" ? "asc" : "desc";
 
-    const [total, rows] = await Promise.all([
+    // Run count, data rows, and distinct suppliers in parallel
+    const [total, rows, suppliersList] = await Promise.all([
       prisma.ecSheetCogs.count({ where }),
       prisma.ecSheetCogs.findMany({
         where,
@@ -224,7 +236,14 @@ export async function getSheetRows(
         take: limit,
         orderBy: [{ [sortField]: sortDir }, { sourceRow: "asc" }],
       }),
+      prisma.ecSheetCogs.findMany({
+        where: { batchId },
+        distinct: ["supplier"],
+        select: { supplier: true },
+      }),
     ]);
+
+    const suppliers = suppliersList.map((s) => s.supplier);
 
     return {
       rows: rows.map((r) => ({
@@ -245,14 +264,6 @@ export async function getSheetRows(
 
   // 3. ADS
   if (params.sheet === "ads") {
-    const accounts = (
-      await prisma.ecSheetAd.findMany({
-        where: { batchId },
-        distinct: ["accountId"],
-        select: { accountId: true },
-      })
-    ).map((a) => a.accountId);
-
     const where: Prisma.EcSheetAdWhereInput = {
       batchId,
       ...(selectedMonth && selectedMonth !== "all"
@@ -275,7 +286,7 @@ export async function getSheetRows(
       params.sort && ADS_SORT_WHITELIST.has(params.sort) ? params.sort : "date";
     const sortDir = params.dir === "asc" ? "asc" : "desc";
 
-    const [total, rows] = await Promise.all([
+    const [total, rows, accountsList] = await Promise.all([
       prisma.ecSheetAd.count({ where }),
       prisma.ecSheetAd.findMany({
         where,
@@ -283,7 +294,14 @@ export async function getSheetRows(
         take: limit,
         orderBy: [{ [sortField]: sortDir }, { sourceRow: "asc" }],
       }),
+      prisma.ecSheetAd.findMany({
+        where: { batchId },
+        distinct: ["accountId"],
+        select: { accountId: true },
+      }),
     ]);
+
+    const accounts = accountsList.map((a) => a.accountId);
 
     return {
       rows: rows.map((r) => ({
@@ -302,14 +320,6 @@ export async function getSheetRows(
   }
 
   // 4. PAYOUTS
-  const types = (
-    await prisma.ecSheetPayout.findMany({
-      where: { batchId },
-      distinct: ["type"],
-      select: { type: true },
-    })
-  ).map((t) => t.type);
-
   const where: Prisma.EcSheetPayoutWhereInput = {
     batchId,
     ...(selectedMonth && selectedMonth !== "all"
@@ -336,7 +346,7 @@ export async function getSheetRows(
       : "processedUtc";
   const sortDir = params.dir === "asc" ? "asc" : "desc";
 
-  const [total, rows] = await Promise.all([
+  const [total, rows, typesList] = await Promise.all([
     prisma.ecSheetPayout.count({ where }),
     prisma.ecSheetPayout.findMany({
       where,
@@ -344,7 +354,14 @@ export async function getSheetRows(
       take: limit,
       orderBy: [{ [sortField]: sortDir }, { sourceRow: "asc" }],
     }),
+    prisma.ecSheetPayout.findMany({
+      where: { batchId },
+      distinct: ["type"],
+      select: { type: true },
+    }),
   ]);
+
+  const types = typesList.map((t) => t.type);
 
   return {
     rows: rows.map((r) => ({

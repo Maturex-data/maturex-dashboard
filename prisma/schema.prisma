@@ -472,6 +472,8 @@ model EcSheetImportRun {
   id           String                  @id @default(cuid())
   spreadsheetId String                 @map("spreadsheet_id")
   status       String                  @default("RUNNING")
+  triggerType  String                  @default("MANUAL") @map("trigger_type") @db.VarChar(20)
+  errorCategory String?                @map("error_category") @db.VarChar(50)
   startedAt    DateTime                @default(now()) @map("started_at")
   heartbeatAt  DateTime                @default(now()) @map("heartbeat_at")
   completedAt  DateTime?               @map("completed_at")
@@ -494,14 +496,26 @@ model EcSheetImportRun {
 
   @@index([startedAt])
   @@index([status])
+  @@index([triggerType])
   @@map("ec_sheet_import_runs")
 }
 
+model EcSheetImportLock {
+  id          Int       @id @default(1)
+  isLocked    Boolean   @default(false) @map("is_locked")
+  lockedBy    String?   @map("locked_by") @db.VarChar(100)
+  lockedAt    DateTime? @map("locked_at")
+  heartbeatAt DateTime? @map("heartbeat_at")
+
+  @@map("ec_sheet_import_locks")
+}
+
 model EcSheetActiveSnapshot {
-  id          Int              @id @default(1)
-  activeRunId String           @map("active_run_id")
-  activeRun   EcSheetImportRun @relation(fields: [activeRunId], references: [id], onDelete: Cascade)
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  id            Int              @id @default(1)
+  activeRunId   String           @map("active_run_id")
+  activeRun     EcSheetImportRun @relation(fields: [activeRunId], references: [id], onDelete: Cascade)
+  lastCheckedAt DateTime         @default(now()) @map("last_checked_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
 
   @@map("ec_sheet_active_snapshots")
 }

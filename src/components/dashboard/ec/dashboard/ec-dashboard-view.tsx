@@ -13,6 +13,9 @@ interface EcDashboardViewProps {
 }
 
 export function EcDashboardView({ initialSummary }: EcDashboardViewProps) {
+  const summaryCache = React.useRef<Record<string, DashboardSummary>>({
+    [initialSummary.period]: initialSummary,
+  });
   const [summary, setSummary] =
     React.useState<DashboardSummary>(initialSummary);
   const [selectedMonth, setSelectedMonth] = React.useState(
@@ -21,10 +24,15 @@ export function EcDashboardView({ initialSummary }: EcDashboardViewProps) {
   const [activeTab, setActiveTab] = React.useState("orders");
 
   const fetchSummary = React.useCallback(async (month: string) => {
+    // Instant switch if cached in memory
+    if (summaryCache.current[month]) {
+      setSummary(summaryCache.current[month]);
+    }
     try {
       const res = await fetch(`/api/ec/dashboard?month=${month}`);
       const json = await res.json();
       if (res.ok && json.success) {
+        summaryCache.current[month] = json.data;
         setSummary(json.data);
       }
     } catch {
@@ -38,6 +46,7 @@ export function EcDashboardView({ initialSummary }: EcDashboardViewProps) {
   };
 
   const handleSyncComplete = () => {
+    summaryCache.current = {};
     fetchSummary(selectedMonth);
   };
 
