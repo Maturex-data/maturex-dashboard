@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import * as XLSX from "xlsx";
-import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,13 +22,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-function formatMoney(val: unknown): string {
-  if (val === null || val === undefined) return "0.00";
-  const num = typeof val === "number" ? val : Number(val);
-  return Number.isNaN(num) ? "0.00" : num.toFixed(2);
-}
+import { getTabColumns, type SheetRow } from "./ec-tab-columns";
 
 interface EcDashboardTabsProps {
   selectedMonth: string;
@@ -53,9 +56,6 @@ export function EcDashboardTabs({
   const [typeFilter, setTypeFilter] = React.useState<string>("");
   const [accountFilter, setAccountFilter] = React.useState<string>("");
 
-  // biome-ignore lint/suspicious/noExplicitAny: dynamic sheet row properties across 4 disparate sheet schemas
-  type SheetRow = Record<string, any>;
-
   // Data state
   const [isLoading, setIsLoading] = React.useState(false);
   const [data, setData] = React.useState<SheetRow[]>([]);
@@ -67,9 +67,27 @@ export function EcDashboardTabs({
     accounts?: string[];
   }>({});
 
-  // Reset pagination and clear stale data when tab or month changes
+  // In-memory tab cache to make switching instantaneous (0ms)
+  const tabCacheRef = React.useRef<
+    Record<
+      string,
+      {
+        data: SheetRow[];
+        total: number;
+        totalPages: number;
+        filterOptions?: {
+          suppliers?: string[];
+          types?: string[];
+          accounts?: string[];
+        };
+      }
+    >
+  >({});
+
+  // Clear cache if month changes
   React.useEffect(() => {
-    if (activeTab || selectedMonth) {
+    if (selectedMonth) {
+      tabCacheRef.current = {};
       setData([]);
       setPage(1);
       setSearch("");
@@ -79,7 +97,20 @@ export function EcDashboardTabs({
       setAccountFilter("");
       setSortField(undefined);
     }
-  }, [activeTab, selectedMonth]);
+  }, [selectedMonth]);
+
+  // Reset filters & page on tab change without wiping existing cached data
+  React.useEffect(() => {
+    if (activeTab) {
+      setPage(1);
+      setSearch("");
+      setDebouncedSearch("");
+      setSupplierFilter("");
+      setTypeFilter("");
+      setAccountFilter("");
+      setSortField(undefined);
+    }
+  }, [activeTab]);
 
   // Debounce search
   React.useEffect(() => {
@@ -90,34 +121,61 @@ export function EcDashboardTabs({
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Fetch sheet rows
+  // Fetch sheet rows with instant memory cache
   const fetchRows = React.useCallback(async () => {
+    const params = new URLSearchParams({
+      sheet: activeTab,
+      month: selectedMonth,
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (sortField) {
+      params.set("sort", sortField);
+      params.set("dir", sortDir);
+    }
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (supplierFilter) params.set("supplier", supplierFilter);
+    if (typeFilter) params.set("type", typeFilter);
+    if (accountFilter) params.set("account", accountFilter);
+
+    const cacheKey = params.toString();
+    const cached = tabCacheRef.current[cacheKey];
+
+    // If cached, display instantly with 0ms delay and no loading spinner
+    if (cached) {
+      setData(cached.data);
+      setTotal(cached.total);
+      setTotalPages(cached.totalPages);
+      if (cached.filterOptions) {
+        setFilterOptions(cached.filterOptions);
+      }
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const params = new URLSearchParams({
-        sheet: activeTab,
-        month: selectedMonth,
-        page: String(page),
-        limit: String(limit),
-      });
-
-      if (sortField) {
-        params.set("sort", sortField);
-        params.set("dir", sortDir);
-      }
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (supplierFilter) params.set("supplier", supplierFilter);
-      if (typeFilter) params.set("type", typeFilter);
-      if (accountFilter) params.set("account", accountFilter);
-
-      const res = await fetch(`/api/ec/sheet-rows?${params.toString()}`);
+      const res = await fetch(`/api/ec/sheet-rows?${cacheKey}`);
       const json = await res.json();
       if (res.ok && json.success) {
-        setData(json.data.rows || []);
-        setTotal(json.data.total || 0);
-        setTotalPages(json.data.totalPages || 1);
-        if (json.data.filterOptions) {
-          setFilterOptions(json.data.filterOptions);
+        const rows = json.data.rows || [];
+        const tot = json.data.total || 0;
+        const totPages = json.data.totalPages || 1;
+        const opts = json.data.filterOptions;
+
+        tabCacheRef.current[cacheKey] = {
+          data: rows,
+          total: tot,
+          totalPages: totPages,
+          filterOptions: opts,
+        };
+
+        setData(rows);
+        setTotal(tot);
+        setTotalPages(totPages);
+        if (opts) {
+          setFilterOptions(opts);
         }
       }
     } catch {
@@ -142,14 +200,16 @@ export function EcDashboardTabs({
     fetchRows();
   }, [fetchRows]);
 
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
+  const handleSort = React.useCallback((field: string) => {
+    setSortField((currentField) => {
+      if (currentField === field) {
+        setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+        return field;
+      }
       setSortDir("desc");
-    }
-  };
+      return field;
+    });
+  }, []);
 
   const handleExport = () => {
     if (data.length === 0) return;
@@ -158,6 +218,11 @@ export function EcDashboardTabs({
     XLSX.utils.book_append_sheet(wb, ws, activeTab.toUpperCase());
     XLSX.writeFile(wb, `EC_${activeTab.toUpperCase()}_${selectedMonth}.xlsx`);
   };
+
+  const columns = React.useMemo(
+    () => getTabColumns(activeTab, sortField, sortDir, handleSort),
+    [activeTab, sortField, sortDir, handleSort],
+  );
 
   return (
     <Tabs
@@ -217,13 +282,13 @@ export function EcDashboardTabs({
         {/* Global Tab Controls (Search, Filters, Export) */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <div className="relative w-44 sm:w-56">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            <input
+            <SearchIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground z-10 pointer-events-none" />
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm trong tab..."
-              className="w-full bg-background pl-8 pr-3 rounded-lg border border-border/80 h-8 text-xs placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+              className="w-full bg-background pl-8 pr-3 h-8 text-xs border-border/80"
             />
           </div>
 
@@ -231,63 +296,81 @@ export function EcDashboardTabs({
           {activeTab === "cogs" &&
             filterOptions.suppliers &&
             filterOptions.suppliers.length > 0 && (
-              <select
-                value={supplierFilter}
-                onChange={(e) => {
-                  setSupplierFilter(e.target.value);
+              <Select
+                value={supplierFilter || "__ALL__"}
+                onValueChange={(val) => {
+                  setSupplierFilter(!val || val === "__ALL__" ? "" : val);
                   setPage(1);
                 }}
-                className="h-8 rounded-lg bg-background border border-border/80 px-2 text-xs text-foreground focus:outline-hidden"
               >
-                <option value="">Tất cả Supplier</option>
-                {filterOptions.suppliers.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-auto min-w-[130px] rounded-lg bg-background border-border/80 px-2.5 text-xs text-foreground shadow-2xs">
+                  <SelectValue placeholder="Tất cả Supplier" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="__ALL__" className="text-xs">
+                    Tất cả Supplier
+                  </SelectItem>
+                  {filterOptions.suppliers.map((s) => (
+                    <SelectItem key={s} value={s} className="text-xs">
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
           {/* Type filter for Payouts */}
           {activeTab === "payouts" &&
             filterOptions.types &&
             filterOptions.types.length > 0 && (
-              <select
-                value={typeFilter}
-                onChange={(e) => {
-                  setTypeFilter(e.target.value);
+              <Select
+                value={typeFilter || "__ALL__"}
+                onValueChange={(val) => {
+                  setTypeFilter(!val || val === "__ALL__" ? "" : val);
                   setPage(1);
                 }}
-                className="h-8 rounded-lg bg-background border border-border/80 px-2 text-xs text-foreground focus:outline-hidden"
               >
-                <option value="">Tất cả Loại GD</option>
-                {filterOptions.types.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-auto min-w-[130px] rounded-lg bg-background border-border/80 px-2.5 text-xs text-foreground shadow-2xs">
+                  <SelectValue placeholder="Tất cả Loại GD" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="__ALL__" className="text-xs">
+                    Tất cả Loại GD
+                  </SelectItem>
+                  {filterOptions.types.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
           {/* Account filter for Ads */}
           {activeTab === "ads" &&
             filterOptions.accounts &&
             filterOptions.accounts.length > 0 && (
-              <select
-                value={accountFilter}
-                onChange={(e) => {
-                  setAccountFilter(e.target.value);
+              <Select
+                value={accountFilter || "__ALL__"}
+                onValueChange={(val) => {
+                  setAccountFilter(!val || val === "__ALL__" ? "" : val);
                   setPage(1);
                 }}
-                className="h-8 rounded-lg bg-background border border-border/80 px-2 text-xs text-foreground focus:outline-hidden"
               >
-                <option value="">Tất cả Account</option>
-                {filterOptions.accounts.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-auto min-w-[130px] rounded-lg bg-background border-border/80 px-2.5 text-xs text-foreground shadow-2xs">
+                  <SelectValue placeholder="Tất cả Account" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="__ALL__" className="text-xs">
+                    Tất cả Account
+                  </SelectItem>
+                  {filterOptions.accounts.map((a) => (
+                    <SelectItem key={a} value={a} className="text-xs">
+                      {a}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
           <Button
@@ -329,419 +412,22 @@ export function EcDashboardTabs({
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="overflow-x-auto max-h-[560px] relative divide-y divide-border/40">
-            {/* 1. ORDERS TABLE */}
-            {activeTab === "orders" && (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/60 text-muted-foreground sticky top-0 z-10 font-medium border-b border-border/60 backdrop-blur-md">
-                  <tr>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Month</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Row</th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("orderName")}
-                    >
-                      Order{" "}
-                      {sortField === "orderName" &&
-                        (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("orderDate")}
-                    >
-                      Date{" "}
-                      {sortField === "orderDate" &&
-                        (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Gross sales
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Discounts
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Shipping
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Tax
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap font-semibold text-foreground">
-                      Corrected net
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Refund
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Before refund
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Source</th>
-                    <th className="py-2.5 px-3 min-w-[200px]">Item name</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40 font-mono">
-                  {data.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={13}
-                        className="py-8 text-center text-muted-foreground font-sans"
-                      >
-                        {isLoading
-                          ? "Đang tải dữ liệu..."
-                          : "Không có bản ghi nào."}
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.month}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.sourceRow}
-                        </td>
-                        <td className="py-2 px-3 font-semibold text-foreground font-sans">
-                          {r.orderName}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.orderDate}
-                        </td>
-                        <td className="py-2 px-3 text-right">
-                          ${formatMoney(r.grossSales)}
-                        </td>
-                        <td className="py-2 px-3 text-right text-rose-600 dark:text-rose-400">
-                          {Number(r.discounts) > 0
-                            ? `-${formatMoney(r.discounts)}`
-                            : "0.00"}
-                        </td>
-                        <td className="py-2 px-3 text-right">
-                          ${formatMoney(r.shippingCharged)}
-                        </td>
-                        <td className="py-2 px-3 text-right">
-                          ${formatMoney(r.originalTax)}
-                        </td>
-                        <td className="py-2 px-3 text-right font-bold text-foreground">
-                          ${formatMoney(r.correctedNet)}
-                        </td>
-                        <td className="py-2 px-3 text-right text-amber-600 dark:text-amber-400">
-                          {Number(r.refundSnapshot) > 0
-                            ? `-$${formatMoney(r.refundSnapshot)}`
-                            : "0.00"}
-                        </td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">
-                          ${formatMoney(r.beforeRefund)}
-                        </td>
-                        <td className="py-2 px-3 font-sans text-muted-foreground">
-                          {r.source || "—"}
-                        </td>
-                        <td
-                          className="py-2 px-3 font-sans text-muted-foreground max-w-[240px] truncate"
-                          title={r.itemName}
-                        >
-                          {r.itemName || "—"}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {/* 2. COGS TABLE */}
-            {activeTab === "cogs" && (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/60 text-muted-foreground sticky top-0 z-10 font-medium border-b border-border/60 backdrop-blur-md">
-                  <tr>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Month</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Row</th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("supplier")}
-                    >
-                      Supplier{" "}
-                      {sortField === "supplier" &&
-                        (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("costDate")}
-                    >
-                      Date{" "}
-                      {sortField === "costDate" &&
-                        (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      Reference Order
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      Supplier Order
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap font-semibold text-foreground">
-                      Total cost
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Estimated cost
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Row key</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Treatment</th>
-                    <th className="py-2.5 px-3 min-w-[180px]">Items name</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40 font-mono">
-                  {data.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={11}
-                        className="py-8 text-center text-muted-foreground font-sans"
-                      >
-                        {isLoading
-                          ? "Đang tải dữ liệu..."
-                          : "Không có bản ghi nào."}
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.month}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.sourceRow}
-                        </td>
-                        <td className="py-2 px-3 font-semibold text-foreground font-sans">
-                          {r.supplier}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.costDate}
-                        </td>
-                        <td className="py-2 px-3 font-sans text-foreground">
-                          {r.referenceOrderId || "—"}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.supplierOrderId || "—"}
-                        </td>
-                        <td className="py-2 px-3 text-right font-bold text-foreground">
-                          ${formatMoney(r.totalCost)}
-                        </td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">
-                          ${formatMoney(r.estimatedCost)}
-                        </td>
-                        <td
-                          className="py-2 px-3 text-muted-foreground text-[11px] truncate max-w-[140px]"
-                          title={r.rowKey}
-                        >
-                          {r.rowKey}
-                        </td>
-                        <td className="py-2 px-3 font-sans">
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] py-0 px-1 font-medium ${
-                              r.treatment?.includes("Loại")
-                                ? "border-muted text-muted-foreground bg-muted/40"
-                                : "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
-                            }`}
-                          >
-                            {r.treatment || "—"}
-                          </Badge>
-                        </td>
-                        <td
-                          className="py-2 px-3 font-sans text-muted-foreground max-w-[200px] truncate"
-                          title={r.itemsName}
-                        >
-                          {r.itemsName || "—"}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {/* 3. ADS TABLE */}
-            {activeTab === "ads" && (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/60 text-muted-foreground sticky top-0 z-10 font-medium border-b border-border/60 backdrop-blur-md">
-                  <tr>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Month</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Row</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      External ID
-                    </th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("date")}
-                    >
-                      Date{" "}
-                      {sortField === "date" && (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      Account ID
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Currency</th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap font-semibold text-foreground">
-                      Spend
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      Granularity
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Source</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40 font-mono">
-                  {data.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        className="py-8 text-center text-muted-foreground font-sans"
-                      >
-                        {isLoading
-                          ? "Đang tải dữ liệu..."
-                          : "Không có bản ghi nào."}
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.month}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.sourceRow}
-                        </td>
-                        <td className="py-2 px-3 font-medium text-foreground">
-                          {r.externalId}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.date}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.accountId}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.currency}
-                        </td>
-                        <td className="py-2 px-3 text-right font-bold text-violet-600 dark:text-violet-400">
-                          ${formatMoney(r.spend)}
-                        </td>
-                        <td className="py-2 px-3 font-sans text-muted-foreground">
-                          {r.granularity}
-                        </td>
-                        <td className="py-2 px-3 font-sans text-muted-foreground">
-                          {r.source || "—"}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {/* 4. PAYOUTS TABLE */}
-            {activeTab === "payouts" && (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead className="bg-muted/60 text-muted-foreground sticky top-0 z-10 font-medium border-b border-border/60 backdrop-blur-md">
-                  <tr>
-                    <th className="py-2.5 px-3 whitespace-nowrap">
-                      Month local
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Row</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Tx ID</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Payout ID</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Type</th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Currency</th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Gross
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap font-semibold text-foreground">
-                      Fee
-                    </th>
-                    <th className="py-2.5 px-3 text-right whitespace-nowrap">
-                      Net
-                    </th>
-                    <th
-                      className="py-2.5 px-3 whitespace-nowrap cursor-pointer hover:text-foreground"
-                      onClick={() => handleSort("processedUtc")}
-                    >
-                      Processed Vietnam{" "}
-                      {sortField === "processedUtc" &&
-                        (sortDir === "asc" ? "▲" : "▼")}
-                    </th>
-                    <th className="py-2.5 px-3 whitespace-nowrap">Reason</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40 font-mono">
-                  {data.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={11}
-                        className="py-8 text-center text-muted-foreground font-sans"
-                      >
-                        {isLoading
-                          ? "Đang tải dữ liệu..."
-                          : "Không có bản ghi nào."}
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.monthLocal}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.sourceRow}
-                        </td>
-                        <td className="py-2 px-3 font-semibold text-foreground text-[11px]">
-                          {r.balanceTransactionId}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground text-[11px]">
-                          {r.payoutId || "—"}
-                        </td>
-                        <td className="py-2 px-3 font-sans">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] py-0 px-1 font-medium"
-                          >
-                            {r.type}
-                          </Badge>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {r.currency}
-                        </td>
-                        <td className="py-2 px-3 text-right">
-                          ${formatMoney(r.gross)}
-                        </td>
-                        <td className="py-2 px-3 text-right font-bold text-sky-600 dark:text-sky-400">
-                          ${formatMoney(r.fee)}
-                        </td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">
-                          ${formatMoney(r.net)}
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground whitespace-nowrap">
-                          {r.processedVietnam}
-                        </td>
-                        <td
-                          className="py-2 px-3 font-sans text-muted-foreground max-w-[150px] truncate"
-                          title={r.reason}
-                        >
-                          {r.reason || "—"}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
+          <div className="overflow-x-auto max-h-[560px] relative border-b border-border/40">
+            <DataTable
+              columns={columns}
+              data={data}
+              keyExtractor={(r, idx) => r.id || `${activeTab}-${idx}`}
+              tableClassName="text-xs border-collapse"
+              headerClassName="bg-muted/70 sticky top-0 z-10 font-medium border-b border-border/60 backdrop-blur-md"
+              rowClassName={() =>
+                "hover:bg-muted/30 transition-colors border-border/40 font-mono"
+              }
+              emptyMessage={
+                <div className="py-12 text-center text-muted-foreground font-sans">
+                  {isLoading ? "Đang tải dữ liệu..." : "Không có bản ghi nào."}
+                </div>
+              }
+            />
           </div>
 
           {/* Pagination Controls */}

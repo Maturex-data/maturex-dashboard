@@ -47,4 +47,5 @@ next-env.d.ts
 .agents
 /scripts/*
 !/scripts/import-etsy-data.mjs
+!/scripts/test-sheet-sync-scheduled.mjs
 /exports

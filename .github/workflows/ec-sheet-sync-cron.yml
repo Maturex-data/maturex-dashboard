@@ -1,0 +1,61 @@
+name: EC Sheet-to-DB Scheduled Sync
+
+on:
+  schedule:
+    # 08:00 ICT (UTC+7) -> 01:00 UTC
+    - cron: '0 1 * * *'
+    # 12:00 ICT (UTC+7) -> 05:00 UTC
+    - cron: '0 5 * * *'
+    # 21:00 ICT (UTC+7) -> 14:00 UTC
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual trigger reason'
+        required: false
+        default: 'Manual test from GitHub Actions'
+
+jobs:
+  sync-ec-sheet:
+    name: Trigger EC Sheet Sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Protected EC Sheet Sync Cron Endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "::error::APP_URL secret is not configured in GitHub Repository Secrets."
+            exit 1
+          fi
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET secret is not configured in GitHub Repository Secrets."
+            exit 1
+          fi
+
+          # Strip trailing slash if present
+          CLEAN_URL="${APP_URL%/}"
+          ENDPOINT="${CLEAN_URL}/api/cron/ec-sheet-sync"
+
+          echo "Triggering EC Sheet sync at: ${ENDPOINT}"
+          echo "Trigger time (UTC): $(date -u)"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${ENDPOINT}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: GitHub-Actions-Scheduler")
+
+          HTTP_BODY=$(echo "$RESPONSE" | sed '$d')
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1)
+
+          echo "HTTP Response Status: ${HTTP_STATUS}"
+          echo "Response Body: ${HTTP_BODY}"
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::error::Sync endpoint returned HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+
+          echo "EC Sheet Sync completed successfully!"

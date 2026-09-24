@@ -2,6 +2,12 @@ import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
+  acquireSheetImportLock,
+  releaseSheetImportLock,
+  updateSheetImportHeartbeat,
+  verifyLockOwnership,
+} from "./lock";
+import {
   parseAdRows,
   parseCogsRows,
   parseOrderRows,
@@ -9,10 +15,14 @@ import {
   validateSheetHeaders,
 } from "./parser";
 import { checkActiveEcDriveSync, fetchRawSheetsData } from "./reader";
-import type {
-  ImportValidationSummary,
-  SheetImportResult,
-  SheetName,
+import {
+  ImportAlreadyRunningError,
+  ImportError,
+  type ImportErrorCategory,
+  type ImportTriggerType,
+  type ImportValidationSummary,
+  type SheetImportResult,
+  type SheetName,
 } from "./types";
 
 const CHUNK_SIZE = 250;
@@ -24,41 +34,132 @@ function computeChecksum(data: unknown): string {
     .digest("hex");
 }
 
+function generateRunId(): string {
+  return `run_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+}
+
+async function runRetentionCleanup(
+  currentRunId: string,
+  previousRunId?: string | null,
+): Promise<void> {
+  try {
+    const keepRunIds = [currentRunId];
+    if (previousRunId && previousRunId !== currentRunId) {
+      keepRunIds.push(previousRunId);
+    }
+
+    // Clean up partial data from failed or incomplete runs older than 10 minutes
+    const staleFailedRuns = await prisma.ecSheetImportRun.findMany({
+      where: {
+        id: { notIn: keepRunIds },
+        status: { in: ["FAILED", "RUNNING"] },
+        startedAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
+      },
+      select: { id: true },
+      take: 20,
+    });
+
+    const staleIds = staleFailedRuns.map((r) => r.id);
+    if (staleIds.length > 0) {
+      await Promise.all([
+        prisma.ecSheetOrder.deleteMany({
+          where: { batchId: { in: staleIds } },
+        }),
+        prisma.ecSheetCogs.deleteMany({ where: { batchId: { in: staleIds } } }),
+        prisma.ecSheetAd.deleteMany({ where: { batchId: { in: staleIds } } }),
+        prisma.ecSheetPayout.deleteMany({
+          where: { batchId: { in: staleIds } },
+        }),
+      ]);
+    }
+
+    // Clean up child rows of older completed runs beyond the 3 most recent
+    const olderCompletedRuns = await prisma.ecSheetImportRun.findMany({
+      where: {
+        id: { notIn: keepRunIds },
+        status: "COMPLETED",
+      },
+      orderBy: { completedAt: "desc" },
+      skip: 2, // Keep 2 more historical completed runs + current + previous rollback
+      select: { id: true },
+      take: 10,
+    });
+
+    const olderIds = olderCompletedRuns.map((r) => r.id);
+    if (olderIds.length > 0) {
+      await Promise.all([
+        prisma.ecSheetOrder.deleteMany({
+          where: { batchId: { in: olderIds } },
+        }),
+        prisma.ecSheetCogs.deleteMany({ where: { batchId: { in: olderIds } } }),
+        prisma.ecSheetAd.deleteMany({ where: { batchId: { in: olderIds } } }),
+        prisma.ecSheetPayout.deleteMany({
+          where: { batchId: { in: olderIds } },
+        }),
+      ]);
+    }
+  } catch (cleanErr) {
+    console.warn("Retention cleanup error (non-fatal):", cleanErr);
+  }
+}
+
 export async function executeSheetImport(options?: {
   actor?: string;
   spreadsheetId?: string;
+  triggerType?: ImportTriggerType;
 }): Promise<SheetImportResult> {
-  // 1. Concurrency check
-  await checkActiveEcDriveSync();
-
+  const startTime = Date.now();
+  const triggerType: ImportTriggerType = options?.triggerType || "MANUAL";
+  const actor =
+    options?.actor || (triggerType === "CRON" ? "System Cron" : "Admin");
+  const runId = generateRunId();
   const startedAt = new Date();
-  const run = await prisma.ecSheetImportRun.create({
-    data: {
-      spreadsheetId: options?.spreadsheetId || "default",
-      status: "RUNNING",
-      actor: options?.actor || "Admin",
-      startedAt,
-      heartbeatAt: startedAt,
-    },
-  });
+
+  // 1. Shared atomic DB-backed lock
+  const lockResult = await acquireSheetImportLock(runId);
+  if (!lockResult.acquired) {
+    throw new ImportAlreadyRunningError(
+      `Một tiến trình đồng bộ khác đang chạy (bắt đầu lúc ${lockResult.lockedAt?.toISOString() || "gần đây"}). Vui lòng đợi hoàn tất.`,
+    );
+  }
+
+  let runCreated = false;
 
   try {
-    // 2. Fetch raw sheet ranges from Google Sheets API
+    // 2. Concurrency check against active upstream /ec-drive-sync
+    await checkActiveEcDriveSync();
+
+    // 3. Create initial import run record
+    await prisma.ecSheetImportRun.create({
+      data: {
+        id: runId,
+        spreadsheetId: options?.spreadsheetId || "default",
+        status: "RUNNING",
+        triggerType,
+        actor,
+        startedAt,
+        heartbeatAt: startedAt,
+      },
+    });
+    runCreated = true;
+
+    // 4. Fetch raw sheet ranges from Google Sheets API
     const rawData = await fetchRawSheetsData(options?.spreadsheetId);
 
-    // Update spreadsheetId if default
+    // Update spreadsheetId and heartbeat
     await prisma.ecSheetImportRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: { spreadsheetId: rawData.spreadsheetId, heartbeatAt: new Date() },
     });
+    await updateSheetImportHeartbeat(runId);
 
-    // 3. Validate headers for all 4 sheets
+    // 5. Validate headers for all 4 sheets
     validateSheetHeaders("Orders", rawData.sheets.Orders.headers);
     validateSheetHeaders("COGS", rawData.sheets.COGS.headers);
     validateSheetHeaders("Ads", rawData.sheets.Ads.headers);
     validateSheetHeaders("Payouts", rawData.sheets.Payouts.headers);
 
-    // 4. Parse rows strictly
+    // 6. Parse rows strictly
     const orders = parseOrderRows(rawData.sheets.Orders.rows);
     const cogs = parseCogsRows(rawData.sheets.COGS.rows);
     const ads = parseAdRows(rawData.sheets.Ads.rows);
@@ -66,7 +167,44 @@ export async function executeSheetImport(options?: {
 
     const totalRows = orders.length + cogs.length + ads.length + payouts.length;
 
-    // 5. Build validation summaries
+    // 7. Compute robust content fingerprints (hashing all normalized data values)
+    const orderChecksum = computeChecksum(
+      orders
+        .map(
+          (r) =>
+            `${r.orderName}|${r.orderDate.toISOString().slice(0, 10)}|${r.grossSales.toFixed(4)}|${r.discounts.toFixed(4)}|${r.shippingCharged.toFixed(4)}|${r.originalTax.toFixed(4)}|${r.correctedNet.toFixed(4)}|${r.refundSnapshot.toFixed(4)}|${r.beforeRefund.toFixed(4)}|${r.source ?? ""}|${r.itemName ?? ""}`,
+        )
+        .join("\n"),
+    );
+
+    const cogsChecksum = computeChecksum(
+      cogs
+        .map(
+          (r) =>
+            `${r.rowKey}|${r.supplier}|${r.costDate.toISOString().slice(0, 10)}|${r.referenceOrderId ?? ""}|${r.itemsName ?? ""}|${r.supplierOrderId ?? ""}|${r.totalCost.toFixed(4)}|${r.estimatedCost.toFixed(4)}|${r.treatment}|${r.source ?? ""}`,
+        )
+        .join("\n"),
+    );
+
+    const adsChecksum = computeChecksum(
+      ads
+        .map(
+          (r) =>
+            `${r.externalId}|${r.date.toISOString().slice(0, 10)}|${r.accountId}|${r.campaignId ?? ""}|${r.campaignName ?? ""}|${r.currency}|${r.spend.toFixed(4)}|${r.granularity}|${r.source ?? ""}`,
+        )
+        .join("\n"),
+    );
+
+    const payoutsChecksum = computeChecksum(
+      payouts
+        .map(
+          (r) =>
+            `${r.balanceTransactionId}|${r.payoutId ?? ""}|${r.type}|${r.currency}|${r.gross.toFixed(4)}|${r.fee.toFixed(4)}|${r.net.toFixed(4)}|${r.processedUtc.toISOString()}|${r.processedVietnam}|${r.reason ?? ""}|${r.sourceId ?? ""}|${r.orderId ?? ""}|${r.source ?? ""}`,
+        )
+        .join("\n"),
+    );
+
+    // 8. Build validation summaries
     const summaries: Record<SheetName, ImportValidationSummary> = {
       Orders: {
         sheet: "Orders",
@@ -87,7 +225,7 @@ export async function executeSheetImport(options?: {
             .reduce((sum, r) => sum.plus(r.originalTax), new Prisma.Decimal(0))
             .toFixed(2),
         },
-        checksum: computeChecksum(orders.map((r) => r.orderName)),
+        checksum: orderChecksum,
       },
       COGS: {
         sheet: "COGS",
@@ -108,7 +246,7 @@ export async function executeSheetImport(options?: {
             )
             .toFixed(2),
         },
-        checksum: computeChecksum(cogs.map((r) => r.rowKey)),
+        checksum: cogsChecksum,
       },
       Ads: {
         sheet: "Ads",
@@ -123,7 +261,7 @@ export async function executeSheetImport(options?: {
             .reduce((sum, r) => sum.plus(r.spend), new Prisma.Decimal(0))
             .toFixed(2),
         },
-        checksum: computeChecksum(ads.map((r) => r.externalId)),
+        checksum: adsChecksum,
       },
       Payouts: {
         sheet: "Payouts",
@@ -144,11 +282,84 @@ export async function executeSheetImport(options?: {
             .reduce((sum, r) => sum.plus(r.net), new Prisma.Decimal(0))
             .toFixed(2),
         },
-        checksum: computeChecksum(payouts.map((r) => r.balanceTransactionId)),
+        checksum: payoutsChecksum,
       },
     };
 
-    // 6. Insert data in bounded chunks
+    // 9. Compare with active snapshot for "NO CHANGE" shortcut
+    const activeSnapshot = await prisma.ecSheetActiveSnapshot.findUnique({
+      where: { id: 1 },
+      include: { activeRun: true },
+    });
+
+    const prevChecksums = activeSnapshot?.activeRun?.checksums as Record<
+      string,
+      string
+    > | null;
+
+    const sameSpreadsheet =
+      activeSnapshot?.activeRun?.spreadsheetId === rawData.spreadsheetId;
+
+    const isUnchanged =
+      sameSpreadsheet &&
+      Boolean(prevChecksums) &&
+      prevChecksums?.Orders === orderChecksum &&
+      prevChecksums?.COGS === cogsChecksum &&
+      prevChecksums?.Ads === adsChecksum &&
+      prevChecksums?.Payouts === payoutsChecksum;
+
+    if (isUnchanged) {
+      const completedAt = new Date();
+      await Promise.all([
+        prisma.ecSheetImportRun.update({
+          where: { id: runId },
+          data: {
+            status: "COMPLETED",
+            completedAt,
+            totalRows,
+            insertedRows: 0,
+            ordersCount: orders.length,
+            cogsCount: cogs.length,
+            adsCount: ads.length,
+            payoutsCount: payouts.length,
+            checksums: {
+              Orders: orderChecksum,
+              COGS: cogsChecksum,
+              Ads: adsChecksum,
+              Payouts: payoutsChecksum,
+            },
+            sheetStats: summaries as unknown as Prisma.InputJsonValue,
+          },
+        }),
+        // Update lastCheckedAt on the active snapshot so UI/API knows the sheet was verified recently
+        prisma.ecSheetActiveSnapshot.update({
+          where: { id: 1 },
+          data: { lastCheckedAt: completedAt },
+        }),
+      ]);
+
+      return {
+        runId,
+        spreadsheetId: rawData.spreadsheetId,
+        status: "NO_CHANGE",
+        triggerType,
+        startedAt,
+        completedAt,
+        totalRows,
+        insertedRows: 0,
+        ordersCount: orders.length,
+        cogsCount: cogs.length,
+        adsCount: ads.length,
+        payoutsCount: payouts.length,
+        summaries,
+        elapsedMs: Date.now() - startTime,
+        message:
+          "Dữ liệu Google Sheet không thay đổi so với bản snapshot đang hoạt động.",
+        isNoChange: true,
+      };
+    }
+
+    // 10. Insert data in bounded chunks with heartbeat update after every batch
     let insertedRows = 0;
 
     // Insert Orders
@@ -156,7 +367,7 @@ export async function executeSheetImport(options?: {
       const chunk = orders.slice(i, i + CHUNK_SIZE);
       const res = await prisma.ecSheetOrder.createMany({
         data: chunk.map((r) => ({
-          batchId: run.id,
+          batchId: runId,
           shop: "EC",
           month: r.month,
           sourceRow: r.sourceRow,
@@ -175,6 +386,7 @@ export async function executeSheetImport(options?: {
         })),
       });
       insertedRows += res.count;
+      await updateSheetImportHeartbeat(runId);
     }
 
     // Insert COGS
@@ -182,7 +394,7 @@ export async function executeSheetImport(options?: {
       const chunk = cogs.slice(i, i + CHUNK_SIZE);
       const res = await prisma.ecSheetCogs.createMany({
         data: chunk.map((r) => ({
-          batchId: run.id,
+          batchId: runId,
           shop: "EC",
           month: r.month,
           sourceRow: r.sourceRow,
@@ -200,6 +412,7 @@ export async function executeSheetImport(options?: {
         })),
       });
       insertedRows += res.count;
+      await updateSheetImportHeartbeat(runId);
     }
 
     // Insert Ads
@@ -207,7 +420,7 @@ export async function executeSheetImport(options?: {
       const chunk = ads.slice(i, i + CHUNK_SIZE);
       const res = await prisma.ecSheetAd.createMany({
         data: chunk.map((r) => ({
-          batchId: run.id,
+          batchId: runId,
           shop: "EC",
           month: r.month,
           sourceRow: r.sourceRow,
@@ -224,6 +437,7 @@ export async function executeSheetImport(options?: {
         })),
       });
       insertedRows += res.count;
+      await updateSheetImportHeartbeat(runId);
     }
 
     // Insert Payouts
@@ -231,7 +445,7 @@ export async function executeSheetImport(options?: {
       const chunk = payouts.slice(i, i + CHUNK_SIZE);
       const res = await prisma.ecSheetPayout.createMany({
         data: chunk.map((r) => ({
-          batchId: run.id,
+          batchId: runId,
           shop: "EC",
           monthLocal: r.monthLocal,
           sourceRow: r.sourceRow,
@@ -253,22 +467,37 @@ export async function executeSheetImport(options?: {
         })),
       });
       insertedRows += res.count;
+      await updateSheetImportHeartbeat(runId);
     }
 
-    // 7. Re-check concurrency before atomic publishing
+    // 11. Re-check concurrency before atomic publishing
     await checkActiveEcDriveSync();
 
-    // 8. Atomic publish snapshot switch
+    // 12. Atomic publish snapshot switch in transaction with ownership check
     const completedAt = new Date();
     await prisma.$transaction(async (tx) => {
+      // Assert lock ownership
+      await verifyLockOwnership(runId, tx);
+
+      // Re-verify upstream sync inside transaction
+      const activeSync = await tx.ecDriveSyncRun.findFirst({
+        where: { status: { in: ["RUNNING", "QUEUED"] } },
+        select: { id: true, source: true },
+      });
+      if (activeSync) {
+        throw new Error(
+          `Một tác vụ EC Drive Sync (${activeSync.source}) vừa được kích hoạt. Hủy publish snapshot để đảm bảo toàn vẹn.`,
+        );
+      }
+
       await tx.ecSheetActiveSnapshot.upsert({
         where: { id: 1 },
-        create: { id: 1, activeRunId: run.id },
-        update: { activeRunId: run.id },
+        create: { id: 1, activeRunId: runId, lastCheckedAt: completedAt },
+        update: { activeRunId: runId, lastCheckedAt: completedAt },
       });
 
       await tx.ecSheetImportRun.update({
-        where: { id: run.id },
+        where: { id: runId },
         data: {
           status: "COMPLETED",
           completedAt,
@@ -279,20 +508,24 @@ export async function executeSheetImport(options?: {
           adsCount: ads.length,
           payoutsCount: payouts.length,
           checksums: {
-            Orders: summaries.Orders.checksum,
-            COGS: summaries.COGS.checksum,
-            Ads: summaries.Ads.checksum,
-            Payouts: summaries.Payouts.checksum,
+            Orders: orderChecksum,
+            COGS: cogsChecksum,
+            Ads: adsChecksum,
+            Payouts: payoutsChecksum,
           },
           sheetStats: summaries as unknown as Prisma.InputJsonValue,
         },
       });
     });
 
+    // 13. Bounded retention cleanup: keep current and previous active runs, purge older
+    await runRetentionCleanup(runId, activeSnapshot?.activeRunId);
+
     return {
-      runId: run.id,
+      runId,
       spreadsheetId: rawData.spreadsheetId,
       status: "COMPLETED",
+      triggerType,
       startedAt,
       completedAt,
       totalRows,
@@ -302,26 +535,40 @@ export async function executeSheetImport(options?: {
       adsCount: ads.length,
       payoutsCount: payouts.length,
       summaries,
+      elapsedMs: Date.now() - startTime,
+      message: `Đồng bộ thành công ${insertedRows.toLocaleString()} dòng từ Google Sheet!`,
     };
   } catch (error) {
+    const errorCategory: ImportErrorCategory =
+      error instanceof ImportError ? error.category : "SYSTEM_ERROR";
+
     const errorMessage =
       error instanceof Error
         ? error.message
         : "Đồng bộ từ Google Sheet thất bại.";
 
-    await prisma.ecSheetImportRun.update({
-      where: { id: run.id },
-      data: {
-        status: "FAILED",
-        completedAt: new Date(),
-        errorMessage,
-        errorDetails: {
-          error: String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        },
-      },
-    });
+    if (runCreated) {
+      await prisma.ecSheetImportRun
+        .update({
+          where: { id: runId },
+          data: {
+            status: "FAILED",
+            completedAt: new Date(),
+            errorCategory,
+            errorMessage,
+            errorDetails: {
+              error: String(error),
+              category: errorCategory,
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+          },
+        })
+        .catch(() => undefined);
+    }
 
     throw error;
+  } finally {
+    // Release the DB-backed lock
+    await releaseSheetImportLock(runId);
   }
 }

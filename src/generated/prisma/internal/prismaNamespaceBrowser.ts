@@ -72,6 +72,7 @@ export const ModelName = {
   EtsyOrderItem: 'EtsyOrderItem',
   EtsyStatement: 'EtsyStatement',
   EcSheetImportRun: 'EcSheetImportRun',
+  EcSheetImportLock: 'EcSheetImportLock',
   EcSheetActiveSnapshot: 'EcSheetActiveSnapshot',
   EcSheetOrder: 'EcSheetOrder',
   EcSheetCogs: 'EcSheetCogs',
@@ -523,6 +524,8 @@ export const EcSheetImportRunScalarFieldEnum = {
   id: 'id',
   spreadsheetId: 'spreadsheetId',
   status: 'status',
+  triggerType: 'triggerType',
+  errorCategory: 'errorCategory',
   startedAt: 'startedAt',
   heartbeatAt: 'heartbeatAt',
   completedAt: 'completedAt',
@@ -542,9 +545,21 @@ export const EcSheetImportRunScalarFieldEnum = {
 export type EcSheetImportRunScalarFieldEnum = (typeof EcSheetImportRunScalarFieldEnum)[keyof typeof EcSheetImportRunScalarFieldEnum]
 
 
+export const EcSheetImportLockScalarFieldEnum = {
+  id: 'id',
+  isLocked: 'isLocked',
+  lockedBy: 'lockedBy',
+  lockedAt: 'lockedAt',
+  heartbeatAt: 'heartbeatAt'
+} as const
+
+export type EcSheetImportLockScalarFieldEnum = (typeof EcSheetImportLockScalarFieldEnum)[keyof typeof EcSheetImportLockScalarFieldEnum]
+
+
 export const EcSheetActiveSnapshotScalarFieldEnum = {
   id: 'id',
   activeRunId: 'activeRunId',
+  lastCheckedAt: 'lastCheckedAt',
   updatedAt: 'updatedAt'
 } as const
 

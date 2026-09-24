@@ -1,4 +1,3 @@
-import { Prisma } from "@/generated/prisma/client";
 import { formatVietnamMonth } from "@/lib/date-time";
 import { prisma } from "@/lib/prisma";
 import type { DashboardSummary } from "./types";
@@ -12,6 +11,30 @@ function getPreviousMonthKey(month: string): string {
 function calculateDiff(curr: number, prev: number): number | null {
   if (prev <= 0) return null;
   return Number((((curr - prev) / prev) * 100).toFixed(1));
+}
+
+interface OrdersMonthSummary {
+  month: string;
+  order_count: number;
+  refund_count: number;
+  gross_sales: number;
+  net_revenue: number;
+  original_tax: number;
+}
+
+interface CogsMonthSummary {
+  month: string;
+  total_cost: number;
+}
+
+interface AdsMonthSummary {
+  month: string;
+  spend: number;
+}
+
+interface PayoutsMonthSummary {
+  month: string;
+  fee: number;
 }
 
 export async function getEcDashboardSummary(
@@ -72,34 +95,54 @@ export async function getEcDashboardSummary(
 
   const batchId = activeSnapshot.activeRunId;
 
-  // 2. Discover available months in this active batch
-  const orderMonths = await prisma.ecSheetOrder.findMany({
-    where: { batchId },
-    distinct: ["month"],
-    select: { month: true },
-  });
-  const cogsMonths = await prisma.ecSheetCogs.findMany({
-    where: { batchId },
-    distinct: ["month"],
-    select: { month: true },
-  });
-  const adMonths = await prisma.ecSheetAd.findMany({
-    where: { batchId },
-    distinct: ["month"],
-    select: { month: true },
-  });
-  const payoutMonths = await prisma.ecSheetPayout.findMany({
-    where: { batchId },
-    distinct: ["monthLocal"],
-    select: { monthLocal: true },
-  });
+  // 2. Query all monthly aggregated metrics in 4 parallel fast SQL queries
+  const [ordersSummary, cogsSummary, adsSummary, payoutsSummary] =
+    await Promise.all([
+      prisma.$queryRaw<OrdersMonthSummary[]>`
+        SELECT
+          month,
+          COUNT(DISTINCT order_name)::int as order_count,
+          COUNT(CASE WHEN refund_snapshot > 0 THEN 1 END)::int as refund_count,
+          COALESCE(SUM(gross_sales), 0)::numeric as gross_sales,
+          COALESCE(SUM(corrected_net - original_tax), 0)::numeric as net_revenue,
+          COALESCE(SUM(original_tax), 0)::numeric as original_tax
+        FROM ec_sheet_orders
+        WHERE batch_id = ${batchId}
+        GROUP BY month
+      `,
+      prisma.$queryRaw<CogsMonthSummary[]>`
+        SELECT
+          month,
+          COALESCE(SUM(total_cost), 0)::numeric as total_cost
+        FROM ec_sheet_cogs
+        WHERE batch_id = ${batchId}
+          AND treatment != 'Loại — chi phí bằng 0'
+        GROUP BY month
+      `,
+      prisma.$queryRaw<AdsMonthSummary[]>`
+        SELECT
+          month,
+          COALESCE(SUM(spend), 0)::numeric as spend
+        FROM ec_sheet_ads
+        WHERE batch_id = ${batchId}
+        GROUP BY month
+      `,
+      prisma.$queryRaw<PayoutsMonthSummary[]>`
+        SELECT
+          month_local as month,
+          COALESCE(SUM(fee), 0)::numeric as fee
+        FROM ec_sheet_payouts
+        WHERE batch_id = ${batchId}
+        GROUP BY month_local
+      `,
+    ]);
 
-  const allMonthsSet = new Set<string>([
-    ...orderMonths.map((m) => m.month),
-    ...cogsMonths.map((m) => m.month),
-    ...adMonths.map((m) => m.month),
-    ...payoutMonths.map((m) => m.monthLocal),
-  ]);
+  // 3. Discover all available months from the summaries
+  const allMonthsSet = new Set<string>();
+  for (const o of ordersSummary) allMonthsSet.add(o.month);
+  for (const c of cogsSummary) allMonthsSet.add(c.month);
+  for (const a of adsSummary) allMonthsSet.add(a.month);
+  for (const p of payoutsSummary) allMonthsSet.add(p.month);
 
   const availableMonths = [...allMonthsSet].filter(Boolean).sort().reverse();
 
@@ -107,10 +150,9 @@ export async function getEcDashboardSummary(
     return emptyFallback;
   }
 
-  // 3. Resolve selected month
+  // 4. Resolve selected month
   let selectedMonth = targetMonth;
   if (!selectedMonth || !allMonthsSet.has(selectedMonth)) {
-    // Default to current Vietnam month if available, else latest available month
     selectedMonth = allMonthsSet.has(currentVietnamMonth)
       ? currentVietnamMonth
       : availableMonths[0];
@@ -119,180 +161,64 @@ export async function getEcDashboardSummary(
   const isProvisional = selectedMonth === currentVietnamMonth;
   const prevMonthKey = getPreviousMonthKey(selectedMonth);
 
-  // 4. Calculate metrics for selected month & previous month
-  // Orders
-  const currentOrders = await prisma.ecSheetOrder.findMany({
-    where: { batchId, month: selectedMonth },
-    select: {
-      orderName: true,
-      orderDate: true,
-      grossSales: true,
-      correctedNet: true,
-      originalTax: true,
-      refundSnapshot: true,
-    },
-  });
+  // 5. Index metrics by month for fast O(1) in-memory lookup
+  const ordersByMonth = new Map(ordersSummary.map((o) => [o.month, o]));
+  const cogsByMonth = new Map(
+    cogsSummary.map((c) => [c.month, Number(c.total_cost)]),
+  );
+  const adsByMonth = new Map(adsSummary.map((a) => [a.month, Number(a.spend)]));
+  const payoutsByMonth = new Map(
+    payoutsSummary.map((p) => [p.month, Number(p.fee)]),
+  );
 
-  const distinctOrderNames = new Set(currentOrders.map((o) => o.orderName));
-  const orderCount = distinctOrderNames.size;
-  const refundCount = currentOrders.filter((o) =>
-    o.refundSnapshot.gt(0),
-  ).length;
+  // Current month stats
+  const currOrder = ordersByMonth.get(selectedMonth);
+  const orderCount = currOrder?.order_count ?? 0;
+  const refundCount = currOrder?.refund_count ?? 0;
   const refundIncidenceRate =
     orderCount > 0 ? Number(((refundCount / orderCount) * 100).toFixed(1)) : 0;
 
-  let grossSalesDec = new Prisma.Decimal(0);
-  let netRevenueDec = new Prisma.Decimal(0);
-  let originalTaxDec = new Prisma.Decimal(0);
-
-  for (const o of currentOrders) {
-    grossSalesDec = grossSalesDec.plus(o.grossSales);
-    originalTaxDec = originalTaxDec.plus(o.originalTax);
-    netRevenueDec = netRevenueDec.plus(o.correctedNet.minus(o.originalTax));
-  }
-
-  const grossSales = Number(grossSalesDec.toFixed(2));
-  const netRevenue = Number(netRevenueDec.toFixed(2));
-  const originalTax = Number(originalTaxDec.toFixed(2));
+  const grossSales = Number(currOrder?.gross_sales ?? 0);
+  const netRevenue = Number(currOrder?.net_revenue ?? 0);
+  const originalTax = Number(currOrder?.original_tax ?? 0);
   const aov = orderCount > 0 ? Number((netRevenue / orderCount).toFixed(2)) : 0;
 
-  // COGS (filter out excluded cost treatment: 'Loại — chi phí bằng 0')
-  const currentCogs = await prisma.ecSheetCogs.findMany({
-    where: {
-      batchId,
-      month: selectedMonth,
-      NOT: { treatment: "Loại — chi phí bằng 0" },
-    },
-    select: { totalCost: true },
-  });
-
-  let cogsDec = new Prisma.Decimal(0);
-  for (const c of currentCogs) {
-    cogsDec = cogsDec.plus(c.totalCost);
-  }
-  const recognizedCogs = Number(cogsDec.toFixed(2));
-
-  // Ads spend
-  const currentAds = await prisma.ecSheetAd.findMany({
-    where: { batchId, month: selectedMonth },
-    select: { spend: true },
-  });
-
-  let adsDec = new Prisma.Decimal(0);
-  for (const a of currentAds) {
-    adsDec = adsDec.plus(a.spend);
-  }
-  const adSpend = Number(adsDec.toFixed(2));
+  const recognizedCogs = cogsByMonth.get(selectedMonth) ?? 0;
+  const adSpend = adsByMonth.get(selectedMonth) ?? 0;
   const mer = adSpend > 0 ? Number((netRevenue / adSpend).toFixed(2)) : null;
 
-  // Gross profit after COGS
   const grossProfit = Number((netRevenue - recognizedCogs).toFixed(2));
   const grossMargin =
     netRevenue > 0 ? Number(((grossProfit / netRevenue) * 100).toFixed(1)) : 0;
 
-  // Payout fee
-  const currentPayouts = await prisma.ecSheetPayout.findMany({
-    where: { batchId, monthLocal: selectedMonth },
-    select: { fee: true },
-  });
+  const payoutFee = payoutsByMonth.get(selectedMonth) ?? 0;
 
-  let payoutFeeDec = new Prisma.Decimal(0);
-  for (const p of currentPayouts) {
-    payoutFeeDec = payoutFeeDec.plus(p.fee);
-  }
-  const payoutFee = Number(payoutFeeDec.toFixed(2));
-
-  // 5. Compare with previous month
-  const prevOrders = await prisma.ecSheetOrder.findMany({
-    where: { batchId, month: prevMonthKey },
-    select: {
-      orderName: true,
-      correctedNet: true,
-      originalTax: true,
-    },
-  });
-
-  const prevOrderCount = new Set(prevOrders.map((o) => o.orderName)).size;
-  let prevNetRevenueDec = new Prisma.Decimal(0);
-  for (const o of prevOrders) {
-    prevNetRevenueDec = prevNetRevenueDec.plus(
-      o.correctedNet.minus(o.originalTax),
-    );
-  }
-  const prevNetRevenue = Number(prevNetRevenueDec.toFixed(2));
-
-  const prevCogs = await prisma.ecSheetCogs.findMany({
-    where: {
-      batchId,
-      month: prevMonthKey,
-      NOT: { treatment: "Loại — chi phí bằng 0" },
-    },
-    select: { totalCost: true },
-  });
-  let prevCogsDec = new Prisma.Decimal(0);
-  for (const c of prevCogs) {
-    prevCogsDec = prevCogsDec.plus(c.totalCost);
-  }
-  const prevCogsTotal = Number(prevCogsDec.toFixed(2));
-
-  const prevAds = await prisma.ecSheetAd.findMany({
-    where: { batchId, month: prevMonthKey },
-    select: { spend: true },
-  });
-  let prevAdsDec = new Prisma.Decimal(0);
-  for (const a of prevAds) {
-    prevAdsDec = prevAdsDec.plus(a.spend);
-  }
-  const prevAdSpend = Number(prevAdsDec.toFixed(2));
+  // Previous month stats
+  const prevOrder = ordersByMonth.get(prevMonthKey);
+  const prevOrderCount = prevOrder?.order_count ?? 0;
+  const prevNetRevenue = Number(prevOrder?.net_revenue ?? 0);
+  const prevCogsTotal = cogsByMonth.get(prevMonthKey) ?? 0;
+  const prevAdSpend = adsByMonth.get(prevMonthKey) ?? 0;
   const prevGrossProfit = Number((prevNetRevenue - prevCogsTotal).toFixed(2));
 
   // 6. Build monthly trend chart series (chronological order)
   const chronologicalMonths = [...availableMonths].reverse();
-  const trendSeries: DashboardSummary["trendSeries"] = [];
+  const trendSeries: DashboardSummary["trendSeries"] = chronologicalMonths.map(
+    (m) => {
+      const ord = ordersByMonth.get(m);
+      const [year, monthNum] = m.split("-");
+      const label = `T${Number.parseInt(monthNum, 10)}/${year.slice(2)}`;
 
-  for (const m of chronologicalMonths) {
-    // Net revenue for month m
-    const mOrders = await prisma.ecSheetOrder.findMany({
-      where: { batchId, month: m },
-      select: { correctedNet: true, originalTax: true },
-    });
-    let mRev = new Prisma.Decimal(0);
-    for (const o of mOrders) {
-      mRev = mRev.plus(o.correctedNet.minus(o.originalTax));
-    }
-
-    // COGS for month m
-    const mCogs = await prisma.ecSheetCogs.findMany({
-      where: { batchId, month: m, NOT: { treatment: "Loại — chi phí bằng 0" } },
-      select: { totalCost: true },
-    });
-    let mCogsSum = new Prisma.Decimal(0);
-    for (const c of mCogs) {
-      mCogsSum = mCogsSum.plus(c.totalCost);
-    }
-
-    // Ads for month m
-    const mAds = await prisma.ecSheetAd.findMany({
-      where: { batchId, month: m },
-      select: { spend: true },
-    });
-    let mAdsSum = new Prisma.Decimal(0);
-    for (const a of mAds) {
-      mAdsSum = mAdsSum.plus(a.spend);
-    }
-
-    const [year, monthNum] = m.split("-");
-    const label = `T${Number.parseInt(monthNum, 10)}/${year.slice(2)}`;
-
-    trendSeries.push({
-      month: m,
-      label,
-      netRevenue: Number(mRev.toFixed(2)),
-      cogs: Number(mCogsSum.toFixed(2)),
-      adSpend: Number(mAdsSum.toFixed(2)),
-      isProvisional: m === currentVietnamMonth,
-    });
-  }
+      return {
+        month: m,
+        label,
+        netRevenue: Number(ord?.net_revenue ?? 0),
+        cogs: cogsByMonth.get(m) ?? 0,
+        adSpend: adsByMonth.get(m) ?? 0,
+        isProvisional: m === currentVietnamMonth,
+      };
+    },
+  );
 
   // 7. Cost mix for selected month
   const totalVariableCost = recognizedCogs + adSpend + payoutFee;

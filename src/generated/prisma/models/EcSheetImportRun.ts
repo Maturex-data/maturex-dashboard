@@ -48,6 +48,8 @@ export type EcSheetImportRunMinAggregateOutputType = {
   id: string | null
   spreadsheetId: string | null
   status: string | null
+  triggerType: string | null
+  errorCategory: string | null
   startedAt: Date | null
   heartbeatAt: Date | null
   completedAt: Date | null
@@ -65,6 +67,8 @@ export type EcSheetImportRunMaxAggregateOutputType = {
   id: string | null
   spreadsheetId: string | null
   status: string | null
+  triggerType: string | null
+  errorCategory: string | null
   startedAt: Date | null
   heartbeatAt: Date | null
   completedAt: Date | null
@@ -82,6 +86,8 @@ export type EcSheetImportRunCountAggregateOutputType = {
   id: number
   spreadsheetId: number
   status: number
+  triggerType: number
+  errorCategory: number
   startedAt: number
   heartbeatAt: number
   completedAt: number
@@ -122,6 +128,8 @@ export type EcSheetImportRunMinAggregateInputType = {
   id?: true
   spreadsheetId?: true
   status?: true
+  triggerType?: true
+  errorCategory?: true
   startedAt?: true
   heartbeatAt?: true
   completedAt?: true
@@ -139,6 +147,8 @@ export type EcSheetImportRunMaxAggregateInputType = {
   id?: true
   spreadsheetId?: true
   status?: true
+  triggerType?: true
+  errorCategory?: true
   startedAt?: true
   heartbeatAt?: true
   completedAt?: true
@@ -156,6 +166,8 @@ export type EcSheetImportRunCountAggregateInputType = {
   id?: true
   spreadsheetId?: true
   status?: true
+  triggerType?: true
+  errorCategory?: true
   startedAt?: true
   heartbeatAt?: true
   completedAt?: true
@@ -263,6 +275,8 @@ export type EcSheetImportRunGroupByOutputType = {
   id: string
   spreadsheetId: string
   status: string
+  triggerType: string
+  errorCategory: string | null
   startedAt: Date
   heartbeatAt: Date
   completedAt: Date | null
@@ -306,6 +320,8 @@ export type EcSheetImportRunWhereInput = {
   id?: Prisma.StringFilter<"EcSheetImportRun"> | string
   spreadsheetId?: Prisma.StringFilter<"EcSheetImportRun"> | string
   status?: Prisma.StringFilter<"EcSheetImportRun"> | string
+  triggerType?: Prisma.StringFilter<"EcSheetImportRun"> | string
+  errorCategory?: Prisma.StringNullableFilter<"EcSheetImportRun"> | string | null
   startedAt?: Prisma.DateTimeFilter<"EcSheetImportRun"> | Date | string
   heartbeatAt?: Prisma.DateTimeFilter<"EcSheetImportRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"EcSheetImportRun"> | Date | string | null
@@ -331,6 +347,8 @@ export type EcSheetImportRunOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  errorCategory?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -359,6 +377,8 @@ export type EcSheetImportRunWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.EcSheetImportRunWhereInput | Prisma.EcSheetImportRunWhereInput[]
   spreadsheetId?: Prisma.StringFilter<"EcSheetImportRun"> | string
   status?: Prisma.StringFilter<"EcSheetImportRun"> | string
+  triggerType?: Prisma.StringFilter<"EcSheetImportRun"> | string
+  errorCategory?: Prisma.StringNullableFilter<"EcSheetImportRun"> | string | null
   startedAt?: Prisma.DateTimeFilter<"EcSheetImportRun"> | Date | string
   heartbeatAt?: Prisma.DateTimeFilter<"EcSheetImportRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"EcSheetImportRun"> | Date | string | null
@@ -384,6 +404,8 @@ export type EcSheetImportRunOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  errorCategory?: Prisma.SortOrderInput | Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -412,6 +434,8 @@ export type EcSheetImportRunScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"EcSheetImportRun"> | string
   spreadsheetId?: Prisma.StringWithAggregatesFilter<"EcSheetImportRun"> | string
   status?: Prisma.StringWithAggregatesFilter<"EcSheetImportRun"> | string
+  triggerType?: Prisma.StringWithAggregatesFilter<"EcSheetImportRun"> | string
+  errorCategory?: Prisma.StringNullableWithAggregatesFilter<"EcSheetImportRun"> | string | null
   startedAt?: Prisma.DateTimeWithAggregatesFilter<"EcSheetImportRun"> | Date | string
   heartbeatAt?: Prisma.DateTimeWithAggregatesFilter<"EcSheetImportRun"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EcSheetImportRun"> | Date | string | null
@@ -432,6 +456,8 @@ export type EcSheetImportRunCreateInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -457,6 +483,8 @@ export type EcSheetImportRunUncheckedCreateInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -482,6 +510,8 @@ export type EcSheetImportRunUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -507,6 +537,8 @@ export type EcSheetImportRunUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -532,6 +564,8 @@ export type EcSheetImportRunCreateManyInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -552,6 +586,8 @@ export type EcSheetImportRunUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -572,6 +608,8 @@ export type EcSheetImportRunUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -592,6 +630,8 @@ export type EcSheetImportRunCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  errorCategory?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -621,6 +661,8 @@ export type EcSheetImportRunMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  errorCategory?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -638,6 +680,8 @@ export type EcSheetImportRunMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   spreadsheetId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  triggerType?: Prisma.SortOrder
+  errorCategory?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   heartbeatAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -739,6 +783,8 @@ export type EcSheetImportRunCreateWithoutSnapshotsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -763,6 +809,8 @@ export type EcSheetImportRunUncheckedCreateWithoutSnapshotsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -803,6 +851,8 @@ export type EcSheetImportRunUpdateWithoutSnapshotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -827,6 +877,8 @@ export type EcSheetImportRunUncheckedUpdateWithoutSnapshotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -851,6 +903,8 @@ export type EcSheetImportRunCreateWithoutOrdersInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -875,6 +929,8 @@ export type EcSheetImportRunUncheckedCreateWithoutOrdersInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -915,6 +971,8 @@ export type EcSheetImportRunUpdateWithoutOrdersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -939,6 +997,8 @@ export type EcSheetImportRunUncheckedUpdateWithoutOrdersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -963,6 +1023,8 @@ export type EcSheetImportRunCreateWithoutCogsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -987,6 +1049,8 @@ export type EcSheetImportRunUncheckedCreateWithoutCogsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -1027,6 +1091,8 @@ export type EcSheetImportRunUpdateWithoutCogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1051,6 +1117,8 @@ export type EcSheetImportRunUncheckedUpdateWithoutCogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1075,6 +1143,8 @@ export type EcSheetImportRunCreateWithoutAdsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -1099,6 +1169,8 @@ export type EcSheetImportRunUncheckedCreateWithoutAdsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -1139,6 +1211,8 @@ export type EcSheetImportRunUpdateWithoutAdsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1163,6 +1237,8 @@ export type EcSheetImportRunUncheckedUpdateWithoutAdsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1187,6 +1263,8 @@ export type EcSheetImportRunCreateWithoutPayoutsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -1211,6 +1289,8 @@ export type EcSheetImportRunUncheckedCreateWithoutPayoutsInput = {
   id?: string
   spreadsheetId: string
   status?: string
+  triggerType?: string
+  errorCategory?: string | null
   startedAt?: Date | string
   heartbeatAt?: Date | string
   completedAt?: Date | string | null
@@ -1251,6 +1331,8 @@ export type EcSheetImportRunUpdateWithoutPayoutsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1275,6 +1357,8 @@ export type EcSheetImportRunUncheckedUpdateWithoutPayoutsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   spreadsheetId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  triggerType?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCategory?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heartbeatAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1366,6 +1450,8 @@ export type EcSheetImportRunSelect<ExtArgs extends runtime.Types.Extensions.Inte
   id?: boolean
   spreadsheetId?: boolean
   status?: boolean
+  triggerType?: boolean
+  errorCategory?: boolean
   startedAt?: boolean
   heartbeatAt?: boolean
   completedAt?: boolean
@@ -1392,6 +1478,8 @@ export type EcSheetImportRunSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   spreadsheetId?: boolean
   status?: boolean
+  triggerType?: boolean
+  errorCategory?: boolean
   startedAt?: boolean
   heartbeatAt?: boolean
   completedAt?: boolean
@@ -1412,6 +1500,8 @@ export type EcSheetImportRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   spreadsheetId?: boolean
   status?: boolean
+  triggerType?: boolean
+  errorCategory?: boolean
   startedAt?: boolean
   heartbeatAt?: boolean
   completedAt?: boolean
@@ -1432,6 +1522,8 @@ export type EcSheetImportRunSelectScalar = {
   id?: boolean
   spreadsheetId?: boolean
   status?: boolean
+  triggerType?: boolean
+  errorCategory?: boolean
   startedAt?: boolean
   heartbeatAt?: boolean
   completedAt?: boolean
@@ -1448,7 +1540,7 @@ export type EcSheetImportRunSelectScalar = {
   actor?: boolean
 }
 
-export type EcSheetImportRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "spreadsheetId" | "status" | "startedAt" | "heartbeatAt" | "completedAt" | "totalRows" | "insertedRows" | "ordersCount" | "cogsCount" | "adsCount" | "payoutsCount" | "checksums" | "sheetStats" | "errorMessage" | "errorDetails" | "actor", ExtArgs["result"]["ecSheetImportRun"]>
+export type EcSheetImportRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "spreadsheetId" | "status" | "triggerType" | "errorCategory" | "startedAt" | "heartbeatAt" | "completedAt" | "totalRows" | "insertedRows" | "ordersCount" | "cogsCount" | "adsCount" | "payoutsCount" | "checksums" | "sheetStats" | "errorMessage" | "errorDetails" | "actor", ExtArgs["result"]["ecSheetImportRun"]>
 export type EcSheetImportRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orders?: boolean | Prisma.EcSheetImportRun$ordersArgs<ExtArgs>
   cogs?: boolean | Prisma.EcSheetImportRun$cogsArgs<ExtArgs>
@@ -1473,6 +1565,8 @@ export type $EcSheetImportRunPayload<ExtArgs extends runtime.Types.Extensions.In
     id: string
     spreadsheetId: string
     status: string
+    triggerType: string
+    errorCategory: string | null
     startedAt: Date
     heartbeatAt: Date
     completedAt: Date | null
@@ -1918,6 +2012,8 @@ export interface EcSheetImportRunFieldRefs {
   readonly id: Prisma.FieldRef<"EcSheetImportRun", 'String'>
   readonly spreadsheetId: Prisma.FieldRef<"EcSheetImportRun", 'String'>
   readonly status: Prisma.FieldRef<"EcSheetImportRun", 'String'>
+  readonly triggerType: Prisma.FieldRef<"EcSheetImportRun", 'String'>
+  readonly errorCategory: Prisma.FieldRef<"EcSheetImportRun", 'String'>
   readonly startedAt: Prisma.FieldRef<"EcSheetImportRun", 'DateTime'>
   readonly heartbeatAt: Prisma.FieldRef<"EcSheetImportRun", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"EcSheetImportRun", 'DateTime'>

@@ -6,6 +6,7 @@ import {
   type ParsedOrderRow,
   type ParsedPayoutRow,
   type SheetName,
+  SheetValidationError,
 } from "./types";
 
 /**
@@ -28,8 +29,8 @@ export function parseDecimal(
 
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new Error(
-        `Non-finite numeric value at ${context.sheet} row ${context.row} col "${context.colName}": ${value}`,
+      throw new SheetValidationError(
+        `Giá trị số không hợp lệ tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}": ${value}`,
       );
     }
     return new Prisma.Decimal(value);
@@ -79,16 +80,14 @@ export function parseDecimal(
       str = str.replace(/,/g, "");
     } else {
       // Single comma: e.g. "45,99" or "105,93" -> decimal separator
-      // Or "1,000" if 3 digits and integer?
-      // In monetary columns of this sheet, "45,99" is standard European/Vietnamese decimal.
       str = str.replace(",", ".");
     }
   }
 
   // Validate pure decimal format
   if (!/^\d+(\.\d+)?$/.test(str)) {
-    throw new Error(
-      `Unparseable decimal "${rawStr}" at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Không thể đọc giá trị tiền tệ "${rawStr}" tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
 
@@ -96,8 +95,8 @@ export function parseDecimal(
     const dec = new Prisma.Decimal(str);
     return isNegative ? dec.negated() : dec;
   } catch {
-    throw new Error(
-      `Invalid decimal conversion "${rawStr}" at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Lỗi chuyển đổi tiền tệ "${rawStr}" tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
 }
@@ -114,8 +113,8 @@ export function parseRequiredString(
 ): string {
   const s = parseString(value);
   if (!s) {
-    throw new Error(
-      `Missing required string at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Thiếu giá trị bắt buộc tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
   return s;
@@ -129,8 +128,8 @@ export function parseInteger(
   const s = parseRequiredString(value, context).replace(/,/g, "");
   const num = Number.parseInt(s, 10);
   if (!Number.isFinite(num)) {
-    throw new Error(
-      `Invalid integer "${value}" at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Giá trị số nguyên không hợp lệ "${value}" tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
   return num;
@@ -168,8 +167,8 @@ export function parseDateOnly(
 
   const parsed = new Date(s);
   if (Number.isNaN(parsed.getTime())) {
-    throw new Error(
-      `Invalid date format "${s}" at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Định dạng ngày không hợp lệ "${s}" tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
   return new Date(
@@ -194,8 +193,8 @@ export function parseUtcTimestamp(
     // Try standard Date parsing
     const standard = new Date(s);
     if (!Number.isNaN(standard.getTime())) return standard;
-    throw new Error(
-      `Invalid UTC timestamp "${s}" at ${context.sheet} row ${context.row} col "${context.colName}"`,
+    throw new SheetValidationError(
+      `Định dạng timestamp UTC không hợp lệ "${s}" tại sheet ${context.sheet} dòng ${context.row} cột "${context.colName}"`,
     );
   }
   return parsed;
@@ -207,8 +206,8 @@ export function validateSheetHeaders(
 ): void {
   const expected = EXPECTED_SHEET_HEADERS[sheetName];
   if (!actualHeaders || actualHeaders.length < expected.length) {
-    throw new Error(
-      `Header mismatch for ${sheetName}: expected at least ${expected.length} columns, got ${actualHeaders?.length ?? 0}`,
+    throw new SheetValidationError(
+      `Cấu trúc header sheet ${sheetName} không khớp: yêu cầu tối thiểu ${expected.length} cột, nhận được ${actualHeaders?.length ?? 0}`,
     );
   }
 
@@ -216,8 +215,8 @@ export function validateSheetHeaders(
     const act = String(actualHeaders[i] ?? "").trim();
     const exp = expected[i];
     if (act.toLowerCase() !== exp.toLowerCase()) {
-      throw new Error(
-        `Header mismatch for ${sheetName} at column ${i + 1}: expected "${exp}", got "${act}"`,
+      throw new SheetValidationError(
+        `Cấu trúc header sheet ${sheetName} tại cột ${i + 1} không khớp: yêu cầu "${exp}", nhận được "${act}"`,
       );
     }
   }
@@ -248,8 +247,8 @@ export function parseOrderRows(rows: unknown[][]): ParsedOrderRow[] {
     const orderName = parseRequiredString(row[2], ctx("Order"));
 
     if (seenKeys.has(orderName)) {
-      throw new Error(
-        `Duplicate order key "${orderName}" found at Orders row ${rowNumber}`,
+      throw new SheetValidationError(
+        `Trùng lặp khóa đơn hàng "${orderName}" tại Orders dòng ${rowNumber}`,
       );
     }
     seenKeys.add(orderName);
@@ -318,8 +317,8 @@ export function parseCogsRows(rows: unknown[][]): ParsedCogsRow[] {
     const rowKey = parseRequiredString(row[9], ctx("Row key"));
 
     if (seenKeys.has(rowKey)) {
-      throw new Error(
-        `Duplicate row key "${rowKey}" found at COGS row ${rowNumber}`,
+      throw new SheetValidationError(
+        `Trùng lặp khóa chi phí "${rowKey}" tại COGS dòng ${rowNumber}`,
       );
     }
     seenKeys.add(rowKey);
@@ -372,8 +371,8 @@ export function parseAdRows(rows: unknown[][]): ParsedAdRow[] {
     const externalId = parseRequiredString(row[2], ctx("ID"));
 
     if (seenKeys.has(externalId)) {
-      throw new Error(
-        `Duplicate external ID "${externalId}" found at Ads row ${rowNumber}`,
+      throw new SheetValidationError(
+        `Trùng lặp khóa quảng cáo "${externalId}" tại Ads dòng ${rowNumber}`,
       );
     }
     seenKeys.add(externalId);
@@ -434,8 +433,8 @@ export function parsePayoutRows(rows: unknown[][]): ParsedPayoutRow[] {
     );
 
     if (seenKeys.has(balanceTransactionId)) {
-      throw new Error(
-        `Duplicate balance transaction ID "${balanceTransactionId}" found at Payouts row ${rowNumber}`,
+      throw new SheetValidationError(
+        `Trùng lặp khóa balance transaction "${balanceTransactionId}" tại Payouts dòng ${rowNumber}`,
       );
     }
     seenKeys.add(balanceTransactionId);
