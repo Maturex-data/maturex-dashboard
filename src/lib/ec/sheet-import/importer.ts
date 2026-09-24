@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
+import { REPORT_SPREADSHEET_ID } from "@/lib/ec-drive";
 import { prisma } from "@/lib/prisma";
 import {
   acquireSheetImportLock,
@@ -14,15 +15,21 @@ import {
   parsePayoutRows,
   validateSheetHeaders,
 } from "./parser";
-import { checkActiveEcDriveSync, fetchRawSheetsData } from "./reader";
+import {
+  checkActiveEcDriveSync,
+  fetchRawSheetsData,
+  fetchSpreadsheetMetadata,
+} from "./reader";
 import {
   ImportAlreadyRunningError,
   ImportError,
   type ImportErrorCategory,
   type ImportTriggerType,
   type ImportValidationSummary,
+  type SheetImportOptions,
   type SheetImportResult,
   type SheetName,
+  type SpreadsheetMetadata,
 } from "./types";
 
 const CHUNK_SIZE = 250;
@@ -103,11 +110,9 @@ async function runRetentionCleanup(
   }
 }
 
-export async function executeSheetImport(options?: {
-  actor?: string;
-  spreadsheetId?: string;
-  triggerType?: ImportTriggerType;
-}): Promise<SheetImportResult> {
+export async function executeSheetImport(
+  options?: SheetImportOptions,
+): Promise<SheetImportResult> {
   const startTime = Date.now();
   const triggerType: ImportTriggerType = options?.triggerType || "MANUAL";
   const actor =
@@ -142,6 +147,95 @@ export async function executeSheetImport(options?: {
       },
     });
     runCreated = true;
+
+    // 3.5. Fast Metadata Probe (Zero-Payload check via Google Drive API)
+    const targetSpreadsheetId = options?.spreadsheetId || REPORT_SPREADSHEET_ID;
+    let driveMeta: SpreadsheetMetadata | null = null;
+
+    if (!options?.forceRefresh) {
+      try {
+        driveMeta = await fetchSpreadsheetMetadata(targetSpreadsheetId);
+
+        const activeSnapshot = await prisma.ecSheetActiveSnapshot.findUnique({
+          where: { id: 1 },
+          include: { activeRun: true },
+        });
+
+        const activeRun = activeSnapshot?.activeRun;
+        const prevStats = activeRun?.sheetStats as Record<
+          string,
+          unknown
+        > | null;
+        const prevModifiedTime = prevStats?._driveModifiedTime as
+          | string
+          | undefined;
+
+        if (
+          activeRun &&
+          activeRun.spreadsheetId === targetSpreadsheetId &&
+          activeRun.status === "COMPLETED" &&
+          prevModifiedTime &&
+          driveMeta?.modifiedTime &&
+          prevModifiedTime === driveMeta.modifiedTime
+        ) {
+          const completedAt = new Date();
+
+          await Promise.all([
+            prisma.ecSheetImportRun.update({
+              where: { id: runId },
+              data: {
+                status: "COMPLETED",
+                completedAt,
+                spreadsheetId: targetSpreadsheetId,
+                totalRows: activeRun.totalRows,
+                insertedRows: 0,
+                ordersCount: activeRun.ordersCount,
+                cogsCount: activeRun.cogsCount,
+                adsCount: activeRun.adsCount,
+                payoutsCount: activeRun.payoutsCount,
+                checksums: activeRun.checksums as Prisma.InputJsonValue,
+                sheetStats: activeRun.sheetStats as Prisma.InputJsonValue,
+              },
+            }),
+            prisma.ecSheetActiveSnapshot.update({
+              where: { id: 1 },
+              data: { lastCheckedAt: completedAt },
+            }),
+          ]);
+
+          const elapsedMs = Date.now() - startTime;
+          return {
+            runId,
+            spreadsheetId: targetSpreadsheetId,
+            status: "NO_CHANGE",
+            triggerType,
+            startedAt,
+            completedAt,
+            totalRows: activeRun.totalRows,
+            insertedRows: 0,
+            ordersCount: activeRun.ordersCount,
+            cogsCount: activeRun.cogsCount,
+            adsCount: activeRun.adsCount,
+            payoutsCount: activeRun.payoutsCount,
+            summaries:
+              (activeRun.sheetStats as unknown as Record<
+                SheetName,
+                ImportValidationSummary
+              >) || {},
+            elapsedMs,
+            isNoChange: true,
+            driveModifiedTime: driveMeta.modifiedTime,
+            fastChecked: true,
+            message: `Không có thay đổi trên Google Sheet (lần sửa gần nhất: ${new Date(driveMeta.modifiedTime).toLocaleString("vi-VN")}) - Fast Check hoàn tất trong ${elapsedMs}ms!`,
+          };
+        }
+      } catch (probeErr) {
+        console.warn(
+          "[EC Sheet Import] Drive metadata probe error (gracefully falling back to full fetch):",
+          probeErr,
+        );
+      }
+    }
 
     // 4. Fetch raw sheet ranges from Google Sheets API
     const rawData = await fetchRawSheetsData(options?.spreadsheetId);
@@ -308,6 +402,12 @@ export async function executeSheetImport(options?: {
       prevChecksums?.Ads === adsChecksum &&
       prevChecksums?.Payouts === payoutsChecksum;
 
+    const enrichedSummaries = {
+      ...summaries,
+      _driveModifiedTime: driveMeta?.modifiedTime ?? null,
+      _driveVersion: driveMeta?.version ?? null,
+    };
+
     if (isUnchanged) {
       const completedAt = new Date();
       await Promise.all([
@@ -328,7 +428,7 @@ export async function executeSheetImport(options?: {
               Ads: adsChecksum,
               Payouts: payoutsChecksum,
             },
-            sheetStats: summaries as unknown as Prisma.InputJsonValue,
+            sheetStats: enrichedSummaries as unknown as Prisma.InputJsonValue,
           },
         }),
         // Update lastCheckedAt on the active snapshot so UI/API knows the sheet was verified recently
@@ -356,6 +456,8 @@ export async function executeSheetImport(options?: {
         message:
           "Dữ liệu Google Sheet không thay đổi so với bản snapshot đang hoạt động.",
         isNoChange: true,
+        driveModifiedTime: driveMeta?.modifiedTime,
+        fastChecked: false,
       };
     }
 
@@ -513,7 +615,7 @@ export async function executeSheetImport(options?: {
             Ads: adsChecksum,
             Payouts: payoutsChecksum,
           },
-          sheetStats: summaries as unknown as Prisma.InputJsonValue,
+          sheetStats: enrichedSummaries as unknown as Prisma.InputJsonValue,
         },
       });
     });
@@ -536,6 +638,8 @@ export async function executeSheetImport(options?: {
       payoutsCount: payouts.length,
       summaries,
       elapsedMs: Date.now() - startTime,
+      driveModifiedTime: driveMeta?.modifiedTime,
+      fastChecked: false,
       message: `Đồng bộ thành công ${insertedRows.toLocaleString()} dòng từ Google Sheet!`,
     };
   } catch (error) {

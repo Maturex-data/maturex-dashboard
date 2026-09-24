@@ -231,6 +231,21 @@ export interface ImportValidationSummary {
   checksum: string;
 }
 
+export interface SpreadsheetMetadata {
+  id: string;
+  name: string;
+  modifiedTime?: string;
+  version?: string;
+  size?: string;
+}
+
+export interface SheetImportOptions {
+  actor?: string;
+  spreadsheetId?: string;
+  triggerType?: ImportTriggerType;
+  forceRefresh?: boolean;
+}
+
 export interface SheetImportResult {
   runId: string;
   spreadsheetId: string;
@@ -248,6 +263,8 @@ export interface SheetImportResult {
   elapsedMs: number;
   message?: string;
   isNoChange?: boolean;
+  driveModifiedTime?: string;
+  fastChecked?: boolean;
   errorMessage?: string;
   errorCategory?: ImportErrorCategory;
 }
