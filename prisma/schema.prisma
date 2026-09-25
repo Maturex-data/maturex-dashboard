@@ -627,3 +627,197 @@ model EcSheetPayout {
   @@index([batchId, processedUtc])
   @@map("ec_sheet_payouts")
 }
+
+// ==============================================================================
+// Microm Projection and Sync Models
+// ==============================================================================
+
+model MicromSourceSyncRun {
+  id                 String    @id @default(cuid())
+  status             String    @default("RUNNING") @db.VarChar(20)
+  triggerType        String    @default("MANUAL") @map("trigger_type") @db.VarChar(20)
+  startedAt          DateTime  @default(now()) @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  windowStart        DateTime? @map("window_start")
+  windowEnd          DateTime? @map("window_end")
+  sources            Json?
+  perTabFingerprints Json?     @map("per_tab_fingerprints")
+  isReconciled       Boolean   @default(false) @map("is_reconciled")
+  errorMessage       String?   @map("error_message") @db.Text
+  errorDetails       Json?     @map("error_details")
+  actor              String?   @db.VarChar(100)
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  @@index([startedAt])
+  @@index([status])
+  @@index([triggerType])
+  @@map("microm_source_sync_runs")
+}
+
+model MicromSheetImportRun {
+  id                      String                     @id @default(cuid())
+  spreadsheetId           String                     @map("spreadsheet_id") @db.VarChar(100)
+  status                  String                     @default("RUNNING") @db.VarChar(20)
+  triggerType             String                     @default("MANUAL") @map("trigger_type") @db.VarChar(20)
+  errorCategory           String?                    @map("error_category") @db.VarChar(50)
+  startedAt               DateTime                   @default(now()) @map("started_at")
+  heartbeatAt             DateTime                   @default(now()) @map("heartbeat_at")
+  completedAt             DateTime?                  @map("completed_at")
+  totalRows               Int                        @default(0) @map("total_rows")
+  insertedRows            Int                        @default(0) @map("inserted_rows")
+  ordersCount             Int                        @default(0) @map("orders_count")
+  cogsCount               Int                        @default(0) @map("cogs_count")
+  adsCount                Int                        @default(0) @map("ads_count")
+  itemsCount              Int                        @default(0) @map("items_count")
+  checksums               Json?
+  sheetStats              Json?                      @map("sheet_stats")
+  sourceSyncRunId         String?                    @map("source_sync_run_id") @db.VarChar(50)
+  providerReconciled      Boolean                    @default(false) @map("provider_reconciled")
+  manualEditAcknowledged  Boolean                    @default(false) @map("manual_edit_acknowledged")
+  acknowledgementReason   String?                    @map("acknowledgement_reason") @db.Text
+  errorMessage            String?                    @map("error_message") @db.Text
+  errorDetails            Json?                      @map("error_details")
+  actor                   String?                    @db.VarChar(100)
+  orders                  MicromSheetOrder[]
+  cogs                    MicromSheetCogs[]
+  ads                     MicromSheetAd[]
+  items                   MicromSheetShopifyItem[]
+  snapshots               MicromSheetActiveSnapshot[]
+
+  @@index([startedAt])
+  @@index([status])
+  @@index([triggerType])
+  @@map("microm_sheet_import_runs")
+}
+
+model MicromSheetImportLock {
+  id          Int       @id @default(1)
+  isLocked    Boolean   @default(false) @map("is_locked")
+  lockedBy    String?   @map("locked_by") @db.VarChar(100)
+  lockedAt    DateTime? @map("locked_at")
+  heartbeatAt DateTime? @map("heartbeat_at")
+
+  @@map("microm_sheet_import_locks")
+}
+
+model MicromSheetActiveSnapshot {
+  id            Int                  @id @default(1)
+  activeRunId   String               @map("active_run_id")
+  activeRun     MicromSheetImportRun @relation(fields: [activeRunId], references: [id], onDelete: Cascade)
+  lastCheckedAt DateTime             @default(now()) @map("last_checked_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@map("microm_sheet_active_snapshots")
+}
+
+model MicromSheetOrder {
+  id                     String               @id @default(cuid())
+  batchId                String               @map("batch_id")
+  batch                  MicromSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceRow              Int                  @map("source_row")
+  orderId                String               @map("order_id") @db.VarChar(100)
+  shopifyId              String               @map("shopify_id") @db.VarChar(100)
+  orderDate              DateTime             @map("order_date") @db.Date
+  period                 String               @db.VarChar(7)
+  financialStatus        String               @map("financial_status") @db.VarChar(50)
+  fulfillmentStatus      String?              @map("fulfillment_status") @db.VarChar(50)
+  currency               String               @default("EUR") @db.VarChar(10)
+  subtotal               Decimal              @db.Decimal(18, 4)
+  discount               Decimal              @db.Decimal(18, 4)
+  shipping               Decimal              @db.Decimal(18, 4)
+  tax                    Decimal              @db.Decimal(18, 4)
+  grossOrder             Decimal              @map("gross_order") @db.Decimal(18, 4)
+  eligibleRevenueEur     Decimal              @map("eligible_revenue_eur") @db.Decimal(18, 4)
+  fxRate                 Decimal              @default(1.15) @map("fx_rate") @db.Decimal(8, 4)
+  eligibleRevenueUsdCalc Decimal              @map("eligible_revenue_usd_calc") @db.Decimal(18, 4)
+  grossOrderUsdCalc      Decimal              @map("gross_order_usd_calc") @db.Decimal(18, 4)
+  sourceLine             String?              @map("source_line") @db.Text
+  rawValues              Json                 @map("raw_values")
+  createdAt              DateTime             @default(now()) @map("created_at")
+
+  @@unique([batchId, shopifyId])
+  @@index([batchId, period])
+  @@index([batchId, orderDate])
+  @@index([batchId, orderId])
+  @@map("microm_sheet_orders")
+}
+
+model MicromSheetCogs {
+  id              String               @id @default(cuid())
+  batchId         String               @map("batch_id")
+  batch           MicromSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceRow       Int                  @map("source_row")
+  pgprintOrderId  String               @map("pgprint_order_id") @db.VarChar(100)
+  pgcOrderId      String?              @map("pgc_order_id") @db.VarChar(100)
+  customerOrderId String?              @map("customer_order_id") @db.VarChar(100)
+  costDate        DateTime             @map("cost_date") @db.Date
+  period          String               @db.VarChar(7)
+  sourceStatus    String?              @map("source_status") @db.VarChar(50)
+  currency        String               @default("USD") @db.VarChar(10)
+  production      Decimal              @db.Decimal(18, 4)
+  shipping        Decimal              @db.Decimal(18, 4)
+  cogsSourceUsd   Decimal              @map("cogs_source_usd") @db.Decimal(18, 4)
+  eligibleCogsUsd Decimal              @map("eligible_cogs_usd") @db.Decimal(18, 4)
+  sourceLine      String?              @map("source_line") @db.Text
+  controlNote     String?              @map("control_note") @db.Text
+  rowKey          String               @map("row_key") @db.VarChar(200)
+  rawValues       Json                 @map("raw_values")
+  createdAt       DateTime             @default(now()) @map("created_at")
+
+  @@unique([batchId, rowKey])
+  @@index([batchId, period])
+  @@index([batchId, costDate])
+  @@index([batchId, customerOrderId])
+  @@map("microm_sheet_cogs")
+}
+
+model MicromSheetAd {
+  id          String               @id @default(cuid())
+  batchId     String               @map("batch_id")
+  batch       MicromSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceRow   Int                  @map("source_row")
+  accountName String               @map("account_name") @db.VarChar(100)
+  accountId   String               @map("account_id") @db.VarChar(100)
+  date        DateTime             @db.Date
+  period      String               @db.VarChar(7)
+  currency    String               @default("USD") @db.VarChar(10)
+  spendUsd    Decimal              @map("spend_usd") @db.Decimal(18, 4)
+  impressions Int                  @default(0)
+  clicks      Int                  @default(0)
+  purchases   Int                  @default(0)
+  sourceLine  String?              @map("source_line") @db.Text
+  controlNote String?              @map("control_note") @db.Text
+  rowKey      String               @map("row_key") @db.VarChar(200)
+  rawValues   Json                 @map("raw_values")
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  @@unique([batchId, rowKey])
+  @@index([batchId, period])
+  @@index([batchId, accountId, date])
+  @@map("microm_sheet_ads")
+}
+
+model MicromSheetShopifyItem {
+  id          String               @id @default(cuid())
+  batchId     String               @map("batch_id")
+  batch       MicromSheetImportRun @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceRow   Int                  @map("source_row")
+  orderId     String               @map("order_id") @db.VarChar(100)
+  period      String?              @db.VarChar(7)
+  orderDate   DateTime?            @map("order_date") @db.Date
+  lineItemId  String               @map("line_item_id") @db.VarChar(100)
+  productName String               @map("product_name") @db.Text
+  sku         String?              @db.VarChar(100)
+  quantity    Int                  @default(1)
+  lineTotal   Decimal              @map("line_total") @db.Decimal(18, 4)
+  currency    String               @default("EUR") @db.VarChar(10)
+  fulfillment String?              @db.VarChar(50)
+  sourceLine  String?              @map("source_line") @db.Text
+  rawValues   Json                 @map("raw_values")
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  @@unique([batchId, lineItemId])
+  @@index([batchId, orderId])
+  @@index([batchId, period])
+  @@map("microm_sheet_shopify_items")
+}

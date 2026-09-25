@@ -8,7 +8,7 @@ export async function proxy(req: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
-    pathname === "/api/cron/ec-sheet-sync" ||
+    pathname.startsWith("/api/cron/") ||
     pathname === "/api/ec/sheet-import/cron" ||
     pathname.startsWith("/favicon.ico") ||
     pathname.includes(".")
