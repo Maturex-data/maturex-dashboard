@@ -1,5 +1,13 @@
+import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import ws from "ws";
 import { PrismaClient } from "@/generated/prisma/client";
+
+// Ensure Node.js environments (GitHub Actions, CLI scripts, Server Components)
+// use the robust 'ws' WebSocket constructor for Neon serverless database connections
+if (typeof WebSocket === "undefined" || !neonConfig.webSocketConstructor) {
+  neonConfig.webSocketConstructor = ws;
+}
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -17,7 +25,12 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+// In development, ensure any cached global instance has the latest generated models
+const existingPrisma = globalForPrisma.prisma;
+export const prisma =
+  existingPrisma && "micromSheetActiveSnapshot" in existingPrisma
+    ? existingPrisma
+    : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

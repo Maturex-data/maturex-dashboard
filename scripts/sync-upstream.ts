@@ -1,3 +1,8 @@
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+neonConfig.webSocketConstructor = ws;
+
 import { createHash } from "node:crypto";
 import { fetchCogsFromSourceApis } from "@/lib/cogs-sync";
 import { formatVietnamDate, formatVietnamDateTime } from "@/lib/date-time";

@@ -68,7 +68,18 @@ const deals = [
   },
 ];
 
-export default function Page() {
+import { redirect } from "next/navigation";
+
+interface DashboardPageProps {
+  searchParams?: Promise<{ team?: string }>;
+}
+
+export default async function Page({ searchParams }: DashboardPageProps) {
+  const params = searchParams ? await searchParams : {};
+  if (params.team === "microm") {
+    redirect("/microm");
+  }
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

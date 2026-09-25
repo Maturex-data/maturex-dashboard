@@ -176,3 +176,43 @@ export type EcSheetAd = Prisma.EcSheetAdModel
  *
  */
 export type EcSheetPayout = Prisma.EcSheetPayoutModel
+/**
+ * Model MicromSourceSyncRun
+ *
+ */
+export type MicromSourceSyncRun = Prisma.MicromSourceSyncRunModel
+/**
+ * Model MicromSheetImportRun
+ *
+ */
+export type MicromSheetImportRun = Prisma.MicromSheetImportRunModel
+/**
+ * Model MicromSheetImportLock
+ *
+ */
+export type MicromSheetImportLock = Prisma.MicromSheetImportLockModel
+/**
+ * Model MicromSheetActiveSnapshot
+ *
+ */
+export type MicromSheetActiveSnapshot = Prisma.MicromSheetActiveSnapshotModel
+/**
+ * Model MicromSheetOrder
+ *
+ */
+export type MicromSheetOrder = Prisma.MicromSheetOrderModel
+/**
+ * Model MicromSheetCogs
+ *
+ */
+export type MicromSheetCogs = Prisma.MicromSheetCogsModel
+/**
+ * Model MicromSheetAd
+ *
+ */
+export type MicromSheetAd = Prisma.MicromSheetAdModel
+/**
+ * Model MicromSheetShopifyItem
+ *
+ */
+export type MicromSheetShopifyItem = Prisma.MicromSheetShopifyItemModel

@@ -46,7 +46,7 @@ const data = {
       name: "Microm",
       logo: <LayersIcon className="size-4 text-sky-400" />,
       plan: "Micro SaaS",
-      href: "/dashboard?team=microm",
+      href: "/microm",
     },
     {
       name: "Pocdy",
@@ -111,11 +111,24 @@ export function AppSidebar({
     },
   ];
 
+  const micromNav = [
+    {
+      title: "Báo cáo P&L Microm",
+      url: "/microm",
+      icon: <LayersIcon className="size-4 text-sky-400" />,
+      isActive: pathname === "/microm",
+    },
+  ];
+
   const ecNav = data.navMain.map((item) => ({
     ...item,
     isActive: pathname === item.url,
   }));
-  const navigation = pathname.startsWith("/flowa") ? flowaNav : ecNav;
+  const navigation = pathname.startsWith("/flowa")
+    ? flowaNav
+    : pathname.startsWith("/microm")
+      ? micromNav
+      : ecNav;
 
   return (
     <Sidebar
