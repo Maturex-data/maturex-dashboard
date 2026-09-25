@@ -20,7 +20,37 @@ jobs:
     name: Run Microm Pipeline
     runs-on: ubuntu-latest
     steps:
-      - name: Call Protected Microm Pipeline Endpoint
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Upstream Sync (Provider -> Google Sheet)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
+          GOOGLE_DRIVE_REDIRECT_URI: ${{ secrets.GOOGLE_DRIVE_REDIRECT_URI }}
+          GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY: ${{ secrets.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY }}
+          MICROM_SHOPIFY_STORE_DOMAIN: ${{ secrets.MICROM_SHOPIFY_STORE_DOMAIN }}
+          MICROM_SHOPIFY_ACCESS_TOKEN: ${{ secrets.MICROM_SHOPIFY_ACCESS_TOKEN }}
+          SHOPIFY_API_VERSION: ${{ secrets.SHOPIFY_API_VERSION }}
+          MICROM_PGPRINT_SHOP_ID: ${{ secrets.MICROM_PGPRINT_SHOP_ID }}
+          MICROM_PGPRINT_SECRET: ${{ secrets.MICROM_PGPRINT_SECRET }}
+          MICROM_META_ACCESS_TOKEN: ${{ secrets.MICROM_META_ACCESS_TOKEN }}
+          MICROM_META_AD_ACCOUNT_IDS: "1204086927598523,1734816417103349"
+          MICROM_SPREADSHEET_ID: "15zckwx3zC-bY_AJsl19mFS1oRz7QkFL6NEW2huhxpuo"
+        run: npm run sync:microm:upstream 14
+
+      - name: Call Protected Microm Import Endpoint (Sheet -> DB)
         env:
           APP_URL: ${{ secrets.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
@@ -37,9 +67,9 @@ jobs:
 
           # Strip trailing slash if present
           CLEAN_URL="${APP_URL%/}"
-          ENDPOINT="${CLEAN_URL}/api/cron/microm"
+          ENDPOINT="${CLEAN_URL}/api/cron/microm?stage=sheet-to-db"
 
-          echo "Triggering Microm Pipeline at: ${ENDPOINT}"
+          echo "Triggering Microm Sheet-to-DB at: ${ENDPOINT}"
           echo "Trigger time (UTC): $(date -u)"
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${ENDPOINT}" \

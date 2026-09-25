@@ -50,4 +50,5 @@ next-env.d.ts
 !/scripts/test-sheet-sync-scheduled.mjs
 !/scripts/test-drive-metadata-sync.mjs
 !/scripts/sync-upstream.ts
+!/scripts/sync-microm-upstream.ts
 /exports
