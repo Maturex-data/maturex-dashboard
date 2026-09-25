@@ -1,5 +1,7 @@
-import { neonConfig } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 import ws from "ws";
 import { PrismaClient } from "@/generated/prisma/client";
 
@@ -20,12 +22,14 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  // In CLI scripts or GitHub Actions where fetch/WebSocket might fail, use native Prisma TCP
+  // In CLI scripts or GitHub Actions where fetch/WebSocket might fail, use native PG TCP
   if (
     process.env.USE_NATIVE_PRISMA === "true" ||
     process.env.GITHUB_ACTIONS === "true"
   ) {
-    return new PrismaClient();
+    const pool = new pg.Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
+    return new PrismaClient({ adapter });
   }
 
   const adapter = new PrismaNeon({ connectionString });
