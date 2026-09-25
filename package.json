@@ -19,6 +19,7 @@
     "import:etsy": "node --env-file=.env scripts/import-etsy-data.mjs",
     "test:sheet-sync": "node --env-file=.env scripts/test-sheet-sync-scheduled.mjs",
     "sync:upstream": "npx tsx scripts/sync-upstream.ts",
+    "sync:microm:upstream": "npx tsx scripts/sync-microm-upstream.ts",
     "test:drive-metadata": "node --env-file=.env scripts/test-drive-metadata-sync.mjs"
   },
   "dependencies": {
