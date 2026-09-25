@@ -19,10 +19,11 @@ export async function fetchMicromMetaInsights(
   adRows: MicromAdRow[];
   accountConfigs: MetaAccountConfig[];
 }> {
-  const token = process.env.MICROM_META_ACCESS_TOKEN;
-  if (!token) {
+  const rawToken = process.env.MICROM_META_ACCESS_TOKEN;
+  if (!rawToken) {
     throw new Error("MICROM_META_ACCESS_TOKEN must be configured.");
   }
+  const token = rawToken.trim().replace(/^["']|["']$/g, "");
 
   const rawAccountIds =
     options.accountIds ||
@@ -48,7 +49,12 @@ export async function fetchMicromMetaInsights(
     );
     if (!accRes.ok) {
       const errText = await accRes.text();
-      throw new Error(`Meta API error for account ${actId}: ${errText}`);
+      const tokenHint = token
+        ? `${token.slice(0, 7)}...${token.slice(-4)}`
+        : "empty";
+      throw new Error(
+        `Meta API error for account ${actId} (token: ${tokenHint}): ${errText}`,
+      );
     }
     const accData = (await accRes.json()) as {
       name: string;
