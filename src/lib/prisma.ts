@@ -20,8 +20,15 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaNeon({ connectionString });
+  // In CLI scripts or GitHub Actions where fetch/WebSocket might fail, use native Prisma TCP
+  if (
+    process.env.USE_NATIVE_PRISMA === "true" ||
+    process.env.GITHUB_ACTIONS === "true"
+  ) {
+    return new PrismaClient();
+  }
 
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({ adapter });
 }
 

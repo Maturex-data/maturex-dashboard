@@ -1,3 +1,5 @@
+process.env.USE_NATIVE_PRISMA = "true";
+
 import { neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
 
