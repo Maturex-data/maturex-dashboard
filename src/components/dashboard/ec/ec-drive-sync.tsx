@@ -20,6 +20,7 @@ import {
   EcDriveConnectionCard,
 } from "./ec-drive-connection-card";
 import { type DriveRun, EcDriveSyncHistory } from "./ec-drive-sync-history";
+import { EcShopifyPayoutSyncCard } from "./ec-shopify-payout-sync-card";
 
 const sources = ["Orders", "COGS", "Ads", "Payouts"];
 
@@ -222,6 +223,8 @@ export function EcDriveSync({
         onDisconnect={disconnect}
         targetFileName={targetFileName}
       />
+
+      <EcShopifyPayoutSyncCard connected={Boolean(connection)} />
 
       {/* Main Workspace Grid: Controls & History */}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">

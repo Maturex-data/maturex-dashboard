@@ -14,7 +14,9 @@ async function main() {
   const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
   const sinceDate = from.toISOString().slice(0, 10);
 
-  console.log(`Starting Microm Provider-to-Sheet sync for the last ${days} days (since: ${sinceDate})...`);
+  console.log(
+    `Starting Microm Provider-to-Sheet sync for the last ${days} days (since: ${sinceDate})...`,
+  );
   const startTime = Date.now();
 
   try {
@@ -37,7 +39,9 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`Microm Provider-to-Sheet sync completed successfully in ${Date.now() - startTime}ms.`);
+    console.log(
+      `Microm Provider-to-Sheet sync completed successfully in ${Date.now() - startTime}ms.`,
+    );
   } catch (error) {
     console.error("Failed to run Microm Provider-to-Sheet sync:", error);
     process.exit(1);
