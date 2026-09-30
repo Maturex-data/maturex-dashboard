@@ -49,12 +49,7 @@ export async function fetchMicromMetaInsights(
     );
     if (!accRes.ok) {
       const errText = await accRes.text();
-      const tokenHint = token
-        ? `${token.slice(0, 7)}...${token.slice(-4)}`
-        : "empty";
-      throw new Error(
-        `Meta API error for account ${actId} (token: ${tokenHint}): ${errText}`,
-      );
+      throw new Error(`Meta API error for account ${actId}: ${errText}`);
     }
     const accData = (await accRes.json()) as {
       name: string;
