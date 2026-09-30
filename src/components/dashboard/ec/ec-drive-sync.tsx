@@ -9,7 +9,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SectionCard } from "@/components/shared/section-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   type DriveConnectionInfo,
+  type DriveHealthState,
   EcDriveConnectionCard,
 } from "./ec-drive-connection-card";
 import { type DriveRun, EcDriveSyncHistory } from "./ec-drive-sync-history";
@@ -95,6 +96,33 @@ export function EcDriveSync({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedSources, setSelectedSources] = useState<string[]>(sources);
+  const [driveHealth, setDriveHealth] = useState<DriveHealthState>(
+    connection ? "checking" : "disconnected",
+  );
+
+  const checkDriveHealth = useCallback(async () => {
+    if (!connection) {
+      setDriveHealth("disconnected");
+      return;
+    }
+    setDriveHealth("checking");
+    try {
+      const response = await fetch("/api/ec/drive/health", {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Health check failed");
+      const result = (await response.json()) as {
+        state: Exclude<DriveHealthState, "checking">;
+      };
+      setDriveHealth(result.state);
+    } catch {
+      setDriveHealth("unavailable");
+    }
+  }, [connection]);
+
+  useEffect(() => {
+    void checkDriveHealth();
+  }, [checkDriveHealth]);
 
   const currentDate = new Date(Date.now() + 7 * 60 * 60 * 1_000)
     .toISOString()
@@ -219,12 +247,14 @@ export function EcDriveSync({
       {/* Target Destination Connection Card */}
       <EcDriveConnectionCard
         connection={connection}
+        health={driveHealth}
         disconnecting={disconnecting}
         onDisconnect={disconnect}
+        onHealthCheck={() => void checkDriveHealth()}
         targetFileName={targetFileName}
       />
 
-      <EcShopifyPayoutSyncCard connected={Boolean(connection)} />
+      <EcShopifyPayoutSyncCard connected={driveHealth === "connected"} />
 
       {/* Main Workspace Grid: Controls & History */}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -264,7 +294,7 @@ export function EcDriveSync({
               <div className="flex items-center gap-2.5 self-end sm:self-auto">
                 <Button
                   type="button"
-                  disabled={!connection || clearing || syncing}
+                  disabled={driveHealth !== "connected" || clearing || syncing}
                   onClick={clearReportData}
                   size="sm"
                   variant="outline"
@@ -279,7 +309,7 @@ export function EcDriveSync({
                 <Button
                   type="button"
                   disabled={
-                    !connection ||
+                    driveHealth !== "connected" ||
                     selectedSources.length === 0 ||
                     syncing ||
                     clearing

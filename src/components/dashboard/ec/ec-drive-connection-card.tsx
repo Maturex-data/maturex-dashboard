@@ -5,6 +5,7 @@ import {
   CloudIcon,
   ExternalLinkIcon,
   LinkIcon,
+  RefreshCwIcon,
   UnplugIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,15 +22,28 @@ export type DriveConnectionInfo = {
   connectedAt: Date | string;
 };
 
+export type DriveHealthState =
+  | "checking"
+  | "disconnected"
+  | "connected"
+  | "reauthorization_required"
+  | "account_mismatch"
+  | "target_unavailable"
+  | "unavailable";
+
 export function EcDriveConnectionCard({
   connection,
+  health,
   disconnecting,
   onDisconnect,
+  onHealthCheck,
   targetFileName,
 }: {
   connection: DriveConnectionInfo | null;
+  health: DriveHealthState;
   disconnecting: boolean;
   onDisconnect: () => void;
+  onHealthCheck: () => void;
   targetFileName?: string | null;
 }) {
   const router = useRouter();
@@ -104,6 +118,7 @@ export function EcDriveConnectionCard({
       setAwaitingCallback(false);
       setCallbackUrl("");
       router.refresh();
+      onHealthCheck();
     } catch (error) {
       setConnectionError(
         error instanceof Error ? error.message : "URL callback không hợp lệ.",
@@ -123,13 +138,32 @@ export function EcDriveConnectionCard({
         title={
           <div className="flex flex-wrap items-center gap-2.5">
             <span>Google Sheets Destination</span>
-            {connection ? (
+            {health === "checking" && connection ? (
+              <Badge variant="secondary" className="text-xs font-medium">
+                Đang kiểm tra kết nối
+              </Badge>
+            ) : health === "connected" ? (
               <Badge
                 variant="outline"
                 className="gap-1.5 border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 shadow-2xs"
               >
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Đã kết nối
+              </Badge>
+            ) : connection ? (
+              <Badge
+                variant="outline"
+                className="border-amber-500/30 bg-amber-500/10 text-xs font-semibold text-amber-700 dark:text-amber-300"
+              >
+                {health === "reauthorization_required"
+                  ? "Cần kết nối lại"
+                  : health === "account_mismatch"
+                    ? "Sai tài khoản Google"
+                    : health === "unavailable"
+                      ? "Không xác minh được"
+                      : health === "target_unavailable"
+                        ? "Không truy cập được file đích"
+                        : "Chưa xác minh"}
               </Badge>
             ) : (
               <Badge variant="secondary" className="text-xs font-medium">
@@ -157,6 +191,31 @@ export function EcDriveConnectionCard({
           <div className="flex items-center gap-2.5">
             {connection ? (
               <>
+                {health === "unavailable" || health === "target_unavailable" ? (
+                  <Button
+                    onClick={onHealthCheck}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 gap-1.5 rounded-xl px-3.5 text-xs font-semibold"
+                  >
+                    <RefreshCwIcon className="size-3.5" />
+                    <span>Kiểm tra lại</span>
+                  </Button>
+                ) : health === "reauthorization_required" ||
+                  health === "account_mismatch" ? (
+                  <Button
+                    disabled={connecting}
+                    onClick={startConnection}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 gap-1.5 rounded-xl border-amber-500/30 px-3.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+                  >
+                    <LinkIcon className="size-3.5" />
+                    <span>
+                      {connecting ? "Đang mở Google…" : "Kết nối lại"}
+                    </span>
+                  </Button>
+                ) : null}
                 {connection.rootFolderId ? (
                   <a
                     className={buttonVariants({
@@ -204,7 +263,7 @@ export function EcDriveConnectionCard({
           </div>
         }
       >
-        {!connection && awaitingCallback ? (
+        {awaitingCallback ? (
           <div className="border-t border-emerald-500/15 px-5 pb-5 pt-4">
             <div className="flex flex-col gap-2.5 sm:flex-row">
               <Input
