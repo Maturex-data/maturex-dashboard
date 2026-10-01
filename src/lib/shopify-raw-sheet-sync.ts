@@ -7,7 +7,8 @@ const SHEET_NAME = "RAW sàn";
 const PAGE_SIZE = 250;
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || "2026-07";
 const TIME_ZONE = "Asia/Ho_Chi_Minh";
-const HEADERS = [
+
+export const HEADERS = [
   "Ngày giao dịch",
   "Transaction dates (phạm vi giao dịch)",
   "Dự án",
@@ -35,9 +36,11 @@ const HEADERS = [
   "Lấy lúc (múi giờ)",
 ] as const;
 
-type JsonRecord = Record<string, unknown>;
-type SheetValue = string | number;
-type ShopifyTransaction = JsonRecord & {
+export const GRAPHQL_ORDER_BATCH_SIZE = 250;
+
+export type JsonRecord = Record<string, unknown>;
+export type SheetValue = string | number;
+export type ShopifyTransaction = JsonRecord & {
   id?: string | number;
   type?: string;
   processed_at?: string;
@@ -50,17 +53,28 @@ type ShopifyTransaction = JsonRecord & {
   source_order_id?: string | number;
   adjustment_reason?: string;
 };
-type ShopifyPayout = JsonRecord & {
+export type ShopifyPayout = JsonRecord & {
   id?: string | number;
   status?: string;
   date?: string;
   currency?: string;
   summary?: JsonRecord;
 };
-type ShopifyOrder = {
+export type ShopifyOrder = {
   id: string;
   name: string;
   currentTotalTaxSet?: { shopMoney?: { amount?: string } };
+};
+
+export type ShopifySyncContext = {
+  getGoogleDriveAccess?: (options?: { forceRefresh?: boolean }) => Promise<{
+    accessToken: string;
+    rootFolderId?: string;
+  }>;
+  googleRequest?: typeof googleRequest;
+  shopifyFetch?: typeof fetch;
+  now?: () => string;
+  bypassPayoutCache?: boolean;
 };
 
 class ApiRequestError extends Error {
@@ -187,18 +201,181 @@ function transactionDateRange(dates: Iterable<string>): string {
     .join(", ");
 }
 
+function isValidDateString(str: string): boolean {
+  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(str)) {
+    return false;
+  }
+  const date = new Date(`${str}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.toISOString().slice(0, 10) === str;
+}
+
+export function isValidTransactionDateRange(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  const segments = trimmed.split(", ");
+  if (segments.length === 0) return false;
+
+  let lastDate = "";
+  for (const segment of segments) {
+    const match = segment.match(
+      /^(\d{4}-\d{2}-\d{2})(?: - (\d{4}-\d{2}-\d{2}))?$/,
+    );
+    if (!match) return false;
+    const startDate = match[1];
+    const endDate = match[2];
+
+    if (!isValidDateString(startDate)) return false;
+
+    if (endDate) {
+      if (!isValidDateString(endDate)) return false;
+      if (startDate >= endDate) return false;
+      if (lastDate && startDate <= lastDate) return false;
+      lastDate = endDate;
+    } else {
+      if (lastDate && startDate <= lastDate) return false;
+      lastDate = startDate;
+    }
+  }
+
+  return true;
+}
+
+export function isDateCoveredByRange(
+  date: string,
+  rangeString: string,
+): boolean {
+  if (!isValidDateString(date) || !isValidTransactionDateRange(rangeString)) {
+    return false;
+  }
+  const segments = rangeString.split(", ");
+  for (const segment of segments) {
+    const match = segment.match(
+      /^(\d{4}-\d{2}-\d{2})(?: - (\d{4}-\d{2}-\d{2}))?$/,
+    );
+    if (!match) continue;
+    const startDate = match[1];
+    const endDate = match[2];
+    if (endDate) {
+      if (date >= startDate && date <= endDate) return true;
+    } else {
+      if (date === startDate) return true;
+    }
+  }
+  return false;
+}
+
+export function extractPayoutDateRangeCache(
+  existingRows: unknown[][],
+  payouts: Map<string, ShopifyPayout>,
+  currentMonthTransactions?: ShopifyTransaction[],
+): Map<string, string> {
+  const rangesByPayout = new Map<string, Set<string>>();
+  const hasEmptyOrInvalidByPayout = new Set<string>();
+  const knownDaysByPayout = new Map<string, Set<string>>();
+
+  for (let i = 1; i < existingRows.length; i += 1) {
+    const row = existingRows[i];
+    if (!row || !Array.isArray(row)) continue;
+    const payoutId = stringValue(row[8]).trim();
+    if (!payoutId) continue;
+
+    // Thu thập tất cả các ngày giao dịch hiện có trên sheet của payout này (cột A)
+    const rowDate = stringValue(row[0]).trim().slice(0, 10);
+    if (isValidDateString(rowDate)) {
+      const days = knownDaysByPayout.get(payoutId) ?? new Set<string>();
+      days.add(rowDate);
+      knownDaysByPayout.set(payoutId, days);
+    }
+
+    const rawRange = stringValue(row[1]).trim();
+    if (!rawRange || !isValidTransactionDateRange(rawRange)) {
+      hasEmptyOrInvalidByPayout.add(payoutId);
+      continue;
+    }
+
+    const set = rangesByPayout.get(payoutId) ?? new Set<string>();
+    set.add(rawRange);
+    rangesByPayout.set(payoutId, set);
+  }
+
+  if (currentMonthTransactions) {
+    for (const tx of currentMonthTransactions) {
+      const payoutId = stringValue(tx.payout_id).trim();
+      const processedAt = tx.processed_at;
+      if (
+        !payoutId ||
+        !processedAt ||
+        stringValue(tx.type).toLowerCase() === "payout"
+      ) {
+        continue;
+      }
+      const days = knownDaysByPayout.get(payoutId) ?? new Set<string>();
+      days.add(formatDateInVietnam(processedAt));
+      knownDaysByPayout.set(payoutId, days);
+    }
+  }
+
+  const validCache = new Map<string, string>();
+  for (const [payoutId, ranges] of rangesByPayout.entries()) {
+    if (hasEmptyOrInvalidByPayout.has(payoutId)) {
+      continue;
+    }
+    if (ranges.size !== 1) {
+      continue;
+    }
+    const payout = payouts.get(payoutId);
+    if (!payout) {
+      continue;
+    }
+    const status = stringValue(payout.status).toLowerCase();
+    if (status !== "paid") {
+      continue;
+    }
+
+    const [singleRange] = ranges;
+
+    // Kiểm tra tính bao phủ (coverage):
+    // Các ngày giao dịch đã biết của payout này trong tháng hiện tại
+    // BẮT BUỘC phải nằm trọn vẹn trong khoảng ngày candidate cache.
+    // Nếu có bất kỳ ngày nào nằm ngoài cache -> cache bị thiếu/lỗi thời -> từ chối cache để gọi API.
+    const knownDays = knownDaysByPayout.get(payoutId);
+    if (knownDays && knownDays.size > 0) {
+      let isCovered = true;
+      for (const day of knownDays) {
+        if (!isDateCoveredByRange(day, singleRange)) {
+          isCovered = false;
+          break;
+        }
+      }
+      if (!isCovered) {
+        continue;
+      }
+    }
+
+    validCache.set(payoutId, singleRange);
+  }
+
+  return validCache;
+}
+
 function getNextPage(response: Response): string | null {
   return (
     response.headers.get("link")?.match(/<([^>]+)>;\s*rel="next"/)?.[1] || null
   );
 }
 
-async function shopifyJson(url: string): Promise<{
+async function shopifyJson(
+  url: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<{
   payload: JsonRecord;
   next: string | null;
 }> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetch(url, {
+    const response = await fetchFn(url, {
       headers: getShopifyHeaders(),
       cache: "no-store",
       signal: AbortSignal.timeout(30_000),
@@ -225,11 +402,12 @@ async function shopifyJson(url: string): Promise<{
 async function fetchCollection(
   path: string,
   key: string,
+  fetchFn: typeof fetch = fetch,
 ): Promise<JsonRecord[]> {
   const rows: JsonRecord[] = [];
   let url: string | null = getShopifyEndpoint(path);
   while (url) {
-    const page = await shopifyJson(url);
+    const page = await shopifyJson(url, fetchFn);
     const pageRows = page.payload[key];
     if (Array.isArray(pageRows)) rows.push(...pageRows.map(record));
     url = page.next;
@@ -258,12 +436,14 @@ async function mapConcurrent<T, R>(
 
 async function fetchMonthTransactions(
   month: string,
+  fetchFn: typeof fetch = fetch,
 ): Promise<ShopifyTransaction[]> {
   const { start, end } = monthUtcRange(month);
   const max = new Date(end.getTime() - 1).toISOString();
   const rows = await fetchCollection(
     `shopify_payments/balance/transactions.json?processed_at_min=${encodeURIComponent(start.toISOString())}&processed_at_max=${encodeURIComponent(max)}&limit=${PAGE_SIZE}`,
     "transactions",
+    fetchFn,
   );
   return rows
     .map((row) => row as ShopifyTransaction)
@@ -274,11 +454,15 @@ async function fetchMonthTransactions(
     );
 }
 
-async function fetchPayout(payoutId: string): Promise<ShopifyPayout | null> {
+async function fetchPayout(
+  payoutId: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<ShopifyPayout | null> {
   const { payload } = await shopifyJson(
     getShopifyEndpoint(
       `shopify_payments/payouts/${encodeURIComponent(payoutId)}.json`,
     ),
+    fetchFn,
   );
   const payout = payload.payout;
   return payout ? (record(payout) as ShopifyPayout) : null;
@@ -287,11 +471,13 @@ async function fetchPayout(payoutId: string): Promise<ShopifyPayout | null> {
 async function fetchPayouts(
   month: string,
   transactions: ShopifyTransaction[],
+  fetchFn: typeof fetch = fetch,
 ): Promise<Map<string, ShopifyPayout>> {
   const { lastDay } = monthUtcRange(month);
   const payouts = await fetchCollection(
     `shopify_payments/payouts.json?date_min=${month}-01&date_max=${month}-${String(lastDay).padStart(2, "0")}&limit=${PAGE_SIZE}`,
     "payouts",
+    fetchFn,
   );
   const byId = new Map<string, ShopifyPayout>();
   for (const row of payouts as ShopifyPayout[]) {
@@ -305,7 +491,9 @@ async function fetchPayouts(
         .filter((id) => id && !byId.has(id)),
     ),
   ];
-  const missingPayouts = await mapConcurrent(missingIds, 4, fetchPayout);
+  const missingPayouts = await mapConcurrent(missingIds, 4, (id) =>
+    fetchPayout(id, fetchFn),
+  );
   for (const payout of missingPayouts) {
     if (payout?.id !== undefined) byId.set(String(payout.id), payout);
   }
@@ -318,8 +506,9 @@ function orderGraphqlId(value: unknown): string | null {
   return id.startsWith("gid://") ? id : `gid://shopify/Order/${id}`;
 }
 
-async function fetchOrders(
+export async function fetchOrders(
   transactions: ShopifyTransaction[],
+  fetchFn: typeof fetch = fetch,
 ): Promise<Map<string, ShopifyOrder>> {
   const orderIds = [
     ...new Set(
@@ -329,16 +518,26 @@ async function fetchOrders(
     ),
   ];
   const orders = new Map<string, ShopifyOrder>();
+  if (!orderIds.length) return orders;
+
   const endpoint = getShopifyEndpoint("graphql.json");
-  for (let start = 0; start < orderIds.length; start += 100) {
-    const ids = orderIds.slice(start, start + 100);
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { ...getShopifyHeaders(), "Content-Type": "application/json" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
-      body: JSON.stringify({
-        query: `query RawSheetOrders($ids: [ID!]!) {
+  for (
+    let start = 0;
+    start < orderIds.length;
+    start += GRAPHQL_ORDER_BATCH_SIZE
+  ) {
+    const ids = orderIds.slice(start, start + GRAPHQL_ORDER_BATCH_SIZE);
+    let payload: JsonRecord = {};
+    let succeeded = false;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetchFn(endpoint, {
+        method: "POST",
+        headers: { ...getShopifyHeaders(), "Content-Type": "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(30_000),
+        body: JSON.stringify({
+          query: `query RawSheetOrders($ids: [ID!]!) {
           nodes(ids: $ids) {
             ... on Order {
               id
@@ -347,17 +546,67 @@ async function fetchOrders(
             }
           }
         }`,
-        variables: { ids },
-      }),
-    });
-    const payload = record(await response.json());
-    const errors = payload.errors;
-    if (!response.ok || (Array.isArray(errors) && errors.length)) {
-      throw new ApiRequestError(
-        `Shopify Orders GraphQL ${response.status}: ${JSON.stringify(errors || "Request failed.")}`,
-        response.status,
+          variables: { ids },
+        }),
+      });
+
+      if (response.status === 429 && attempt < 2) {
+        const retryAfter = Number(response.headers.get("retry-after")) || 2;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(retryAfter, 10) * 1_000),
+        );
+        continue;
+      }
+
+      payload = record(await response.json());
+      const errors = payload.errors;
+
+      const isThrottled =
+        Array.isArray(errors) &&
+        errors.some((err) => {
+          const errRec = record(err);
+          const code = record(errRec.extensions).code;
+          const msg = stringValue(errRec.message).toLowerCase();
+          return code === "THROTTLED" || msg.includes("throttled");
+        });
+
+      if (isThrottled && attempt < 2) {
+        const extensions = record(payload.extensions);
+        const cost = record(extensions.cost);
+        const throttleStatus = record(cost.throttleStatus);
+        const currentlyAvailable =
+          Number(throttleStatus.currentlyAvailable) || 0;
+        const restoreRate = Number(throttleStatus.restoreRate) || 50;
+        const needed = 250;
+        const waitSeconds =
+          currentlyAvailable < needed
+            ? Math.ceil(
+                (needed - currentlyAvailable) / Math.max(restoreRate, 1),
+              )
+            : 2;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(Math.max(waitSeconds, 1), 10) * 1_000),
+        );
+        continue;
+      }
+
+      if (!response.ok || (Array.isArray(errors) && errors.length)) {
+        throw new ApiRequestError(
+          `Shopify Orders GraphQL ${response.status}: ${JSON.stringify(errors || "Request failed.")}`,
+          response.status,
+        );
+      }
+
+      succeeded = true;
+      break;
+    }
+
+    if (!succeeded) {
+      throw new Error(
+        "Shopify Orders GraphQL rate limit persisted after retries.",
       );
     }
+
     const data = record(payload.data);
     const nodes = Array.isArray(data.nodes) ? data.nodes : [];
     for (const value of nodes) {
@@ -452,43 +701,255 @@ function buildRows(
   });
 }
 
-async function googleRequest(
+export async function googleRequest(
   accessToken: string,
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}${path}`,
-    {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
-      cache: "no-store",
+  const url = path.startsWith("https://")
+    ? path
+    : `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}${path}`;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      ...init?.headers,
     },
-  );
+    cache: "no-store",
+  });
   if (!response.ok) {
     const payload = record(await response.json());
     throw new ApiRequestError(
-      `Google Sheets API ${response.status}: ${stringValue(record(payload.error).message) || "Request failed."}`,
+      `Google API ${response.status}: ${stringValue(record(payload.error).message) || "Request failed."}`,
       response.status,
     );
   }
   return response;
 }
 
+function isProtectedRangeIntersectingData(range?: JsonRecord): boolean {
+  if (!range) {
+    // Không có range chỉ định nghĩa là bảo vệ toàn bộ sheet
+    return true;
+  }
+  const startCol =
+    range.startColumnIndex !== undefined ? Number(range.startColumnIndex) : 0;
+  const endCol =
+    range.endColumnIndex !== undefined
+      ? Number(range.endColumnIndex)
+      : Number.POSITIVE_INFINITY;
+  const startRow =
+    range.startRowIndex !== undefined ? Number(range.startRowIndex) : 0;
+  const endRow =
+    range.endRowIndex !== undefined
+      ? Number(range.endRowIndex)
+      : Number.POSITIVE_INFINITY;
+
+  // Giao với cột A:Y ([0, 25)) và hàng 2 trở đi ([1, Infinity))
+  const colIntersect = startCol < HEADERS.length && endCol > 0;
+  const rowIntersect = endRow > 1 && startRow < Number.POSITIVE_INFINITY;
+
+  return colIntersect && rowIntersect;
+}
+
+function isDataFullyUnprotected(unprotectedRanges?: JsonRecord[]): boolean {
+  if (!Array.isArray(unprotectedRanges) || unprotectedRanges.length === 0) {
+    return false;
+  }
+  return unprotectedRanges.some((upr) => {
+    const startCol =
+      upr.startColumnIndex !== undefined ? Number(upr.startColumnIndex) : 0;
+    const endCol =
+      upr.endColumnIndex !== undefined
+        ? Number(upr.endColumnIndex)
+        : Number.POSITIVE_INFINITY;
+    const startRow =
+      upr.startRowIndex !== undefined ? Number(upr.startRowIndex) : 0;
+    const endRow =
+      upr.endRowIndex !== undefined
+        ? Number(upr.endRowIndex)
+        : Number.POSITIVE_INFINITY;
+
+    // Bao phủ toàn bộ vùng dữ liệu A2:Y
+    return (
+      startCol <= 0 &&
+      endCol >= HEADERS.length &&
+      startRow <= 1 &&
+      endRow === Number.POSITIVE_INFINITY
+    );
+  });
+}
+
+export async function preflightGoogleSheet(
+  accessToken: string,
+  requestFn: typeof googleRequest = googleRequest,
+): Promise<string[]> {
+  // 1. Kiểm tra quyền chỉnh sửa spreadsheet của tài khoản qua Drive API capabilities(canEdit,canModifyContent) (GET read-only)
+  try {
+    const driveResponse = await requestFn(
+      accessToken,
+      `https://www.googleapis.com/drive/v3/files/${SPREADSHEET_ID}?fields=capabilities(canEdit,canModifyContent)`,
+    );
+    const drivePayload = record(await driveResponse.json());
+    if (driveResponse.ok) {
+      const capabilities = record(drivePayload.capabilities);
+      if (
+        capabilities.canEdit !== true ||
+        capabilities.canModifyContent !== true
+      ) {
+        throw new Error(
+          `Tài khoản không có đủ quyền chỉnh sửa nội dung spreadsheet (canEdit: ${capabilities.canEdit ?? false}, canModifyContent: ${capabilities.canModifyContent ?? false}).`,
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      throw error;
+    }
+    throw new Error(
+      `Pre-flight Google Sheet thất bại (quyền chỉnh sửa): ${
+        error instanceof Error ? error.message : "Không có quyền chỉnh sửa."
+      }`,
+    );
+  }
+
+  // 2. Kiểm tra tab RAW sàn và các vùng bảo vệ (protected ranges) qua Sheets metadata (GET read-only)
+  try {
+    const metaResponse = await requestFn(
+      accessToken,
+      "?fields=sheets(properties(sheetId,title),protectedRanges)",
+    );
+    const metaPayload = record(await metaResponse.json());
+    if (metaResponse.ok) {
+      const sheets = Array.isArray(metaPayload.sheets)
+        ? metaPayload.sheets
+        : [];
+      const targetSheet = sheets.find(
+        (s) => record(record(s).properties).title === SHEET_NAME,
+      );
+      if (!targetSheet) {
+        throw new Error(
+          `Không tìm thấy tab "${SHEET_NAME}" trong spreadsheet.`,
+        );
+      }
+
+      const protectedRanges = Array.isArray(record(targetSheet).protectedRanges)
+        ? (record(targetSheet).protectedRanges as JsonRecord[])
+        : [];
+      for (const pr of protectedRanges) {
+        // warningOnly = true thì Google Sheet chỉ hiện cảnh báo, không chặn ghi dữ liệu qua API
+        if (pr.warningOnly === true) {
+          continue;
+        }
+        // requestingUserCanEdit = true thì user có quyền chỉnh sửa protected range này
+        if (pr.requestingUserCanEdit !== false) {
+          continue;
+        }
+
+        const prRange = pr.range ? record(pr.range) : undefined;
+        // Kiểm tra xem protected range có giao với vùng dữ liệu A2:Y không
+        if (!isProtectedRangeIntersectingData(prRange)) {
+          // Chỉ khóa cột ngoài A:Y (ví dụ cột Z trở đi) hoặc chỉ khóa hàng tiêu đề A1:Y1 -> không ảnh hưởng A2:Y
+          continue;
+        }
+
+        // Nếu là protected sheet có thiết lập unprotectedRanges cho toàn bộ A2:Y thì vẫn cho phép sửa
+        const unprotected = Array.isArray(pr.unprotectedRanges)
+          ? (pr.unprotectedRanges as JsonRecord[])
+          : undefined;
+        if (isDataFullyUnprotected(unprotected)) {
+          continue;
+        }
+
+        throw new Error(
+          `Tab "${SHEET_NAME}" có vùng bảo vệ không cho phép chỉnh sửa dữ liệu A2:Y.`,
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      throw error;
+    }
+    throw new Error(
+      `Pre-flight Google Sheet thất bại (metadata tab): ${
+        error instanceof Error ? error.message : "Lỗi kiểm tra metadata tab."
+      }`,
+    );
+  }
+
+  // 3. Đọc và kiểm tra cấu trúc 25 cột header A1:Y1 (GET read-only)
+  const sheetRange = `'${SHEET_NAME}'`;
+  const encodedRange = encodeURIComponent(`${sheetRange}!A1:Y1`);
+  let headerResponse: Response;
+  try {
+    headerResponse = await requestFn(
+      accessToken,
+      `/values/${encodedRange}?valueRenderOption=UNFORMATTED_VALUE`,
+    );
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      throw error;
+    }
+    throw new Error(
+      `Pre-flight Google Sheet thất bại (đọc header): ${
+        error instanceof Error ? error.message : "Không thể đọc header."
+      }`,
+    );
+  }
+
+  const payload = record(await headerResponse.json());
+  if (!headerResponse.ok) {
+    const errorMsg =
+      stringValue(record(payload.error).message) ||
+      stringValue(payload.error) ||
+      `HTTP ${headerResponse.status}`;
+    if (headerResponse.status === 401) {
+      throw new ApiRequestError(`Google Sheets API 401: ${errorMsg}`, 401);
+    }
+    throw new Error(
+      `Pre-flight Google Sheet thất bại: Google Sheets API ${headerResponse.status}: ${errorMsg}`,
+    );
+  }
+
+  const values = Array.isArray(payload.values) ? payload.values : [];
+  const firstRow = Array.isArray(values[0]) ? values[0] : [];
+  const currentHeaders = firstRow.map(stringValue);
+
+  if (currentHeaders.length !== HEADERS.length) {
+    throw new Error(
+      `Header tab ${SHEET_NAME} không đủ 25 cột: mong đợi ${HEADERS.length} cột, nhận được ${currentHeaders.length} cột.`,
+    );
+  }
+
+  for (let i = 0; i < HEADERS.length; i += 1) {
+    if (currentHeaders[i] !== HEADERS[i]) {
+      throw new Error(
+        `Header tab ${SHEET_NAME} sai ở cột ${i + 1}: mong đợi "${HEADERS[i]}", nhận được "${currentHeaders[i]}".`,
+      );
+    }
+  }
+
+  return currentHeaders;
+}
+
 async function withGoogleAccess<T>(
   operation: (accessToken: string) => Promise<T>,
+  options?: {
+    getGoogleDriveAccess?: (options?: { forceRefresh?: boolean }) => Promise<{
+      accessToken: string;
+      rootFolderId?: string;
+    }>;
+  },
 ): Promise<T> {
-  const { accessToken } = await getGoogleDriveAccess();
+  const getAccess = options?.getGoogleDriveAccess || getGoogleDriveAccess;
+  const { accessToken } = await getAccess();
   try {
     return await operation(accessToken);
   } catch (error) {
     if (!(error instanceof ApiRequestError) || error.status !== 401)
       throw error;
-    const refreshed = await getGoogleDriveAccess({ forceRefresh: true });
+    const refreshed = await getAccess({ forceRefresh: true });
     return operation(refreshed.accessToken);
   }
 }
@@ -496,34 +957,69 @@ async function withGoogleAccess<T>(
 async function writeMonth(
   month: string,
   monthRows: SheetValue[][],
+  options?: {
+    accessToken?: string;
+    existingRows?: SheetValue[][];
+    payoutDateRanges?: Map<string, string>;
+    googleRequestFn?: typeof googleRequest;
+    getGoogleDriveAccessFn?: (options?: { forceRefresh?: boolean }) => Promise<{
+      accessToken: string;
+      rootFolderId?: string;
+    }>;
+  },
 ): Promise<{ replacedRows: number }> {
-  return withGoogleAccess(async (accessToken) => {
+  const reqFn = options?.googleRequestFn || googleRequest;
+  const getAccessFn = options?.getGoogleDriveAccessFn || getGoogleDriveAccess;
+
+  const performWrite = async (
+    accessToken: string,
+    existingRowsArg?: SheetValue[][],
+  ) => {
     const sheetRange = `'${SHEET_NAME}'`;
-    const encodedReadRange = encodeURIComponent(`${sheetRange}!A1:Y`);
-    const readResponse = await googleRequest(
-      accessToken,
-      `/values/${encodedReadRange}?valueRenderOption=UNFORMATTED_VALUE`,
-    );
-    const payload = record(await readResponse.json());
-    const existingRows = Array.isArray(payload.values)
-      ? (payload.values as unknown[][]).map((row) =>
-          Array.from(
-            { length: HEADERS.length },
-            (_, index) => (row[index] as SheetValue | undefined) ?? "",
-          ),
-        )
-      : [];
-    const currentHeaders = existingRows[0] ?? [];
-    if (JSON.stringify(currentHeaders) !== JSON.stringify(HEADERS)) {
-      throw new Error(
-        "Header tab RAW sàn không khớp cấu trúc 25 cột; chưa ghi dữ liệu.",
+    let existingRows = existingRowsArg;
+
+    if (!existingRows) {
+      const encodedReadRange = encodeURIComponent(`${sheetRange}!A1:Y`);
+      const readResponse = await reqFn(
+        accessToken,
+        `/values/${encodedReadRange}?valueRenderOption=UNFORMATTED_VALUE`,
       );
+      const payload = record(await readResponse.json());
+      existingRows = Array.isArray(payload.values)
+        ? (payload.values as unknown[][]).map((row) =>
+            Array.from(
+              { length: HEADERS.length },
+              (_, index) => (row[index] as SheetValue | undefined) ?? "",
+            ),
+          )
+        : [];
+      const currentHeaders = existingRows[0] ?? [];
+      if (JSON.stringify(currentHeaders) !== JSON.stringify(HEADERS)) {
+        throw new Error(
+          "Header tab RAW sàn không khớp cấu trúc 25 cột; chưa ghi dữ liệu.",
+        );
+      }
     }
 
     const rows = existingRows.slice(1);
     const preservedRows = rows.filter(
       (row) => !String(row[0] || "").startsWith(`${month}-`),
     );
+
+    // Backfill: đồng bộ cột B (Transaction dates) cho toàn bộ các dòng thuộc các tháng khác
+    // có cùng payout ID nếu payout đó được tính toán/xác nhận date range trong lần sync này.
+    if (options?.payoutDateRanges) {
+      for (const preservedRow of preservedRows) {
+        const payoutId = stringValue(preservedRow[8]).trim();
+        if (payoutId && options.payoutDateRanges.has(payoutId)) {
+          const fullRange = options.payoutDateRanges.get(payoutId);
+          if (fullRange && preservedRow[1] !== fullRange) {
+            preservedRow[1] = fullRange;
+          }
+        }
+      }
+    }
+
     const combined = [...preservedRows, ...monthRows].sort((left, right) =>
       String(right[0] || "").localeCompare(String(left[0] || "")),
     );
@@ -531,7 +1027,7 @@ async function writeMonth(
     const lastCombinedRow = combined.length + 1;
 
     if (combined.length) {
-      await googleRequest(accessToken, "/values:batchUpdate", {
+      await reqFn(accessToken, "/values:batchUpdate", {
         method: "POST",
         body: JSON.stringify({
           valueInputOption: "RAW",
@@ -547,14 +1043,14 @@ async function writeMonth(
     }
 
     if (lastExistingRow > lastCombinedRow) {
-      await googleRequest(
+      await reqFn(
         accessToken,
         `/values/${encodeURIComponent(`${sheetRange}!A${lastCombinedRow + 1}:Y${lastExistingRow}`)}:clear`,
         { method: "POST", body: "{}" },
       );
     }
 
-    const verifyResponse = await googleRequest(
+    const verifyResponse = await reqFn(
       accessToken,
       `/values/${encodeURIComponent(`${sheetRange}!A2:Y${lastCombinedRow}`)}?valueRenderOption=UNFORMATTED_VALUE`,
     );
@@ -571,61 +1067,153 @@ async function writeMonth(
       );
     }
     return { replacedRows: rows.length - preservedRows.length };
-  });
+  };
+
+  if (options?.accessToken) {
+    try {
+      return await performWrite(options.accessToken, options.existingRows);
+    } catch (error) {
+      if (!(error instanceof ApiRequestError) || error.status !== 401) {
+        throw error;
+      }
+      return withGoogleAccess(
+        (refreshedToken) => performWrite(refreshedToken),
+        { getGoogleDriveAccess: getAccessFn },
+      );
+    }
+  }
+
+  return withGoogleAccess(
+    (accessToken) => performWrite(accessToken, options?.existingRows),
+    { getGoogleDriveAccess: getAccessFn },
+  );
 }
+
+let isSyncInProgress = false;
 
 export async function syncShopifyRawMonthToSheet(
   month: string,
+  context?: ShopifySyncContext,
 ): Promise<{ rowsWritten: number; replacedRows: number }> {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
     throw new Error("Vui lòng chọn tháng hợp lệ.");
   }
 
-  const transactions = await fetchMonthTransactions(month);
-  if (!transactions.length) {
+  if (isSyncInProgress) {
     throw new Error(
-      `Shopify không trả giao dịch nào cho tháng ${month}; sheet chưa thay đổi.`,
+      "Một tiến trình đồng bộ khác đang chạy trên tab RAW sàn. Vui lòng đợi tiến trình hoàn tất trước khi chạy tiếp.",
     );
   }
-  const [payouts, orders] = await Promise.all([
-    fetchPayouts(month, transactions),
-    fetchOrders(transactions),
-  ]);
-  const payoutIds = [
-    ...new Set(
-      transactions.map((row) => stringValue(row.payout_id)).filter(Boolean),
-    ),
-  ];
-  const payoutTransactions = await mapConcurrent(
-    payoutIds,
-    4,
-    async (payoutId) =>
-      fetchCollection(
-        `shopify_payments/balance/transactions.json?payout_id=${encodeURIComponent(payoutId)}&limit=${PAGE_SIZE}`,
-        "transactions",
-      ),
-  );
-  const daySets = new Map<string, Set<string>>();
-  for (let index = 0; index < payoutIds.length; index += 1) {
-    const payoutId = payoutIds[index];
-    const days = new Set<string>();
-    for (const raw of payoutTransactions[index]) {
-      if (
-        stringValue(raw.type).toLowerCase() === "payout" ||
-        typeof raw.processed_at !== "string"
-      ) {
-        continue;
-      }
-      days.add(formatDateInVietnam(raw.processed_at));
+
+  isSyncInProgress = true;
+  try {
+    const getDriveAccessFn =
+      context?.getGoogleDriveAccess || getGoogleDriveAccess;
+    const googleRequestFn = context?.googleRequest || googleRequest;
+    const shopifyFetchFn = context?.shopifyFetch || fetch;
+    const nowIso = context?.now ? context.now() : new Date().toISOString();
+
+    // 1. Pre-flight Google Sheet first before any Shopify API calls
+    const { accessToken } = await withGoogleAccess(
+      async (token) => {
+        await preflightGoogleSheet(token, googleRequestFn);
+        return { accessToken: token };
+      },
+      { getGoogleDriveAccess: getDriveAccessFn },
+    );
+
+    // 2. Fetch month transactions from Shopify
+    const transactions = await fetchMonthTransactions(month, shopifyFetchFn);
+    if (!transactions.length) {
+      throw new Error(
+        `Shopify không trả giao dịch nào cho tháng ${month}; sheet chưa thay đổi.`,
+      );
     }
-    daySets.set(payoutId, days);
+
+    // 3. Fetch payouts and orders (with 250 batching & throttled retry)
+    const [payouts, orders] = await Promise.all([
+      fetchPayouts(month, transactions, shopifyFetchFn),
+      fetchOrders(transactions, shopifyFetchFn),
+    ]);
+
+    const payoutIds = [
+      ...new Set(
+        transactions.map((row) => stringValue(row.payout_id)).filter(Boolean),
+      ),
+    ];
+
+    // 4. Read existing sheet rows for payout date range caching
+    const sheetRange = `'${SHEET_NAME}'`;
+    const encodedReadRange = encodeURIComponent(`${sheetRange}!A1:Y`);
+    const readResponse = await googleRequestFn(
+      accessToken,
+      `/values/${encodedReadRange}?valueRenderOption=UNFORMATTED_VALUE`,
+    );
+    const payload = record(await readResponse.json());
+    const existingRows = Array.isArray(payload.values)
+      ? (payload.values as unknown[][]).map((row) =>
+          Array.from(
+            { length: HEADERS.length },
+            (_, index) => (row[index] as SheetValue | undefined) ?? "",
+          ),
+        )
+      : [];
+
+    const payoutCache = context?.bypassPayoutCache
+      ? new Map<string, string>()
+      : extractPayoutDateRangeCache(existingRows, payouts, transactions);
+
+    // 5. Fetch transactions only for uncached payouts
+    const uncachedPayoutIds = payoutIds.filter((id) => !payoutCache.has(id));
+    const uncachedPayoutTransactions = await mapConcurrent(
+      uncachedPayoutIds,
+      4,
+      async (payoutId) =>
+        fetchCollection(
+          `shopify_payments/balance/transactions.json?payout_id=${encodeURIComponent(payoutId)}&limit=${PAGE_SIZE}`,
+          "transactions",
+          shopifyFetchFn,
+        ),
+    );
+
+    const dateRangesByPayout = new Map<string, string>();
+    for (let i = 0; i < uncachedPayoutIds.length; i += 1) {
+      const payoutId = uncachedPayoutIds[i];
+      const days = new Set<string>();
+      for (const raw of uncachedPayoutTransactions[i]) {
+        if (
+          stringValue(raw.type).toLowerCase() === "payout" ||
+          typeof raw.processed_at !== "string"
+        ) {
+          continue;
+        }
+        days.add(formatDateInVietnam(raw.processed_at));
+      }
+      dateRangesByPayout.set(payoutId, transactionDateRange(days));
+    }
+
+    for (const [payoutId, cachedRange] of payoutCache.entries()) {
+      dateRangesByPayout.set(payoutId, cachedRange);
+    }
+
+    // 6. Build sheet rows
+    const rows = buildRows(transactions, payouts, orders, "");
+    for (let index = 0; index < transactions.length; index += 1) {
+      const payoutId = stringValue(transactions[index].payout_id);
+      rows[index][1] = payoutId ? (dateRangesByPayout.get(payoutId) ?? "") : "";
+      rows[index][24] = formatDateTimeInVietnam(nowIso);
+    }
+
+    // 7. Write to Google Sheet (re-reads fresh sheet rows right before write to avoid overwriting concurrent edits, backfilling column B across all rows for synced payouts)
+    const result = await writeMonth(month, rows, {
+      accessToken,
+      payoutDateRanges: dateRangesByPayout,
+      googleRequestFn,
+      getGoogleDriveAccessFn: getDriveAccessFn,
+    });
+
+    return { rowsWritten: rows.length, replacedRows: result.replacedRows };
+  } finally {
+    isSyncInProgress = false;
   }
-  const rows = buildRows(transactions, payouts, orders, "");
-  for (let index = 0; index < transactions.length; index += 1) {
-    const payoutId = stringValue(transactions[index].payout_id);
-    rows[index][1] = transactionDateRange(daySets.get(payoutId) ?? []);
-    rows[index][24] = formatDateTimeInVietnam(new Date().toISOString());
-  }
-  const result = await writeMonth(month, rows);
-  return { rowsWritten: rows.length, replacedRows: result.replacedRows };
 }

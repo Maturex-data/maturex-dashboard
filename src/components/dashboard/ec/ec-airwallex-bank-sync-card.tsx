@@ -30,11 +30,13 @@ function currentVietnamMonth(): string {
 }
 
 export function EcAirwallexBankSyncCard({ connected }: { connected: boolean }) {
-  const [scope, setScope] = useState<"all" | "month">("all");
+  const [scope, setScope] = useState<"all" | "month">("month");
   const [month, setMonth] = useState(currentVietnamMonth);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const scopeLabel = scope === "all" ? "tất cả từ 01/2026" : `tháng ${month}`;
 
   async function sync(): Promise<void> {
     setSyncing(true);
@@ -60,7 +62,7 @@ export function EcAirwallexBankSyncCard({ connected }: { connected: boolean }) {
         ? ` Đã thay ${payload.replacedShopify} dòng Shopify đặt nhầm.`
         : "";
       setMessage(
-        `Airwallex: ${payload.fetched ?? 0} giao dịch; thêm ${payload.added ?? 0}, cập nhật ${payload.updated ?? 0}, không đổi ${payload.unchanged ?? 0}.${replacement}`,
+        `Airwallex (${scopeLabel}): ${payload.fetched ?? 0} giao dịch; thêm ${payload.added ?? 0}, cập nhật ${payload.updated ?? 0}, không đổi ${payload.unchanged ?? 0}.${replacement}`,
       );
     } catch (syncError) {
       setError(
@@ -110,22 +112,30 @@ export function EcAirwallexBankSyncCard({ connected }: { connected: boolean }) {
           <Button
             type="button"
             size="sm"
-            variant={scope === "all" ? "default" : "outline"}
-            onClick={() => setScope("all")}
-            disabled={syncing}
-          >
-            Tất cả từ 01/2026
-          </Button>
-          <Button
-            type="button"
-            size="sm"
             variant={scope === "month" ? "default" : "outline"}
             onClick={() => setScope("month")}
             disabled={syncing}
           >
             Theo tháng
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={scope === "all" ? "default" : "outline"}
+            onClick={() => setScope("all")}
+            disabled={syncing}
+          >
+            Tất cả từ 01/2026
+          </Button>
         </fieldset>
+        <p className="text-xs text-muted-foreground">
+          Đang chọn:{" "}
+          <span className="font-medium text-foreground">
+            {scope === "all"
+              ? "Tất cả từ 01/2026"
+              : `Tháng ${month} (theo giờ Việt Nam)`}
+          </span>
+        </p>
         {scope === "month" && (
           <div className="space-y-1.5">
             <Label
@@ -167,7 +177,7 @@ export function EcAirwallexBankSyncCard({ connected }: { connected: boolean }) {
         <RefreshCwIcon
           className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
         />
-        {syncing ? "Đang đồng bộ…" : "Đồng bộ"}
+        {syncing ? `Đang đồng bộ ${scopeLabel}…` : "Đồng bộ"}
       </Button>
     </SectionCard>
   );
