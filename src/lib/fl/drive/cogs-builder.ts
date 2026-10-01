@@ -18,7 +18,9 @@ export async function fetchFlowaCogsValues(
 ): Promise<FlowaSheetValue[][]> {
   const range = databaseDateRange(from, to);
   const shopCondition =
-    shopCode && shopCode !== "ALL" ? { shop: { code: shopCode } } : {};
+    shopCode && shopCode !== "ALL"
+      ? { shop: { code: shopCode, active: true } }
+      : { shop: { active: true } };
 
   // Find all Etsy orders in the range
   const orders = await prisma.etsyOrder.findMany({

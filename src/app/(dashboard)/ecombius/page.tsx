@@ -11,19 +11,27 @@ import Link from "next/link";
 import { FlowaDataTable } from "@/components/dashboard/fl/flowa-data-table";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ETSY_SHOPS } from "@/lib/etsy-import";
+import { ETSY_SHOPS, ensureEcombiusShops } from "@/lib/fl/etsy-constants";
 import { prisma } from "@/lib/prisma";
 
+export const metadata = {
+  title: "ECOMBIUS - Bảng dữ liệu Etsy",
+  description:
+    "Báo cáo phân tích và dữ liệu đối tác Etsy của workspace ECOMBIUS",
+};
+
 export default async function FlowaPage() {
+  await ensureEcombiusShops(prisma);
+
   const [shops, orderCount, itemCount, statementCount] = await Promise.all([
     prisma.etsyShop.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
       select: { code: true, name: true },
     }),
-    prisma.etsyOrder.count(),
-    prisma.etsyOrderItem.count(),
-    prisma.etsyStatement.count(),
+    prisma.etsyOrder.count({ where: { shop: { active: true } } }),
+    prisma.etsyOrderItem.count({ where: { shop: { active: true } } }),
+    prisma.etsyStatement.count({ where: { shop: { active: true } } }),
   ]);
 
   const shopOptions =
@@ -48,7 +56,7 @@ export default async function FlowaPage() {
             </Link>
             <span className="text-muted-foreground/40 hidden sm:inline">/</span>
             <span className="font-semibold text-foreground truncate">
-              Flowa
+              ECOMBIUS
             </span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-muted-foreground truncate">
@@ -68,7 +76,7 @@ export default async function FlowaPage() {
               <span>Về Trang chủ</span>
             </Button>
           </Link>
-          <Link href="/flowa/import">
+          <Link href="/ecombius/import">
             <Button
               size="sm"
               className="h-8 text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
@@ -86,7 +94,7 @@ export default async function FlowaPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-heading">
-                Flowa Etsy Analytics
+                ECOMBIUS Etsy Analytics
               </h1>
               <span className="rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-0.5 text-[11px] font-mono font-semibold border border-purple-500/20">
                 Hub
@@ -99,7 +107,7 @@ export default async function FlowaPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href="/flowa/import">
+            <Link href="/ecombius/import">
               <Button
                 size="sm"
                 className="h-8 text-xs gap-1.5 bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 shadow-2xs font-medium cursor-pointer"
@@ -192,7 +200,7 @@ export default async function FlowaPage() {
               <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
                 <span>Phân loại shop:</span>
                 <span className="font-mono font-medium text-foreground">
-                  Artisanhand
+                  Artisan
                 </span>
               </div>
             </div>

@@ -53,7 +53,7 @@ export const sourceConfigs: Record<
   },
   COGS: {
     label: "COGS",
-    description: "Chi phí giá vốn hàng bán Flowa (Fastway, Equarus, etc.)",
+    description: "Chi phí giá vốn hàng bán ECOMBIUS (Fastway, Equarus, etc.)",
     tag: "FLOWA_COGS",
     activeBorder: "border-amber-500/50 dark:border-amber-500/60",
     activeBg: "bg-amber-500/[0.06] shadow-amber-500/5",

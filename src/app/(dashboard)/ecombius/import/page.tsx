@@ -3,9 +3,23 @@ import Link from "next/link";
 import { EtsyImportCenter } from "@/components/dashboard/fl/etsy-import-center";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ETSY_SHOPS } from "@/lib/etsy-import";
+import { ETSY_SHOPS, ensureEcombiusShops } from "@/lib/fl/etsy-constants";
+import { prisma } from "@/lib/prisma";
+
+export const metadata = {
+  title: "ECOMBIUS - Nạp dữ liệu Sheet",
+  description: "Nạp và quản lý dữ liệu đối tác Etsy của workspace ECOMBIUS",
+};
 
 export default async function FlowaImportPage() {
+  await ensureEcombiusShops(prisma);
+  const dbShops = await prisma.etsyShop.findMany({
+    where: { active: true },
+    orderBy: { name: "asc" },
+    select: { code: true, name: true },
+  });
+  const shops = dbShops.length > 0 ? dbShops : [...ETSY_SHOPS];
+
   return (
     <>
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 bg-background/80 px-4 sm:px-6 backdrop-blur-md sticky top-0 z-20 gap-2">
@@ -23,7 +37,7 @@ export default async function FlowaImportPage() {
             </Link>
             <span className="text-muted-foreground/40 hidden sm:inline">/</span>
             <span className="font-semibold text-foreground truncate">
-              Flowa
+              ECOMBIUS
             </span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-muted-foreground truncate">
@@ -42,7 +56,7 @@ export default async function FlowaImportPage() {
               <span>Về Trang chủ</span>
             </Button>
           </Link>
-          <Link href="/flowa">
+          <Link href="/ecombius">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
               <ShoppingBagIcon className="size-3.5 mr-1" />
               <span>Xem bảng dữ liệu</span>
@@ -56,12 +70,12 @@ export default async function FlowaImportPage() {
           <div>
             <p className="text-sm text-muted-foreground">Trung tâm tải lên</p>
             <h1 className="mt-1 font-semibold text-2xl tracking-tight">
-              Flowa Sheet Import
+              ECOMBIUS Sheet Import
             </h1>
           </div>
         </section>
 
-        <EtsyImportCenter shops={[...ETSY_SHOPS]} />
+        <EtsyImportCenter shops={shops} />
       </main>
     </>
   );

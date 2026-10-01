@@ -91,7 +91,7 @@ export function FlowaExportDropdown({
       XLSX.utils.book_append_sheet(workbook, worksheet, activeTab);
       XLSX.writeFile(
         workbook,
-        `flowa-${activeTab}-${exportMonth || "all"}.xlsx`,
+        `ecombius-${activeTab}-${exportMonth || "all"}.xlsx`,
       );
     } finally {
       setExporting(false);
@@ -149,7 +149,7 @@ export function FlowaExportDropdown({
         );
       }
 
-      XLSX.writeFile(workbook, `flowa-all-${exportMonth || "all"}.xlsx`);
+      XLSX.writeFile(workbook, `ecombius-all-${exportMonth || "all"}.xlsx`);
     } finally {
       setExporting(false);
     }

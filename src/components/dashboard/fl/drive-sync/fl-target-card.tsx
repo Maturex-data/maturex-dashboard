@@ -56,7 +56,7 @@ export function FlTargetCard({
         }
         title={
           <div className="flex flex-wrap items-center gap-2.5">
-            <span>Google Sheets Destination (Flowa)</span>
+            <span>Google Sheets Destination (ECOMBIUS)</span>
             {connection ? (
               <Badge
                 variant="outline"
@@ -84,7 +84,7 @@ export function FlTargetCard({
               </span>
             </span>
           ) : (
-            "Tài khoản Google Drive được ủy quyền tự động đồng bộ lên bảng tính Flowa."
+            "Tài khoản Google Drive được ủy quyền tự động đồng bộ lên bảng tính ECOMBIUS."
           )
         }
         action={

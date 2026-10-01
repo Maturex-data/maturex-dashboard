@@ -153,7 +153,9 @@ export function FlowaDriveSync({
 
   const handleClearHistory = async () => {
     if (
-      !confirm("Bạn có chắc muốn xóa toàn bộ lịch sử các phiên đồng bộ Flowa?")
+      !confirm(
+        "Bạn có chắc muốn xóa toàn bộ lịch sử các phiên đồng bộ ECOMBIUS?",
+      )
     ) {
       return;
     }

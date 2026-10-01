@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MatureX - Financial Dashboard",
-  description: "Báo cáo tài chính đa team MatureX (EC, Flowa, Microm, Pocdy)",
+  description: "Báo cáo tài chính đa team MatureX (EC, ECOMBIUS, Microm)",
 };
 
 export default function RootLayout({

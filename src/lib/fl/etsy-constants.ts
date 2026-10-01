@@ -1,19 +1,39 @@
+import type { PrismaClient } from "@/generated/prisma/client";
+
 export const ETSY_SHOPS = [
-  { code: "97DECOR", name: "97Decor" },
-  { code: "ARTISANHAND", name: "Artisanhand" },
   { code: "EVERNEST", name: "Evernest" },
-  { code: "POCDY", name: "Pocdy" },
+  { code: "ORIVIA", name: "Orivia" },
   { code: "TIMOND", name: "Timond" },
+  { code: "ARTISANHAND", name: "Artisan" },
+  { code: "97DECOR", name: "97Decor" },
+  { code: "KINDLORA", name: "Kindlora" },
+  { code: "EVERMIRTH", name: "Evermirth" },
 ] as const;
+
+export type EtsyShopCode = (typeof ETSY_SHOPS)[number]["code"];
 
 export const SHOPS_MAP: Record<string, string> = {
   "97DECOR": "97DECOR",
+  ARTISAN: "ARTISANHAND",
   ARTISANHAND: "ARTISANHAND",
   ARTISANSHAND: "ARTISANHAND",
+  EVERMIRTH: "EVERMIRTH",
   EVERNEST: "EVERNEST",
-  POCDY: "POCDY",
+  KINDLORA: "KINDLORA",
+  ORIVIA: "ORIVIA",
   TIMOND: "TIMOND",
 };
+
+export function isPocdyPath(pathOrCode: string): boolean {
+  if (!pathOrCode) return false;
+  const normalized = normalizeShopCode(pathOrCode);
+  if (normalized === "POCDY" || normalized.startsWith("POCDY")) return true;
+  const parts = pathOrCode.split(/[/\\]/);
+  return parts.some((part) => {
+    const norm = normalizeShopCode(part);
+    return norm === "POCDY" || norm.startsWith("POCDY");
+  });
+}
 
 export function normalizeShopCode(value: string): string {
   return String(value ?? "")
@@ -24,6 +44,9 @@ export function normalizeShopCode(value: string): string {
 }
 
 export function detectShopFromPath(pathOrName: string): string | null {
+  if (isPocdyPath(pathOrName)) {
+    return null;
+  }
   if (isCogsFileName(pathOrName)) {
     return "97DECOR";
   }
@@ -44,4 +67,22 @@ export function isCogsFileName(fileName: string): boolean {
     lower.includes("claim") ||
     lower.includes("cogs")
   );
+}
+
+let syncExecuted = false;
+
+export async function ensureEcombiusShops(prismaClient: PrismaClient) {
+  if (syncExecuted) return;
+  try {
+    for (const shop of ETSY_SHOPS) {
+      await prismaClient.etsyShop.upsert({
+        where: { code: shop.code },
+        create: { code: shop.code, name: shop.name, active: true },
+        update: { name: shop.name, active: true },
+      });
+    }
+    syncExecuted = true;
+  } catch (error) {
+    console.error("Failed to ensure ECOMBIUS shops in DB:", error);
+  }
 }

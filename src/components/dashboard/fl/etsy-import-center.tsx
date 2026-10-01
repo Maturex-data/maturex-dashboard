@@ -15,7 +15,7 @@ import { useRef, useState } from "react";
 import { importEtsyAction } from "@/actions/etsy";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { detectShopFromPath } from "@/lib/etsy-constants";
+import { detectShopFromPath, isPocdyPath } from "@/lib/etsy-constants";
 import { cn } from "@/lib/utils";
 
 interface ShopOption {
@@ -204,8 +204,8 @@ export function EtsyImportCenter({ shops }: { shops: ShopOption[] }) {
         payload.summary.failed > 0
           ? `${payload.summary.failed} file cần kiểm tra lại.`
           : payload.summary.insertedRows === 0 && payload.summary.skipped > 0
-            ? `${payload.summary.skipped} file chưa có tab đích trong Google Sheet Flowa.`
-            : `Đã nạp ${payload.summary.insertedRows.toLocaleString("vi-VN")} dòng vào Google Sheet Flowa.`,
+            ? `${payload.summary.skipped} file chưa có tab đích trong Google Sheet ECOMBIUS.`
+            : `Đã nạp ${payload.summary.insertedRows.toLocaleString("vi-VN")} dòng vào Google Sheet ECOMBIUS.`,
       );
       if (payload.summary.failed === 0) setFiles([]);
       window.dispatchEvent(new CustomEvent("etsy-cache-invalidated"));
@@ -234,8 +234,8 @@ export function EtsyImportCenter({ shops }: { shops: ShopOption[] }) {
               </Badge>
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              File được nạp trực tiếp vào Google Sheet Flowa; các công thức báo
-              cáo trên Sheet sẽ tự tính lại.
+              File được nạp trực tiếp vào Google Sheet ECOMBIUS; các công thức
+              báo cáo trên Sheet sẽ tự tính lại.
             </p>
           </div>
           <Badge variant="outline">CSV / XLSX / Folder</Badge>
@@ -362,7 +362,7 @@ export function EtsyImportCenter({ shops }: { shops: ShopOption[] }) {
               </span>
               <span className="mt-1 text-xs text-muted-foreground">
                 Hệ thống tự động quét đệ quy các thư mục con và phân tích đúng
-                Shop (97Decor, Artisanhand, Timond...)
+                Shop (Evernest, Orivia, Timond, Artisan...)
               </span>
 
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
@@ -420,16 +420,34 @@ export function EtsyImportCenter({ shops }: { shops: ShopOption[] }) {
                     </div>
                     <div className="flex flex-col items-end sm:items-start truncate text-xs text-muted-foreground">
                       <span>{guessedReport(item.file.name)}</span>
-                      {detectShopFromPath(
-                        item.relativePath || item.file.name,
-                      ) && (
-                        <span className="text-[10px] text-purple-600 font-semibold">
-                          Shop:{" "}
-                          {detectShopFromPath(
-                            item.relativePath || item.file.name,
-                          )}
-                        </span>
-                      )}
+                      {(() => {
+                        const relPath = item.relativePath || item.file.name;
+                        if (
+                          isPocdyPath(relPath) ||
+                          isPocdyPath(item.file.name)
+                        ) {
+                          return (
+                            <span className="text-[10px] text-destructive font-semibold">
+                              Shop không được hỗ trợ
+                            </span>
+                          );
+                        }
+                        const detected = detectShopFromPath(relPath);
+                        if (!detected) return null;
+                        const shopObj = shops.find((s) => s.code === detected);
+                        if (!shopObj) {
+                          return (
+                            <span className="text-[10px] text-destructive font-semibold">
+                              Shop không được hỗ trợ
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="text-[10px] text-purple-600 font-semibold">
+                            Shop: {shopObj.name}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <span className="text-right text-xs tabular-nums text-muted-foreground">
                       {fileSize(item.file.size)}

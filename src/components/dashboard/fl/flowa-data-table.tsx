@@ -87,7 +87,7 @@ export function FlowaDataTable({ shops }: { shops: ShopOption[] }) {
       params.set("tab", tab);
       params.set("shop", shop);
       params.set("month", month);
-      router.replace(`/flowa?${params.toString()}`, { scroll: false });
+      router.replace(`/ecombius?${params.toString()}`, { scroll: false });
     },
     [router],
   );
@@ -303,7 +303,7 @@ export function FlowaDataTable({ shops }: { shops: ShopOption[] }) {
               <div>
                 <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground tracking-tight">
                   <ShoppingBagIcon className="size-4 text-primary" />
-                  Bảng Dữ Liệu Đối Tác Etsy (Flowa Hub)
+                  Bảng Dữ Liệu Đối Tác Etsy (ECOMBIUS Hub)
                 </h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Báo cáo đơn hàng, sao kê dòng tiền và dữ liệu sản phẩm chi
@@ -346,7 +346,7 @@ export function FlowaDataTable({ shops }: { shops: ShopOption[] }) {
                 className="gap-2 text-xs py-2 px-1 font-medium transition-colors hover:text-foreground"
               >
                 <DatabaseIcon className="size-3.5 text-sky-500" />
-                <span>3. Chi Tiết SP (chỉ Artisanhand)</span>
+                <span>3. Chi Tiết SP (chỉ Artisan)</span>
                 {activeTab === "items" && (
                   <span className="ml-1 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.2 text-[10px] font-mono font-semibold">
                     {total}
