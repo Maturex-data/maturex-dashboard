@@ -15,7 +15,9 @@ export async function fetchFlowaStatementValues(
 ): Promise<FlowaSheetValue[][]> {
   const range = databaseDateRange(from, to);
   const shopCondition =
-    shopCode && shopCode !== "ALL" ? { shop: { code: shopCode } } : {};
+    shopCode && shopCode !== "ALL"
+      ? { shop: { code: shopCode, active: true } }
+      : { shop: { active: true } };
 
   const statements = await prisma.etsyStatement.findMany({
     where: {

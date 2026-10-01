@@ -4,7 +4,7 @@ import {
   BarChart3Icon,
   ChartNoAxesCombinedIcon,
   CloudIcon,
-  CreditCardIcon,
+  GaugeIcon,
   HomeIcon,
   LayersIcon,
   ShoppingBagIcon,
@@ -38,22 +38,16 @@ const data = {
       href: "/ec",
     },
     {
-      name: "Flowa",
+      name: "ECOMBIUS",
       logo: <SparklesIcon className="size-4 text-purple-400" />,
-      plan: "Digital / Media",
-      href: "/flowa",
+      plan: "Etsy / Cross-border",
+      href: "/ecombius",
     },
     {
       name: "Microm",
       logo: <LayersIcon className="size-4 text-sky-400" />,
       plan: "Micro SaaS",
       href: "/microm",
-    },
-    {
-      name: "Pocdy",
-      logo: <CreditCardIcon className="size-4 text-amber-400" />,
-      plan: "Cross-border Brand",
-      href: "/dashboard?team=pocdy",
     },
   ],
 };
@@ -85,10 +79,11 @@ export function AppSidebar({
       isActive: pathname.startsWith("/ec"),
     },
     {
-      title: "Flowa Team",
-      url: "/flowa",
+      title: "ECOMBIUS",
+      url: "/ecombius",
       icon: <SparklesIcon className="size-4 text-purple-500" />,
-      isActive: pathname.startsWith("/flowa"),
+      isActive:
+        pathname.startsWith("/ecombius") || pathname.startsWith("/flowa"),
     },
     {
       title: "Microm Team",
@@ -98,24 +93,25 @@ export function AppSidebar({
     },
   ];
 
-  const flowaNav = [
+  const ecombiusNav = [
     {
       title: "Bảng dữ liệu Etsy",
-      url: "/flowa",
+      url: "/ecombius",
       icon: <ShoppingBagIcon className="size-4 text-purple-500" />,
-      isActive: pathname === "/flowa",
+      isActive: pathname === "/ecombius" || pathname === "/flowa",
     },
     {
       title: "Import & Lịch sử file",
-      url: "/flowa/import",
+      url: "/ecombius/import",
       icon: <UploadCloudIcon className="size-4 text-purple-500" />,
-      isActive: pathname === "/flowa/import",
+      isActive: pathname === "/ecombius/import" || pathname === "/flowa/import",
     },
     {
-      title: "Flowa Drive Sync",
-      url: "/flowa/drive-sync",
+      title: "ECOMBIUS Drive Sync",
+      url: "/ecombius/drive-sync",
       icon: <CloudIcon className="size-4 text-purple-500" />,
-      isActive: pathname === "/flowa/drive-sync",
+      isActive:
+        pathname === "/ecombius/drive-sync" || pathname === "/flowa/drive-sync",
     },
   ];
 
@@ -144,6 +140,13 @@ export function AppSidebar({
       isActive: pathname === "/ec/business-report",
     },
     {
+      title: "Tiến độ & KPI",
+      url: "/ec/progress",
+      icon: <GaugeIcon />,
+      badge: "Q4 / T10",
+      isActive: pathname === "/ec/progress",
+    },
+    {
       title: "EC Drive Sync",
       url: "/ec/drive-sync",
       icon: <CloudIcon />,
@@ -152,15 +155,16 @@ export function AppSidebar({
     },
   ];
 
-  const navigation = pathname.startsWith("/flowa")
-    ? flowaNav
-    : pathname.startsWith("/microm")
-      ? micromNav
-      : pathname.startsWith("/ec")
-        ? ecNav
-        : pathname === "/"
-          ? homeNav
-          : ecNav;
+  const navigation =
+    pathname.startsWith("/ecombius") || pathname.startsWith("/flowa")
+      ? ecombiusNav
+      : pathname.startsWith("/microm")
+        ? micromNav
+        : pathname.startsWith("/ec")
+          ? ecNav
+          : pathname === "/"
+            ? homeNav
+            : ecNav;
 
   return (
     <Sidebar

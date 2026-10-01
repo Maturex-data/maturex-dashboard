@@ -3,6 +3,7 @@ import {
   detectShopFromPath,
   ETSY_SHOPS,
   isCogsFileName,
+  isPocdyPath,
 } from "../etsy-constants";
 import { importSource } from "./importers";
 import { parseFile } from "./parser";
@@ -16,6 +17,11 @@ export async function importEtsyFiles(
   if (files.length === 0) throw new Error("Chưa chọn file để import.");
   if (files.length > MAX_FILES)
     throw new Error(`Mỗi lần chỉ import tối đa ${MAX_FILES} file.`);
+  if (isPocdyPath(shopCode)) {
+    throw new Error(
+      'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
+    );
+  }
 
   // Pre-load all shops
   const allShops = await prisma.etsyShop.findMany();
@@ -32,9 +38,19 @@ export async function importEtsyFiles(
 
     let targetShopCode = shopCode;
     try {
+      if (
+        isPocdyPath(shopCode) ||
+        isPocdyPath(relPath) ||
+        isPocdyPath(file.name)
+      ) {
+        throw new Error(
+          'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
+        );
+      }
+
       if (isCogsFileName(relPath) || isCogsFileName(file.name)) {
         targetShopCode = "97DECOR";
-      } else if (!targetShopCode || targetShopCode === "AUTO") {
+      } else if (!shopCode || shopCode === "AUTO") {
         const detected =
           detectShopFromPath(relPath) || detectShopFromPath(file.name);
         if (!detected) {
@@ -43,21 +59,33 @@ export async function importEtsyFiles(
           );
         }
         targetShopCode = detected;
+      } else {
+        targetShopCode = shopCode;
       }
 
       let shop = shopMap.get(targetShopCode.toUpperCase());
+      if (shop && !shop.active) {
+        throw new Error(
+          `Shop "${shop.name || targetShopCode}" không được hỗ trợ hoặc đã ngừng hoạt động.`,
+        );
+      }
+
       if (!shop) {
-        // Fallback or create if valid
-        const def = ETSY_SHOPS.find((s) => s.code === targetShopCode);
+        // Fallback or create if valid in active ETSY_SHOPS
+        const def = ETSY_SHOPS.find(
+          (s) => s.code === targetShopCode.toUpperCase(),
+        );
         if (def) {
           shop = await prisma.etsyShop.upsert({
             where: { code: def.code },
-            create: { code: def.code, name: def.name },
-            update: {},
+            create: { code: def.code, name: def.name, active: true },
+            update: { name: def.name, active: true },
           });
           shopMap.set(shop.code.toUpperCase(), shop);
         } else {
-          throw new Error(`Shop "${targetShopCode}" không hợp lệ.`);
+          throw new Error(
+            `Shop "${targetShopCode}" không được hỗ trợ. Danh mục hiện tại chỉ hỗ trợ 7 shop đang hoạt động.`,
+          );
         }
       }
 

@@ -140,7 +140,7 @@ export function FlSyncHistoryTable({
   return (
     <SectionCard
       title="Lịch sử phiên chạy (Giờ Việt Nam)"
-      description="Nhật ký các lần đồng bộ dữ liệu Flowa lên Google Sheets."
+      description="Nhật ký các lần đồng bộ dữ liệu ECOMBIUS lên Google Sheets."
       icon={
         <ClockIcon className="size-4 text-purple-600 dark:text-purple-400" />
       }
@@ -162,7 +162,7 @@ export function FlSyncHistoryTable({
       <DataTable
         columns={columns}
         data={runs}
-        emptyMessage="Chưa có phiên đồng bộ nào được ghi nhận cho Flowa."
+        emptyMessage="Chưa có phiên đồng bộ nào được ghi nhận cho ECOMBIUS."
         keyExtractor={(run) => run.id}
       />
     </SectionCard>

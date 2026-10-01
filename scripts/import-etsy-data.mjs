@@ -15,12 +15,15 @@ const sourceRoot = path.resolve(
 );
 
 const SHOPS = {
-  "97DECOR": { code: "97DECOR", name: "97Decor" },
-  ARTISANHAND: { code: "ARTISANHAND", name: "Artisanhand" },
-  ARTISANSHAND: { code: "ARTISANHAND", name: "Artisanhand" },
-  EVERNEST: { code: "EVERNEST", name: "Evernest" },
-  POCDY: { code: "POCDY", name: "Pocdy" },
-  TIMOND: { code: "TIMOND", name: "Timond" },
+  "97DECOR": { code: "97DECOR", name: "97Decor", active: true },
+  ARTISAN: { code: "ARTISANHAND", name: "Artisan", active: true },
+  ARTISANHAND: { code: "ARTISANHAND", name: "Artisan", active: true },
+  ARTISANSHAND: { code: "ARTISANHAND", name: "Artisan", active: true },
+  EVERMIRTH: { code: "EVERMIRTH", name: "Evermirth", active: true },
+  EVERNEST: { code: "EVERNEST", name: "Evernest", active: true },
+  KINDLORA: { code: "KINDLORA", name: "Kindlora", active: true },
+  ORIVIA: { code: "ORIVIA", name: "Orivia", active: true },
+  TIMOND: { code: "TIMOND", name: "Timond", active: true },
 };
 
 const REPORT_DATE_COLUMN = {
@@ -88,8 +91,21 @@ function hash(value) {
 
 function resolveShop(filePath) {
   for (const segment of filePath.split(path.sep).reverse()) {
-    const shop = SHOPS[normalize(segment)];
-    if (shop) return shop;
+    const norm = normalize(segment);
+    if (norm === "POCDY" || norm.startsWith("POCDY")) {
+      throw new Error(
+        'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
+      );
+    }
+    const shop = SHOPS[norm];
+    if (shop) {
+      if (!shop.active) {
+        throw new Error(
+          `Shop "${shop.name}" (${shop.code}) không còn được hỗ trợ. Không thể nhập dữ liệu mới.`,
+        );
+      }
+      return shop;
+    }
   }
   throw new Error(`Cannot determine Etsy shop from path: ${filePath}`);
 }

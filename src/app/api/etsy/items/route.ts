@@ -23,7 +23,9 @@ export async function GET(req: NextRequest) {
     const where: Prisma.EtsyOrderItemWhereInput = {};
 
     if (shopCode && shopCode !== "all") {
-      where.shop = { code: shopCode };
+      where.shop = { code: shopCode, active: true };
+    } else {
+      where.shop = { active: true };
     }
 
     if (month && month !== "all" && /^\d{4}-\d{2}$/.test(month)) {
@@ -68,10 +70,12 @@ export async function GET(req: NextRequest) {
         take: limit,
       }),
       prisma.etsyShop.findMany({
+        where: { active: true },
         select: { code: true, name: true },
         orderBy: { name: "asc" },
       }),
       prisma.etsyOrderItem.findMany({
+        where: { shop: { active: true } },
         select: { saleDate: true },
         distinct: ["saleDate"],
         orderBy: { saleDate: "desc" },

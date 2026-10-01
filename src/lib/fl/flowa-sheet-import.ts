@@ -1,6 +1,10 @@
 import * as XLSX from "xlsx";
 import { type FlowaSheetValue, upsertFlowaImportedRows } from "@/lib/fl/drive";
-import { detectShopFromPath, isCogsFileName } from "@/lib/fl/etsy-constants";
+import {
+  detectShopFromPath,
+  isCogsFileName,
+  isPocdyPath,
+} from "@/lib/fl/etsy-constants";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_FILES = 100;
@@ -251,6 +255,11 @@ export async function importFilesToFlowaSheet(
   if (!files.length) throw new Error("Chưa chọn file để import.");
   if (files.length > MAX_FILES)
     throw new Error(`Mỗi lần tối đa ${MAX_FILES} file.`);
+  if (isPocdyPath(shopCode)) {
+    throw new Error(
+      'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
+    );
+  }
 
   const results: FlowaSheetImportResult[] = [];
   const sources: PendingSource[] = [];
@@ -261,14 +270,33 @@ export async function importFilesToFlowaSheet(
       item instanceof File
         ? file.webkitRelativePath || file.name
         : item.relativePath || file.name;
-    const detectedShop = isCogsFileName(relativePath)
-      ? "97DECOR"
-      : shopCode === "AUTO"
-        ? detectShopFromPath(relativePath) || ""
-        : shopCode;
+
+    let detectedShop = shopCode;
     try {
+      if (
+        isPocdyPath(shopCode) ||
+        isPocdyPath(relativePath) ||
+        isPocdyPath(file.name)
+      ) {
+        throw new Error(
+          'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
+        );
+      }
+
+      if (isCogsFileName(relativePath) || isCogsFileName(file.name)) {
+        detectedShop = "97DECOR";
+      } else if (!shopCode || shopCode === "AUTO") {
+        detectedShop =
+          detectShopFromPath(relativePath) ||
+          detectShopFromPath(file.name) ||
+          "";
+      } else {
+        detectedShop = shopCode;
+      }
+
       if (!detectedShop)
         throw new Error("Không xác định được shop từ thư mục/tên file.");
+
       const source = await parseFile(file);
       sources.push({
         fileName: file.name,
@@ -330,7 +358,7 @@ export async function importFilesToFlowaSheet(
       insertedRows: count,
       skippedRows: supported ? 0 : source.source.rows.length,
       message: supported
-        ? "Đã nạp vào Google Sheet Flowa."
+        ? "Đã nạp vào Google Sheet ECOMBIUS."
         : "File Orders/Order items chưa có tab đích trong mẫu Sheet nên chưa nạp.",
     });
   }

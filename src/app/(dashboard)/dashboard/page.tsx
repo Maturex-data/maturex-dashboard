@@ -79,6 +79,13 @@ export default async function Page({ searchParams }: DashboardPageProps) {
   if (params.team === "microm") {
     redirect("/microm");
   }
+  if (
+    params.team === "pocdy" ||
+    params.team === "flowa" ||
+    params.team === "ecombius"
+  ) {
+    redirect("/ecombius");
+  }
 
   return (
     <>

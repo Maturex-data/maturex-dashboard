@@ -3,18 +3,27 @@ import Link from "next/link";
 import { FlowaDriveSync } from "@/components/dashboard/fl/fl-drive-sync";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getGoogleDriveConnection } from "@/lib/ec-drive";
-import { ETSY_SHOPS } from "@/lib/etsy-import";
+import { ETSY_SHOPS, ensureEcombiusShops } from "@/lib/fl/etsy-constants";
 import { getFlowaDriveFileName } from "@/lib/fl-drive";
 import { prisma } from "@/lib/prisma";
 
+export const metadata = {
+  title: "ECOMBIUS - Đồng bộ Drive",
+  description:
+    "Đồng bộ dữ liệu đối tác Etsy lên Google Drive cho workspace ECOMBIUS",
+};
+
 export default async function FlowaDriveSyncPage() {
+  await ensureEcombiusShops(prisma);
   const [connection, runs, targetFileName, dbShops] = await Promise.all([
     getGoogleDriveConnection(),
     prisma.ecDriveSyncRun.findMany({
       where: {
         OR: [
           { shop: { startsWith: "Flowa" } },
+          { shop: { startsWith: "ECOMBIUS" } },
           { source: { startsWith: "FLOWA_" } },
+          { source: { startsWith: "ECOMBIUS_" } },
         ],
       },
       orderBy: { createdAt: "desc" },
@@ -62,7 +71,7 @@ export default async function FlowaDriveSyncPage() {
             </Link>
             <span className="text-muted-foreground/40 hidden sm:inline">/</span>
             <span className="font-semibold text-foreground truncate">
-              Flowa
+              ECOMBIUS
             </span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-muted-foreground truncate">

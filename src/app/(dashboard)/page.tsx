@@ -1,6 +1,5 @@
 import {
   ArrowRightIcon,
-  CreditCardIcon,
   LayersIcon,
   LayoutDashboardIcon,
   ShoppingBagIcon,
@@ -28,15 +27,15 @@ export default function HomePage() {
       badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     },
     {
-      title: "Flowa",
+      title: "ECOMBIUS",
       description:
         "Bảng dữ liệu Etsy, quản lý tệp import, phân tích đơn hàng và đồng bộ Google Drive.",
-      href: "/flowa",
-      tag: "Digital / Media",
+      href: "/ecombius",
+      tag: "Etsy / Cross-border",
       icon: <SparklesIcon className="size-5 text-purple-400" />,
       accentBorder: "hover:border-purple-500/40",
       accentBg: "hover:bg-purple-500/[0.03]",
-      badge: "Etsy Ops",
+      badge: "Etsy Hub",
       badgeClass: "bg-purple-500/10 text-purple-400 border-purple-500/20",
     },
     {
@@ -50,18 +49,6 @@ export default function HomePage() {
       accentBg: "hover:bg-sky-500/[0.03]",
       badge: "P&L",
       badgeClass: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-    },
-    {
-      title: "Pocdy",
-      description:
-        "Quản lý hoạt động kinh doanh thương hiệu xuyên biên giới và kênh thanh toán.",
-      href: "/dashboard?team=pocdy",
-      tag: "Cross-border Brand",
-      icon: <CreditCardIcon className="size-5 text-amber-400" />,
-      accentBorder: "hover:border-amber-500/40",
-      accentBg: "hover:bg-amber-500/[0.03]",
-      badge: "Brand Ops",
-      badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     },
   ];
 
