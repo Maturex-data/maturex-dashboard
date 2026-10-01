@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EcAirwallexBankSyncCard } from "./ec-airwallex-bank-sync-card";
 import {
   type DriveConnectionInfo,
   type DriveHealthState,
@@ -22,6 +23,7 @@ import {
 } from "./ec-drive-connection-card";
 import { type DriveRun, EcDriveSyncHistory } from "./ec-drive-sync-history";
 import { EcShopifyPayoutSyncCard } from "./ec-shopify-payout-sync-card";
+import { EcShopifyRawSyncCard } from "./ec-shopify-raw-sync-card";
 
 const sources = ["Orders", "COGS", "Ads", "Payouts"];
 
@@ -255,6 +257,8 @@ export function EcDriveSync({
       />
 
       <EcShopifyPayoutSyncCard connected={driveHealth === "connected"} />
+      <EcShopifyRawSyncCard connected={driveHealth === "connected"} />
+      <EcAirwallexBankSyncCard connected={driveHealth === "connected"} />
 
       {/* Main Workspace Grid: Controls & History */}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
