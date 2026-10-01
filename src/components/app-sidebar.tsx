@@ -5,6 +5,7 @@ import {
   ChartNoAxesCombinedIcon,
   CloudIcon,
   CreditCardIcon,
+  HomeIcon,
   LayersIcon,
   ShoppingBagIcon,
   SparklesIcon,
@@ -34,7 +35,7 @@ const data = {
       name: "EC Team",
       logo: <ShoppingBagIcon className="size-4 text-emerald-400" />,
       plan: "Shopify / POD / Ads",
-      href: "/",
+      href: "/ec",
     },
     {
       name: "Flowa",
@@ -55,26 +56,6 @@ const data = {
       href: "/dashboard?team=pocdy",
     },
   ],
-  navMain: [
-    {
-      title: "Tổng quan dữ liệu",
-      url: "/",
-      icon: <BarChart3Icon />,
-      badge: "Realtime",
-    },
-    {
-      title: "Báo cáo kinh doanh",
-      url: "/business-report",
-      icon: <ChartNoAxesCombinedIcon />,
-      badge: "P&L",
-    },
-    {
-      title: "EC Drive Sync",
-      url: "/ec-drive-sync",
-      icon: <CloudIcon />,
-      badge: "Raw data",
-    },
-  ],
 };
 
 export function AppSidebar({
@@ -89,6 +70,33 @@ export function AppSidebar({
 }) {
   const currentUser = user || data.user;
   const pathname = usePathname();
+
+  const homeNav = [
+    {
+      title: "Trang chủ",
+      url: "/",
+      icon: <HomeIcon className="size-4 text-emerald-400" />,
+      isActive: pathname === "/",
+    },
+    {
+      title: "EC Team",
+      url: "/ec",
+      icon: <ShoppingBagIcon className="size-4 text-emerald-500" />,
+      isActive: pathname.startsWith("/ec"),
+    },
+    {
+      title: "Flowa Team",
+      url: "/flowa",
+      icon: <SparklesIcon className="size-4 text-purple-500" />,
+      isActive: pathname.startsWith("/flowa"),
+    },
+    {
+      title: "Microm Team",
+      url: "/microm",
+      icon: <LayersIcon className="size-4 text-sky-400" />,
+      isActive: pathname.startsWith("/microm"),
+    },
+  ];
 
   const flowaNav = [
     {
@@ -120,15 +128,39 @@ export function AppSidebar({
     },
   ];
 
-  const ecNav = data.navMain.map((item) => ({
-    ...item,
-    isActive: pathname === item.url,
-  }));
+  const ecNav = [
+    {
+      title: "Tổng quan dữ liệu",
+      url: "/ec",
+      icon: <BarChart3Icon />,
+      badge: "Realtime",
+      isActive: pathname === "/ec",
+    },
+    {
+      title: "Báo cáo kinh doanh",
+      url: "/ec/business-report",
+      icon: <ChartNoAxesCombinedIcon />,
+      badge: "P&L",
+      isActive: pathname === "/ec/business-report",
+    },
+    {
+      title: "EC Drive Sync",
+      url: "/ec/drive-sync",
+      icon: <CloudIcon />,
+      badge: "Raw data",
+      isActive: pathname === "/ec/drive-sync",
+    },
+  ];
+
   const navigation = pathname.startsWith("/flowa")
     ? flowaNav
     : pathname.startsWith("/microm")
       ? micromNav
-      : ecNav;
+      : pathname.startsWith("/ec")
+        ? ecNav
+        : pathname === "/"
+          ? homeNav
+          : ecNav;
 
   return (
     <Sidebar

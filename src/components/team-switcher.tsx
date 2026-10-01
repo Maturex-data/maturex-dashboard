@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDownIcon, PlusIcon } from "lucide-react";
+import { ChevronsUpDownIcon, HomeIcon, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import {
@@ -33,6 +33,7 @@ export function TeamSwitcher({
   const pathname = usePathname();
   const router = useRouter();
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const isHome = pathname === "/";
 
   React.useEffect(() => {
     const routeTeam = teams.find((team) => {
@@ -48,7 +49,17 @@ export function TeamSwitcher({
 
   React.useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || !/^[1-4]$/.test(event.key)) {
+      if (!(event.metaKey || event.ctrlKey)) {
+        return;
+      }
+
+      if (event.key === "0") {
+        event.preventDefault();
+        router.push("/");
+        return;
+      }
+
+      if (!/^[1-4]$/.test(event.key)) {
         return;
       }
 
@@ -69,6 +80,7 @@ export function TeamSwitcher({
   if (!activeTeam) {
     return null;
   }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -82,17 +94,21 @@ export function TeamSwitcher({
             }
           >
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-xs border border-white/10 shrink-0">
-              {activeTeam.logo}
+              {isHome ? (
+                <HomeIcon className="size-4 text-emerald-400" />
+              ) : (
+                activeTeam.logo
+              )}
             </div>
             <div className="grid flex-1 text-left text-xs leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
               <div className="flex items-center gap-1.5">
                 <span className="truncate font-semibold text-foreground">
-                  {activeTeam.name}
+                  {isHome ? "MatureX Workspace" : activeTeam.name}
                 </span>
                 <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
               </div>
               <span className="truncate text-[10px] text-muted-foreground font-mono">
-                {activeTeam.plan}
+                {isHome ? "Trang chủ" : activeTeam.plan}
               </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-3.5 text-muted-foreground shrink-0 group-data-[collapsible=icon]:hidden" />
@@ -104,11 +120,39 @@ export function TeamSwitcher({
             sideOffset={6}
           >
             <DropdownMenuGroup>
+              <DropdownMenuItem
+                onClick={() => {
+                  router.push("/");
+                }}
+                className={`gap-2.5 p-2 rounded-lg cursor-pointer text-xs ${
+                  isHome
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-2xs shrink-0">
+                  <HomeIcon className="size-4" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="truncate font-medium">
+                    Trang chủ Workspace
+                  </span>
+                  <span className="truncate text-[10px] text-muted-foreground font-mono">
+                    Overview Portal
+                  </span>
+                </div>
+                <DropdownMenuShortcut className="font-mono text-[10px]">
+                  ⌘0
+                </DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuGroup>
               <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 MatureX Teams
               </div>
               {teams.map((team, index) => {
-                const isSelected = team.name === activeTeam.name;
+                const isSelected = !isHome && team.name === activeTeam.name;
                 return (
                   <DropdownMenuItem
                     key={team.name}

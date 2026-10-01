@@ -45,7 +45,7 @@ async function completeCallback(url: URL): Promise<{
 }
 
 export async function GET(request: Request) {
-  const redirectUrl = new URL("/ec-drive-sync", request.url);
+  const redirectUrl = new URL("/ec/drive-sync", request.url);
   const result = await completeCallback(new URL(request.url));
   if (result.error) redirectUrl.searchParams.set("drive_error", result.error);
   else redirectUrl.searchParams.set("drive_connected", "1");
