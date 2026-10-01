@@ -33,7 +33,7 @@ function SheetTable({ table }: { table: EcBusinessReportSheetTable }) {
   }
 
   const isPl = table.name === "PL";
-  const isDaily = table.name === "P&L ngày";
+  const isDaily = table.name.startsWith("P&L ngày T");
   const columnCount = table.rows[0]?.length ?? 0;
 
   return (

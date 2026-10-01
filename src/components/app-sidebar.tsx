@@ -4,6 +4,7 @@ import {
   BarChart3Icon,
   ChartNoAxesCombinedIcon,
   CloudIcon,
+  GaugeIcon,
   HomeIcon,
   LayersIcon,
   ShoppingBagIcon,
@@ -137,6 +138,13 @@ export function AppSidebar({
       icon: <ChartNoAxesCombinedIcon />,
       badge: "P&L",
       isActive: pathname === "/ec/business-report",
+    },
+    {
+      title: "Tiến độ & KPI",
+      url: "/ec/progress",
+      icon: <GaugeIcon />,
+      badge: "Q4 / T10",
+      isActive: pathname === "/ec/progress",
     },
     {
       title: "EC Drive Sync",
