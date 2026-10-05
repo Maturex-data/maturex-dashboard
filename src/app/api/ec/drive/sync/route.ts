@@ -6,6 +6,10 @@ import {
   formatVietnamDateTime,
   vietnamMonthRange,
 } from "@/lib/date-time";
+import {
+  ensureOrdersDeliveryHeaders,
+  orderDeliveryValues,
+} from "@/lib/ec/order-delivery-sheet";
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
 import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/jwt-service";
 import { fetchMetaDailyFinancialsFromApi } from "@/lib/meta-daily-financials-sync";
@@ -18,7 +22,7 @@ const REPORT_SPREADSHEET_ID =
   "19QrKNM6Tzn433gRo4neKcT3e6UtRcFaJ7Hj8lvtP5g8";
 
 const REPORT_SHEETS = {
-  Orders: { lastColumn: "M", dateIndex: 3, source: "all-data / RAW.ORDER" },
+  Orders: { lastColumn: "V", dateIndex: 3, source: "all-data / RAW.ORDER" },
   COGS: { lastColumn: "L", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
@@ -190,6 +194,7 @@ async function valuesFor(
           orderTotalBeforeRefund,
           REPORT_SHEETS.Orders.source,
           itemNames,
+          ...orderDeliveryValues(row),
         ];
       });
     }
@@ -293,6 +298,11 @@ async function writeSheet(
   from: Date,
   to: Date,
 ): Promise<void> {
+  if (sheet === "Orders") {
+    await ensureOrdersDeliveryHeaders((path, init) =>
+      sheetsRequest(accessToken, path, init),
+    );
+  }
   const { dateIndex, lastColumn } = REPORT_SHEETS[sheet];
   const existingResponse = await sheetsRequest(
     accessToken,
