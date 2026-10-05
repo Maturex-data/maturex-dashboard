@@ -23,6 +23,8 @@ Read via the project's OAuth and Google Sheets API, not inferred from EC's schem
 | Ads | `Account`, `Account ID`, `Ngày`, `Kỳ`, `Spend USD`, `Impressions`, `Clicks`, `Purchases`, `Nguồn dòng`, `Kiểm soát` | Account-day, **not** account-only; unique `(account ID, date, granularity=account-day)` | USD in header; verify actual Meta account currency |
 | Shopify_Items | `Order ID`, `Line Item ID`, `Tên sản phẩm`, `SKU`, `Quantity`, `Line total`, `Currency`, `Fulfillment`, `Nguồn dòng` | One Shopify line item; Line Item ID stable key; join Orders by Order ID | EUR in current rows |
 
+Follow-up read-only check on 2026-10-05 found that COGS column A had been renamed from `PGPrint Order ID` to `Supplier Order ID`; the other 12 headers still match. The sync contract now follows the live header while preserving the same column position and row data.
+
 Current Ads rows include multiple dates for the same account and multiple periods. Do not use `Account ID` alone as a key. COGS has a row with blank source status and positive source cost but **zero eligible cost**; retain it for audit and do not infer eligibility from cost alone. Orders include voided/unfulfilled rows with zero eligible revenue; retain them but exclude from eligible-order/revenue KPIs. Never add `Shopify_Items.Line total` on top of order revenue or campaign-level Meta rows on top of account-day spend.
 
 ## 3. Architecture and choices
