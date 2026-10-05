@@ -203,7 +203,7 @@ export function MicromTabs({
                 )}
                 {activeTab === "COGS" && (
                   <tr>
-                    <th className="py-2.5 px-3.5">PGPrint Order ID</th>
+                    <th className="py-2.5 px-3.5">Supplier Order ID</th>
                     <th className="py-2.5 px-3">PGC Order ID</th>
                     <th className="py-2.5 px-3">Customer Order ID</th>
                     <th className="py-2.5 px-3">Ngày tạo</th>

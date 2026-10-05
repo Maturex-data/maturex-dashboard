@@ -7,19 +7,7 @@ import type {
   MicromOrderRow,
   MicromShopifyItemRow,
 } from "./types";
-
-export class MicromHeaderDriftError extends Error {
-  constructor(
-    public tab: MicromTabName,
-    public expected: readonly string[] | string[],
-    public actual: unknown[],
-  ) {
-    super(
-      `Phát hiện sai lệch cấu trúc cột (header drift) tại tab "${tab}". Yêu cầu dừng thao tác để bảo vệ dữ liệu Google Sheet.`,
-    );
-    this.name = "MicromHeaderDriftError";
-  }
-}
+import { MicromHeaderDriftError } from "./types";
 
 /**
  * Validates sheet headers against the strict contract
@@ -244,7 +232,7 @@ export async function writeCogsToSheet(
     "A2:M",
   );
 
-  // Map by composite key (PGPrint Order ID + Customer Order ID + Child Item Identifier)
+  // Map by composite key (supplier order ID + Customer Order ID + Child Item Identifier)
   const rowsMap = new Map<string, unknown[]>();
   for (let idx = 0; idx < existingRows.length; idx++) {
     const r = existingRows[idx];

@@ -35,7 +35,7 @@ export const ORDERS_COLUMNS = [
 ] as const;
 
 export const COGS_COLUMNS = [
-  "PGPrint Order ID",
+  "Supplier Order ID",
   "PGC Order ID",
   "Customer Order ID",
   "Ngày tạo",
