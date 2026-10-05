@@ -1,3 +1,4 @@
+import { fetchMicromOrderDelivery } from "@/lib/microm/shopify-delivery";
 import { formatVietnamDate, formatVietnamPeriod } from "./date-utils";
 import type { MicromOrderRow, MicromShopifyItemRow } from "./types";
 
@@ -114,6 +115,10 @@ export async function fetchMicromShopifyOrders(
     );
   }
 
+  const deliveryByOrder = await fetchMicromOrderDelivery(
+    allOrders.map((order) => String(order.id)),
+  );
+
   // Map to Sheet Rows
   const orderRows: MicromOrderRow[] = [];
   const itemRows: MicromShopifyItemRow[] = [];
@@ -185,6 +190,7 @@ export async function fetchMicromShopifyOrders(
     }
 
     orderRows.push({
+      deliveryValues: deliveryByOrder.get(String(order.id)),
       orderId: order.name,
       shopifyId: String(order.id),
       ngayTao,
