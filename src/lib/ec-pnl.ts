@@ -112,6 +112,7 @@ export async function getEcPnlMonth(
   const cogsLuxuryPro = cogsBySupplier.get("luxury pro") ?? 0;
   const cogsPrintify = cogsBySupplier.get("printify") ?? 0;
   const cogsPrintful = cogsBySupplier.get("printful") ?? 0;
+  const cogsPrintPoss = cogsBySupplier.get("printposs") ?? 0;
 
   const feeBuckets = { charge: 0, refund: 0, dispute: 0, other: 0 };
   for (const row of paymentFees) {
@@ -128,7 +129,8 @@ export async function getEcPnlMonth(
   const originalSalesTax = amount(orders._sum.salesTax);
   const netRevenue = correctedNetOrder - originalSalesTax;
   const metaAdvertising = amount(ads._sum.spend);
-  const cogsTotal = cogsPgPrint + cogsLuxuryPro + cogsPrintify + cogsPrintful;
+  const cogsTotal =
+    cogsPgPrint + cogsLuxuryPro + cogsPrintify + cogsPrintful + cogsPrintPoss;
   const paymentFeesTotal =
     feeBuckets.charge +
     feeBuckets.refund +
@@ -187,6 +189,7 @@ export async function getEcPnlMonth(
       cogsLuxuryPro,
       cogsPrintify,
       cogsPrintful,
+      cogsPrintPoss,
       metaAdvertising,
       paymentProcessingFees: feeBuckets.charge,
       refundProcessingFees: feeBuckets.refund,

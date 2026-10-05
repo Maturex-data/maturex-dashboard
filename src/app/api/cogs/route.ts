@@ -64,7 +64,9 @@ export async function POST(request: Request): Promise<Response> {
             ? "Printful"
             : source === "luxury-pro"
               ? "Luxury Pro"
-              : undefined;
+              : source === "printposs"
+                ? "PrintPoss"
+                : undefined;
     return Response.json(await syncCogs(selectedSource, cogsMonthRange(month)));
   } catch (error) {
     return Response.json(
