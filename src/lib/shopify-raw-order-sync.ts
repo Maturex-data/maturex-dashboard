@@ -32,6 +32,12 @@ export type ShopifyOrderNode = {
     }>;
   };
   fulfillments: Array<{
+    id?: string;
+    inTransitAt?: string | null;
+    trackingInfo?: Array<{ company: string | null; number: string | null }>;
+    events?: {
+      nodes: Array<{ status: string; happenedAt: string; createdAt: string }>;
+    };
     createdAt: string;
     deliveredAt: string | null;
     displayStatus: string;
@@ -92,6 +98,10 @@ const ORDERS_QUERY = `
           }
         }
         fulfillments(first: 250) {
+          id
+          inTransitAt
+          trackingInfo { company number }
+          events(first: 1, reverse: true) { nodes { status happenedAt createdAt } }
           createdAt
           deliveredAt
           displayStatus
@@ -232,6 +242,7 @@ async function fetchOrdersPage(
           variables: { after, first: PAGE_SIZE, query },
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(30_000),
       });
       const payload = (await response.json()) as ShopifyOrdersResponse;
       const throttled = payload.errors?.some(
@@ -266,10 +277,10 @@ async function fetchOrdersPage(
   throw new Error("Shopify sync retry limit reached.");
 }
 
-export async function fetchShopifyOrdersFromApi(range: {
-  from: Date;
-  to: Date;
-}): Promise<ShopifyOrderNode[]> {
+export async function fetchShopifyOrdersFromApi(
+  range: { from: Date; to: Date },
+  onProgress?: (fetched: number) => void,
+): Promise<ShopifyOrderNode[]> {
   const fromDay = formatVietnamDate(range.from);
   const untilDay = formatVietnamDate(new Date(range.to.getTime() - 1));
   const query = `created_at:>=${range.from.toISOString()} created_at:<${range.to.toISOString()}`;
@@ -279,6 +290,7 @@ export async function fetchShopifyOrdersFromApi(range: {
   do {
     const page = await fetchOrdersPage(after, query);
     orders.push(...page.nodes);
+    onProgress?.(orders.length);
     after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
   } while (after);
 
