@@ -1,5 +1,14 @@
 import crypto from "node:crypto";
-import { MICROM_TABS, type MicromTabName, TAB_COLUMNS_MAP } from "./constants";
+import {
+  ensureOrdersDeliveryHeaders,
+  ORDER_DELIVERY_HEADERS,
+} from "@/lib/ec/order-delivery-sheet";
+import {
+  MICROM_TABS,
+  type MicromTabName,
+  ORDERS_COLUMNS,
+  TAB_COLUMNS_MAP,
+} from "./constants";
 import { normalizePeriod, normalizeSheetDate } from "./date-utils";
 import type {
   MicromAdRow,
@@ -109,6 +118,12 @@ export function computeTabFingerprint(rows: unknown[][]): string {
   return hash.digest("hex");
 }
 
+export function computeOrdersFingerprint(rows: unknown[][]): string {
+  return computeTabFingerprint(
+    rows.map((row) => row.slice(0, ORDERS_COLUMNS.length)),
+  );
+}
+
 /**
  * Extract item suffix from PGPrint nguonDong to ensure unique composite key for multi-child items
  */
@@ -140,13 +155,30 @@ export async function writeOrdersToSheet(
   accessToken: string,
   newRows: MicromOrderRow[],
 ): Promise<{ writtenCount: number; fingerprint: string }> {
-  await validateSheetHeaders(spreadsheetId, accessToken, MICROM_TABS.ORDERS);
+  await ensureOrdersDeliveryHeaders(async (path, init) => {
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}${path}`,
+      {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(45_000),
+      },
+    );
+    if (!response.ok)
+      throw new Error(
+        `Microm Orders Sheets HTTP ${response.status}: ${await response.text()}`,
+      );
+    return response;
+  }, ORDERS_COLUMNS);
 
   const existingRows = await fetchSheetRows(
     spreadsheetId,
     accessToken,
     MICROM_TABS.ORDERS,
-    "A2:N",
+    "A2:W",
   );
 
   // Map by Shopify ID (index 1)
@@ -177,6 +209,13 @@ export async function writeOrdersToSheet(
       r.grossOrder,
       r.doanhThuHopLeEur,
       r.nguonDong,
+      ...Array.from(
+        { length: ORDER_DELIVERY_HEADERS.length },
+        (_, index) =>
+          r.deliveryValues?.[index] ??
+          rowsMap.get(r.shopifyId)?.[ORDERS_COLUMNS.length + index] ??
+          "",
+      ),
     ];
     rowsMap.set(r.shopifyId, rowArray);
   }
@@ -188,12 +227,12 @@ export async function writeOrdersToSheet(
     return dateB.localeCompare(dateA);
   });
 
-  await clearTabDataRows(spreadsheetId, accessToken, MICROM_TABS.ORDERS, "N");
+  await clearTabDataRows(spreadsheetId, accessToken, MICROM_TABS.ORDERS, "W");
 
-  const range = `${MICROM_TABS.ORDERS}!A2:N${finalRows.length + 1}`;
+  const range = `${MICROM_TABS.ORDERS}!A2:W${finalRows.length + 1}`;
   const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(
     range,
-  )}?valueInputOption=USER_ENTERED`;
+  )}?valueInputOption=RAW`;
 
   const updateRes = await fetch(updateUrl, {
     method: "PUT",
@@ -211,7 +250,7 @@ export async function writeOrdersToSheet(
     );
   }
 
-  const fingerprint = computeTabFingerprint(finalRows);
+  const fingerprint = computeOrdersFingerprint(finalRows);
   return { writtenCount: finalRows.length, fingerprint };
 }
 

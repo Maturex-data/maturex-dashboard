@@ -15,7 +15,9 @@ export const ORDER_DELIVERY_HEADERS = [
 
 // Each line represents the same fulfillment across all delivery columns.
 // Keep Shopify's ISO timestamps, including their timezone, without DATE storage.
-export function orderDeliveryValues(order: ShopifyOrderNode): string[] {
+export function orderDeliveryValues(
+  order: Pick<ShopifyOrderNode, "displayFulfillmentStatus" | "fulfillments">,
+): string[] {
   const fulfillments = order.fulfillments;
   const join = (values: Array<string | null | undefined>) =>
     values.map((value) => value || "").join("\n");
@@ -51,13 +53,18 @@ type SheetsRequest = (path: string, init?: RequestInit) => Promise<Response>;
 
 export async function ensureOrdersDeliveryHeaders(
   request: SheetsRequest,
+  baseHeaders: readonly string[] = EXPECTED_SHEET_HEADERS.Orders,
 ): Promise<void> {
+  const firstIndex = baseHeaders.length;
+  const columnCount = firstIndex + ORDER_DELIVERY_HEADERS.length;
+  const lastColumn = String.fromCharCode(64 + columnCount);
+  const firstColumn = String.fromCharCode(65 + firstIndex);
   const response = await request(
-    `/values/${encodeURIComponent("Orders!A1:V1")}`,
+    `/values/${encodeURIComponent(`Orders!A1:${lastColumn}1`)}`,
   );
   const payload = (await response.json()) as { values?: unknown[][] };
   const headers = payload.values?.[0] || [];
-  for (const [index, expected] of EXPECTED_SHEET_HEADERS.Orders.entries()) {
+  for (const [index, expected] of baseHeaders.entries()) {
     if (String(headers[index] || "").trim() !== expected) {
       throw new Error(
         `Orders header mismatch at column ${index + 1}; expected ${expected}.`,
@@ -65,16 +72,16 @@ export async function ensureOrdersDeliveryHeaders(
     }
   }
   for (const [index, expected] of ORDER_DELIVERY_HEADERS.entries()) {
-    const actual = String(headers[index + 13] || "").trim();
+    const actual = String(headers[index + firstIndex] || "").trim();
     if (actual && actual !== expected) {
       throw new Error(
-        `Orders delivery column ${index + 14} is already used by ${actual}.`,
+        `Orders delivery column ${index + firstIndex + 1} is already used by ${actual}.`,
       );
     }
   }
   if (
     ORDER_DELIVERY_HEADERS.every(
-      (expected, index) => headers[index + 13] === expected,
+      (expected, index) => headers[index + firstIndex] === expected,
     )
   )
     return;
@@ -95,7 +102,7 @@ export async function ensureOrdersDeliveryHeaders(
     (sheet) => sheet.properties.title === "Orders",
   )?.properties;
   if (!properties) throw new Error("Orders tab does not exist.");
-  if (properties.gridProperties.columnCount < 22) {
+  if (properties.gridProperties.columnCount < columnCount) {
     await request(":batchUpdate", {
       method: "POST",
       body: JSON.stringify({
@@ -104,7 +111,7 @@ export async function ensureOrdersDeliveryHeaders(
             updateSheetProperties: {
               properties: {
                 sheetId: properties.sheetId,
-                gridProperties: { columnCount: 22 },
+                gridProperties: { columnCount },
               },
               fields: "gridProperties.columnCount",
             },
@@ -114,7 +121,7 @@ export async function ensureOrdersDeliveryHeaders(
     });
   }
   await request(
-    `/values/${encodeURIComponent("Orders!N1:V1")}?valueInputOption=RAW`,
+    `/values/${encodeURIComponent(`Orders!${firstColumn}1:${lastColumn}1`)}?valueInputOption=RAW`,
     {
       method: "PUT",
       body: JSON.stringify({ values: [ORDER_DELIVERY_HEADERS] }),

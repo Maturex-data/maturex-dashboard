@@ -5,7 +5,10 @@ import {
   type MicromTabName,
   TAB_COLUMNS_MAP,
 } from "./constants";
-import { computeTabFingerprint } from "./sheet-writer";
+import {
+  computeOrdersFingerprint,
+  computeTabFingerprint,
+} from "./sheet-writer";
 import { MicromHeaderDriftError, type TabFingerprints } from "./types";
 
 export interface SheetRawData {
@@ -69,7 +72,10 @@ export async function readMicromSheetData(
     }
 
     const dataRows = allRows.slice(1);
-    const fingerprint = computeTabFingerprint(dataRows);
+    const fingerprint =
+      tab === MICROM_TABS.ORDERS
+        ? computeOrdersFingerprint(dataRows)
+        : computeTabFingerprint(dataRows);
 
     result[tab] = {
       tab,

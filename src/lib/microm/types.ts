@@ -1,6 +1,7 @@
 import type { MicromTabName } from "./constants";
 
 export interface MicromOrderRow {
+  deliveryValues?: string[];
   orderId: string;
   shopifyId: string;
   ngayTao: string; // YYYY-MM-DD
