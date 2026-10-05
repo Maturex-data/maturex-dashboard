@@ -50,7 +50,7 @@ const sourceConfigs: Record<
   },
   COGS: {
     label: "COGS",
-    description: "PGPrint, Printify, Printful, Luxury Pro",
+    description: "PGPrint, Printify, Printful, Luxury Pro, PrintPoss",
     tag: "RAW.COGS",
     activeBorder: "border-amber-500/50 dark:border-amber-500/60",
     activeBg: "bg-amber-500/[0.06] shadow-amber-500/5",

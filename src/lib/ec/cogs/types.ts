@@ -8,7 +8,12 @@ export const STALE_JOB_MS = 15 * 60 * 1000;
 export const WRITE_BATCH_SIZE = 50;
 
 export type DateRange = { from: Date; to: Date };
-export type CogsSource = "PGPrint" | "Printify" | "Printful" | "Luxury Pro";
+export type CogsSource =
+  | "PGPrint"
+  | "Printify"
+  | "Printful"
+  | "Luxury Pro"
+  | "PrintPoss";
 
 export type SyncProgress = {
   pagesProcessed: number;

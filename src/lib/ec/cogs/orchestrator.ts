@@ -4,6 +4,7 @@ import { fetchLuxuryPro } from "./providers/luxury-pro";
 import { fetchPgPrint } from "./providers/pgprint";
 import { fetchPrintful } from "./providers/printful";
 import { fetchPrintify } from "./providers/printify";
+import { fetchPrintPoss } from "./providers/printposs";
 import {
   type CogsRow,
   type CogsSource,
@@ -20,6 +21,7 @@ export const COGS_SOURCES = [
   ["Printify", fetchPrintify],
   ["Printful", fetchPrintful],
   ["Luxury Pro", fetchLuxuryPro],
+  ["PrintPoss", fetchPrintPoss],
 ] as const;
 
 export function sourceEntries(selectedSource?: CogsSource) {

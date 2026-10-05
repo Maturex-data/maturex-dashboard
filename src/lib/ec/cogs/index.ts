@@ -3,4 +3,5 @@ export * from "./providers/luxury-pro";
 export * from "./providers/pgprint";
 export * from "./providers/printful";
 export * from "./providers/printify";
+export * from "./providers/printposs";
 export * from "./types";

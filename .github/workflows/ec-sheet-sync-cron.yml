@@ -50,6 +50,7 @@ jobs:
           PRINTIFY_ACCESS_TOKEN: ${{ secrets.PRINTIFY_ACCESS_TOKEN }}
           PRINTIFY_SHOP_ID: ${{ secrets.PRINTIFY_SHOP_ID }}
           PRINTFUL_API_TOKEN: ${{ secrets.PRINTFUL_API_TOKEN }}
+          PRINTPOSS_API_TOKEN: ${{ secrets.PRINTPOSS_API_TOKEN }}
           LUXURY_PRO_SHEET_ID: ${{ secrets.LUXURY_PRO_SHEET_ID }}
           LUXURY_PRO_SHEET_GID: ${{ secrets.LUXURY_PRO_SHEET_GID }}
           EC_REPORT_SPREADSHEET_ID: ${{ secrets.EC_REPORT_SPREADSHEET_ID }}
