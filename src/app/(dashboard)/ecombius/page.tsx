@@ -76,13 +76,13 @@ export default async function FlowaPage() {
               <span>Về Trang chủ</span>
             </Button>
           </Link>
-          <Link href="/ecombius/import">
+          <Link href="/ecombius/bo-import">
             <Button
               size="sm"
               className="h-8 text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
             >
               <UploadCloudIcon className="size-3.5" />
-              <span>Import & Lịch sử</span>
+              <span>Import theo BO</span>
             </Button>
           </Link>
         </div>
@@ -107,7 +107,7 @@ export default async function FlowaPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href="/ecombius/import">
+            <Link href="/ecombius/bo-import">
               <Button
                 size="sm"
                 className="h-8 text-xs gap-1.5 bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 shadow-2xs font-medium cursor-pointer"

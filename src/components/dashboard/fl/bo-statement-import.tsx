@@ -46,8 +46,8 @@ export function BoStatementImport({
       onValueChange={(value) => handleBoChange(String(value))}
       className="gap-4"
     >
-      <Card size="sm">
-        <CardHeader className="flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <Card size="sm" className="rounded-xl shadow-none ring-border/70">
+        <CardHeader className="flex flex-col gap-4 px-5 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-sm">Nhóm BO</CardTitle>
             <CardDescription className="text-xs">
@@ -56,13 +56,13 @@ export function BoStatementImport({
           </div>
           <TabsList
             aria-label="Chọn nhóm BO"
-            className="h-9 p-1 overflow-hidden"
+            className="overflow-hidden rounded-lg p-1 group-data-horizontal/tabs:h-10"
           >
             {groups.map((group) => (
               <TabsTrigger
                 key={group.id}
                 value={group.id}
-                className="px-3 data-active:text-purple-700"
+                className="rounded-md px-5 data-active:text-emerald-700 dark:data-active:text-emerald-400"
               >
                 {group.name}
               </TabsTrigger>
