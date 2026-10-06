@@ -142,7 +142,7 @@ export async function importCogs(
   file: Buffer,
   name: string,
   token: string,
-  approved: string[],
+  _approved: string[],
 ) {
   return prisma.$transaction(
     async (tx) => {
@@ -157,7 +157,10 @@ export async function importCogs(
         throw Error(
           "Preview có lỗi mapping/xung đột hoặc chênh lệch payment chưa được duyệt.",
         );
-      return applyCogs(p, approved);
+      return applyCogs(
+        p,
+        p.plan.decisions.filter((d) => d.kind === "CHANGED").map((d) => d.key),
+      );
     },
     { timeout: 120_000, maxWait: 5000 },
   );

@@ -1,5 +1,4 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,15 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { GenericValidationSummary } from "./bo-orders-summary";
-export function CogsReview({
-  summary,
-  approvedKeys,
-  onChange,
-}: {
-  summary: GenericValidationSummary;
-  approvedKeys: string[];
-  onChange: (keys: string[]) => void;
-}) {
+export function CogsReview({ summary }: { summary: GenericValidationSummary }) {
   const changes = summary.decisions?.filter((d) => d.kind === "CHANGED") ?? [];
   return (
     <div className="space-y-3 text-sm">
@@ -33,24 +24,9 @@ export function CogsReview({
           ghi Sheet.
         </p>
       )}
-      <Button
-        type="button"
-        variant="outline"
-        disabled={!changes.length}
-        onClick={() =>
-          onChange(
-            approvedKeys.length === changes.length
-              ? []
-              : changes.map((d) => d.key),
-          )
-        }
-      >
-        Chọn/bỏ toàn bộ cập nhật
-      </Button>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Duyệt</TableHead>
             <TableHead>Order ID</TableHead>
             <TableHead>Thay đổi</TableHead>
           </TableRow>
@@ -58,23 +34,6 @@ export function CogsReview({
         <TableBody>
           {changes.map((d) => (
             <TableRow key={d.key}>
-              <TableCell>
-                <Button
-                  type="button"
-                  variant={approvedKeys.includes(d.key) ? "default" : "outline"}
-                  aria-label={`Duyệt cập nhật ${d.orderId}`}
-                  aria-pressed={approvedKeys.includes(d.key)}
-                  onClick={() =>
-                    onChange(
-                      approvedKeys.includes(d.key)
-                        ? approvedKeys.filter((k) => k !== d.key)
-                        : [...approvedKeys, d.key],
-                    )
-                  }
-                >
-                  {approvedKeys.includes(d.key) ? "Đã chọn" : "Chọn"}
-                </Button>
-              </TableCell>
               <TableCell>{d.orderId}</TableCell>
               <TableCell>
                 {d.changes.map((c) => (

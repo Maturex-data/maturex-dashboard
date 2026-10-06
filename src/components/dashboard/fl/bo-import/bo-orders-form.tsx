@@ -56,7 +56,6 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
   const [validating, setValidating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [approvedKeys, setApprovedKeys] = useState<string[]>([]);
   const [summary, setSummary] = useState<GenericValidationSummary | null>(null);
   const [importedResult, setImportedResult] =
     useState<ImportedSheetResult | null>(null);
@@ -137,7 +136,6 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       }
 
       setSummary(data.summary);
-      setApprovedKeys([]);
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Đã xảy ra lỗi khi kiểm tra file.",
@@ -168,7 +166,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       formData.set("action", "import");
       if (isCogs) {
         formData.set("previewToken", summary.previewToken || "");
-        formData.set("approvedKeys", JSON.stringify(approvedKeys));
+        formData.set("approvedKeys", "[]");
       }
 
       const res = await fetch(endpoint, {
@@ -188,7 +186,6 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
         setSummary((prev) =>
           prev ? { ...prev, previewToken: undefined } : null,
         );
-        setApprovedKeys([]);
       }
     } catch (err) {
       setErrorMessage(
@@ -306,7 +303,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
                 onValueChange={(val) => {
                   setShopCode(val ? String(val) : "");
                   setSummary(null);
-                  setApprovedKeys([]);
+
                   setImportedResult(null);
                   setErrorMessage("");
                 }}
@@ -453,11 +450,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
               )}
 
               {isCogs && summary && !importedResult && (
-                <CogsReview
-                  summary={summary}
-                  approvedKeys={approvedKeys}
-                  onChange={setApprovedKeys}
-                />
+                <CogsReview summary={summary} />
               )}
               {/* Tóm tắt kết quả kiểm tra thành công */}
               {summary && (

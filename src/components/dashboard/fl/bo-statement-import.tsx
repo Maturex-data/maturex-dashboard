@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { BoOrdersForm } from "@/components/dashboard/fl/bo-import/bo-orders-form";
 import { BoStatementForm } from "@/components/dashboard/fl/bo-import/bo-statement-form";
+import { FolderImport } from "@/components/dashboard/fl/bo-import/folder-import";
 import {
   Card,
   CardDescription,
@@ -77,7 +78,10 @@ export function BoStatementImport({
           className={cn(isPending && "opacity-70 transition-opacity")}
         >
           {group.id === "ms-linh" ? (
-            <BoOrdersForm key={group.id} group={group} />
+            <div className="space-y-5">
+              <FolderImport />
+              <BoOrdersForm key={group.id} group={group} />
+            </div>
           ) : (
             <BoStatementForm key={group.id} group={group} />
           )}

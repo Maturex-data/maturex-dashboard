@@ -60,7 +60,7 @@ export function BoOrdersFooter({
       ? "Đang ghi..."
       : isCogsLocked
         ? "Cần xử lý lỗi preview"
-        : "Ghi dòng mới và cập nhật đã duyệt";
+        : "Ghi dòng mới và tự cập nhật thay đổi";
   } else if (importing) {
     buttonText = "Đang ghi vào Google Sheet...";
   } else if (summary) {
@@ -103,7 +103,7 @@ export function BoOrdersFooter({
       <div className="flex flex-col items-end gap-1.5 sm:flex-row sm:items-center">
         {isCogs && (
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-            Chỉ cập nhật các dòng bạn đã chọn duyệt
+            Tự cập nhật các cột nguồn thay đổi; giữ các cột nguồn không cung cấp
           </span>
         )}
         <Button

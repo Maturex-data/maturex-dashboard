@@ -46,3 +46,21 @@ is independent. COGS does not require prior Items or Statement.
 The user confirmed orders 4171577410 and 4162490383 belong to 97Decor; their
 source CSV records were moved from the Timond September Orders file into the
 97Decor September Orders file, with original files backed up locally.
+
+## Folder import and automatic COGS updates
+
+Ms. Linh has a folder picker and recursive directory drop zone. Server analysis
+recognizes CSV type by headers and Equarus XLSX by worksheet/parser; path or
+filename identifies shop, with manual selection for ambiguous files. The UI
+shows the list before executing sequential Orders → Items → Statement → COGS.
+Byte-identical files are omitted. Conflicting Orders IDs across files, multiple
+Statement files for one shop/month, and multiple COGS files require removing
+extra files before running. File failures are reported; failed Orders block
+dependent Items/COGS for that run while Statement can proceed. Successful jobs
+are skipped when retrying on the same page.
+
+User decision supersedes the earlier review policy: COGS changes automatically
+update only source-provided columns. The importer computes all CHANGED keys on
+the server after fresh validation. Signed preview and snapshot validation remain.
+Orders prerequisites, Store mismatches, duplicate keys, and missing source data
+still block writes. There is no per-row approval UI.
