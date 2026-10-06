@@ -4,6 +4,7 @@ import {
   BarChart3Icon,
   ChartNoAxesCombinedIcon,
   CloudIcon,
+  FileSpreadsheetIcon,
   GaugeIcon,
   HomeIcon,
   LayersIcon,
@@ -105,6 +106,13 @@ export function AppSidebar({
       url: "/ecombius/import",
       icon: <UploadCloudIcon className="size-4 text-purple-500" />,
       isActive: pathname === "/ecombius/import" || pathname === "/flowa/import",
+    },
+    {
+      title: "Import theo BO",
+      url: "/ecombius/bo-import",
+      icon: <FileSpreadsheetIcon className="size-4 text-purple-500" />,
+      isActive:
+        pathname === "/ecombius/bo-import" || pathname === "/flowa/bo-import",
     },
     {
       title: "ECOMBIUS Drive Sync",
