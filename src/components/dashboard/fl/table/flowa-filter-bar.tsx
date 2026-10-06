@@ -5,7 +5,15 @@ import {
   Columns3Icon,
   RefreshCwIcon,
   SearchIcon,
+  StoreIcon,
+  XIcon,
 } from "lucide-react";
+import { FlowaExportDropdown } from "@/components/dashboard/fl/table/flowa-export-dropdown";
+import type {
+  Column,
+  ShopOption,
+  TableTab,
+} from "@/components/dashboard/fl/table/flowa-table-columns";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,8 +23,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FlowaExportDropdown } from "./flowa-export-dropdown";
-import type { Column, ShopOption, TableTab } from "./flowa-table-columns";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FlowaFilterBarProps {
   activeTab: TableTab;
@@ -64,27 +78,32 @@ export function FlowaFilterBar({
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Shop Selector */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground font-medium">
-            Shop:
+          <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+            <StoreIcon className="size-3.5" /> Shop:
           </span>
-          <div className="relative">
-            <select
+          <Select
+            value={selectedShop}
+            onValueChange={(val) => {
+              if (val) onShopChange(String(val));
+            }}
+          >
+            <SelectTrigger
               aria-label="Lọc theo Shop"
-              value={selectedShop}
-              onChange={(e) => onShopChange(e.target.value)}
-              className="h-8 rounded-lg border border-border/60 bg-background pl-2.5 pr-7 text-xs text-foreground font-medium focus:outline-hidden focus:border-foreground/40 transition-colors appearance-none cursor-pointer shadow-2xs"
+              className="h-8 min-w-[140px] text-xs font-medium"
             >
-              <option value="all">Tất cả Shop (All)</option>
+              <SelectValue placeholder="Tất cả Shop (All)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">
+                Tất cả Shop (All)
+              </SelectItem>
               {shops.map((s) => (
-                <option key={s.code} value={s.code}>
+                <SelectItem key={s.code} value={s.code} className="text-xs">
                   {s.name}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[9px]">
-              ▼
-            </div>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Month Selector */}
@@ -92,33 +111,38 @@ export function FlowaFilterBar({
           <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
             <CalendarIcon className="size-3.5" /> Kỳ:
           </span>
-          <div className="relative">
-            <select
+          <Select
+            value={selectedMonth}
+            onValueChange={(val) => {
+              if (val) onMonthChange(String(val));
+            }}
+          >
+            <SelectTrigger
               aria-label="Lọc theo Tháng"
-              value={selectedMonth}
-              onChange={(e) => onMonthChange(e.target.value)}
-              className="h-8 rounded-lg border border-border/60 bg-background pl-2.5 pr-7 text-xs text-foreground font-mono focus:outline-hidden focus:border-foreground/40 transition-colors appearance-none cursor-pointer shadow-2xs"
+              className="h-8 min-w-[130px] text-xs font-medium"
             >
-              <option value="all">Tất cả tháng</option>
+              <SelectValue placeholder="Tất cả tháng" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">
+                Tất cả tháng
+              </SelectItem>
               {availableMonths.map((month) => {
                 const [year, monthNumber] = month.split("-");
                 return (
-                  <option key={month} value={month}>
+                  <SelectItem key={month} value={month} className="text-xs">
                     Tháng {Number(monthNumber)}/{year}
-                  </option>
+                  </SelectItem>
                 );
               })}
-            </select>
-            <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[9px]">
-              ▼
-            </div>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Local Search Input */}
         <div className="relative w-48 sm:w-64">
-          <SearchIcon className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
-          <input
+          <SearchIcon className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+          <Input
             type="text"
             placeholder={
               activeTab === "orders"
@@ -129,7 +153,7 @@ export function FlowaFilterBar({
             }
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-background pl-8 pr-7 py-1 rounded-lg border border-border/60 text-xs placeholder:text-muted-foreground focus:outline-hidden focus:border-foreground/60 transition-colors h-8 shadow-2xs"
+            className="h-8 pl-8 pr-7 text-xs shadow-2xs"
           />
           {searchTerm ? (
             <button
@@ -138,7 +162,7 @@ export function FlowaFilterBar({
               className="absolute right-2 top-2 text-muted-foreground hover:text-foreground text-xs size-4 flex items-center justify-center rounded-full hover:bg-muted"
               title="Xóa tìm kiếm"
             >
-              ✕
+              <XIcon className="size-3" />
             </button>
           ) : null}
         </div>

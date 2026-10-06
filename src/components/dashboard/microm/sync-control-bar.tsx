@@ -22,6 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { MicromMonthOption } from "@/lib/microm/dashboard-queries";
 
 interface SyncControlBarProps {
@@ -163,26 +170,27 @@ export function SyncControlBar({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3.5 sm:px-4 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm">
         {/* Left: Month selection & Reconciliation badge */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2.5 py-1 border border-border/50">
-            <CalendarIcon className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">
-              Kỳ:
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <CalendarIcon className="size-3.5" /> Kỳ:
             </span>
-            <select
+            <Select
               value={selectedMonth}
-              onChange={(e) => onSelectMonth(e.target.value)}
-              className="h-7 text-xs font-semibold bg-transparent focus:outline-none cursor-pointer pr-1 text-foreground"
+              onValueChange={(val) => {
+                if (val) onSelectMonth(String(val));
+              }}
             >
-              {availableMonths.map((m) => (
-                <option
-                  key={m.value}
-                  value={m.value}
-                  className="bg-popover text-foreground"
-                >
-                  {m.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-8 min-w-[130px] text-xs font-semibold">
+                <SelectValue placeholder="Chọn kỳ" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableMonths.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {isProviderReconciled ? (

@@ -4,6 +4,13 @@ import { CalendarIcon, RefreshCwIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -135,22 +142,34 @@ export function MiAdSpendTable() {
     <div className="w-full space-y-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
               <CalendarIcon className="size-3.5" /> Tháng:
             </span>
-            <select
-              aria-label="Select Meta month"
-              className="h-8 rounded-lg border border-border/60 bg-background px-2.5 text-xs text-foreground font-mono focus:outline-hidden"
+            <Select
               value={month}
-              onChange={(event) => setMonth(event.target.value)}
+              onValueChange={(val) => {
+                if (val) setMonth(String(val));
+              }}
             >
-              {options.map((value) => (
-                <option key={value} value={value}>
-                  Tháng {Number(value.slice(5))}/{value.slice(0, 4)}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label="Select Meta month"
+                className="h-8 min-w-[130px] text-xs font-mono"
+              >
+                <SelectValue placeholder="Chọn tháng" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((value) => (
+                  <SelectItem
+                    key={value}
+                    value={value}
+                    className="text-xs font-mono"
+                  >
+                    Tháng {Number(value.slice(5))}/{value.slice(0, 4)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="hidden sm:flex items-center gap-3 border-l border-border/60 pl-3 text-xs font-mono">
