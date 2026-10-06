@@ -8,6 +8,16 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import * as XLSX from "xlsx";
+import {
+  type Column,
+  type DataRow,
+  endpointForTab,
+  itemColumns,
+  orderColumns,
+  type ShopOption,
+  statementColumns,
+  type TableTab,
+} from "@/components/dashboard/fl/table/flowa-table-columns";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,15 +28,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  type Column,
-  type DataRow,
-  endpointForTab,
-  itemColumns,
-  orderColumns,
-  type ShopOption,
-  statementColumns,
-  type TableTab,
-} from "./flowa-table-columns";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FlowaExportDropdownProps {
   activeTab: TableTab;
@@ -194,51 +201,65 @@ export function FlowaExportDropdown({
               <span className="text-[11px] font-medium text-muted-foreground block mb-1">
                 Gian hàng
               </span>
-              <div className="relative">
-                <select
+              <Select
+                value={exportShop}
+                onValueChange={(val) => {
+                  if (val) setExportShop(String(val));
+                }}
+              >
+                <SelectTrigger
                   aria-label="Shop xuất dữ liệu"
-                  className="h-8 w-full rounded-lg border border-border/70 bg-muted/30 px-2.5 text-xs text-foreground font-medium focus:outline-hidden focus:border-foreground/50 transition-colors appearance-none cursor-pointer pr-7"
-                  value={exportShop}
-                  onChange={(event) => setExportShop(event.target.value)}
+                  className="h-8 w-full text-xs font-medium"
                 >
-                  <option value="all">Tất cả Shop (All)</option>
+                  <SelectValue placeholder="Tất cả Shop (All)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">
+                    Tất cả Shop (All)
+                  </SelectItem>
                   {shops.map((shop) => (
-                    <option key={shop.code} value={shop.code}>
+                    <SelectItem
+                      key={shop.code}
+                      value={shop.code}
+                      className="text-xs"
+                    >
                       {shop.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[10px]">
-                  ▼
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <span className="text-[11px] font-medium text-muted-foreground block mb-1">
                 Kỳ phát sinh
               </span>
-              <div className="relative">
-                <select
+              <Select
+                value={exportMonth}
+                onValueChange={(val) => {
+                  if (val) setExportMonth(String(val));
+                }}
+              >
+                <SelectTrigger
                   aria-label="Tháng xuất dữ liệu"
-                  className="h-8 w-full rounded-lg border border-border/70 bg-muted/30 px-2.5 text-xs text-foreground font-mono focus:outline-hidden focus:border-foreground/50 transition-colors appearance-none cursor-pointer pr-7"
-                  value={exportMonth}
-                  onChange={(event) => setExportMonth(event.target.value)}
+                  className="h-8 w-full text-xs font-medium"
                 >
-                  <option value="all">Tất cả tháng</option>
+                  <SelectValue placeholder="Tất cả tháng" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">
+                    Tất cả tháng
+                  </SelectItem>
                   {availableMonths.map((month) => {
                     const [year, monthNumber] = month.split("-");
                     return (
-                      <option key={month} value={month}>
+                      <SelectItem key={month} value={month} className="text-xs">
                         Tháng {Number(monthNumber)}/{year}
-                      </option>
+                      </SelectItem>
                     );
                   })}
-                </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[10px]">
-                  ▼
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

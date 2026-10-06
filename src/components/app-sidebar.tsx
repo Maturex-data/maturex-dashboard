@@ -4,12 +4,12 @@ import {
   BarChart3Icon,
   ChartNoAxesCombinedIcon,
   CloudIcon,
+  FileSpreadsheetIcon,
   GaugeIcon,
   HomeIcon,
   LayersIcon,
   ShoppingBagIcon,
   SparklesIcon,
-  UploadCloudIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
@@ -101,17 +101,11 @@ export function AppSidebar({
       isActive: pathname === "/ecombius" || pathname === "/flowa",
     },
     {
-      title: "Import & Lịch sử file",
-      url: "/ecombius/import",
-      icon: <UploadCloudIcon className="size-4 text-purple-500" />,
-      isActive: pathname === "/ecombius/import" || pathname === "/flowa/import",
-    },
-    {
-      title: "ECOMBIUS Drive Sync",
-      url: "/ecombius/drive-sync",
-      icon: <CloudIcon className="size-4 text-purple-500" />,
+      title: "Import theo BO",
+      url: "/ecombius/bo-import",
+      icon: <FileSpreadsheetIcon className="size-4 text-purple-500" />,
       isActive:
-        pathname === "/ecombius/drive-sync" || pathname === "/flowa/drive-sync",
+        pathname === "/ecombius/bo-import" || pathname === "/flowa/bo-import",
     },
   ];
 

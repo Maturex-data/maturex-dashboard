@@ -20,7 +20,11 @@
     "test:sheet-sync": "node --env-file=.env scripts/test-sheet-sync-scheduled.mjs",
     "sync:upstream": "npx tsx scripts/sync-upstream.ts",
     "sync:microm:upstream": "npx tsx scripts/sync-microm-upstream.ts",
-    "test:drive-metadata": "node --env-file=.env scripts/test-drive-metadata-sync.mjs"
+    "test:drive-metadata": "node --env-file=.env scripts/test-drive-metadata-sync.mjs",
+    "test:orders": "npx tsx scripts/test-orders-parser.ts",
+    "test:items": "npx tsx scripts/test-items-parser.ts",
+    "test:statement": "npx tsx scripts/test-statement-parser.ts",
+    "test:cogs": "npx tsx --env-file=.env scripts/test-cogs-parser.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

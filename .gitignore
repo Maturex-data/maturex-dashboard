@@ -53,4 +53,5 @@ next-env.d.ts
 !/scripts/backfill-microm-order-delivery.ts
 !/scripts/sync-upstream.ts
 !/scripts/sync-microm-upstream.ts
+!/scripts/test-orders-parser.ts
 /exports

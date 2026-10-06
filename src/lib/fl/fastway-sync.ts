@@ -1,5 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/lib/prisma";
+import { syncFastwayRawCogs } from "@/lib/fl/fastway-raw-cogs";
 
 export interface FastwayOrderItem {
   orderName?: string;
@@ -30,6 +29,10 @@ export async function syncFastwayOrdersToCogs(
 ): Promise<{
   totalFetched: number;
   upserted: number;
+  insertedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  missingStoreCount: number;
 }> {
   const token = process.env.FASTWAY_API_TOKEN;
   if (!token) {
@@ -71,48 +74,10 @@ export async function syncFastwayOrdersToCogs(
     };
     if (!body.data || body.data.length === 0) break;
     allOrders.push(...body.data);
-    if (allOrders.length >= (body.total || 0)) break;
+    if (typeof body.total === "number" && allOrders.length >= body.total) break;
     page++;
   }
 
-  let upserted = 0;
-  for (const order of allOrders) {
-    const rawOrderName = String(order.orderName || "").trim();
-    if (!rawOrderName) continue;
-    const referenceOrderId = rawOrderName.split("-")[0];
-    const totalCost = Number(order.totalFee ?? order.orderPrice ?? 0);
-    const date = order.createdAt ? new Date(order.createdAt) : new Date();
-    const itemKey = `flowa-fastway-${order.exOrderId || rawOrderName}`;
-    const status = String(order.status || "OK");
-    const supplierOrderId = order.exOrderId ? String(order.exOrderId) : null;
-    const payload = JSON.parse(JSON.stringify(order)) as Prisma.InputJsonValue;
-
-    await prisma.cogsRecord.upsert({
-      where: { itemKey },
-      create: {
-        supplier: "Fastway",
-        date,
-        referenceOrderId,
-        supplierOrderId,
-        totalCost,
-        estimatedCost: 0,
-        itemKey,
-        mappingStatus: status,
-        rawPayload: payload,
-      },
-      update: {
-        supplier: "Fastway",
-        date,
-        referenceOrderId,
-        supplierOrderId,
-        totalCost,
-        mappingStatus: status,
-        rawPayload: payload,
-        syncedAt: new Date(),
-      },
-    });
-    upserted++;
-  }
-
-  return { totalFetched: allOrders.length, upserted };
+  const result = await syncFastwayRawCogs(allOrders);
+  return { totalFetched: allOrders.length, ...result };
 }

@@ -8,7 +8,6 @@ import {
   normalizeShopCode,
   SHOPS_MAP,
 } from "../fl/etsy-constants";
-import { importFilesToFlowaSheet } from "../fl/flowa-sheet-import";
 
 test("ETSY_SHOPS contains exactly 7 active shops with expected codes and names", () => {
   assert.equal(ETSY_SHOPS.length, 7);
@@ -136,83 +135,6 @@ test("detectShopFromPath resolves all 7 shops, aliases, COGS, and rejects Pocdy 
 
   // Unknown
   assert.equal(detectShopFromPath("unknown_file.csv"), null);
-});
-
-test("importFilesToFlowaSheet blocks Pocdy selection and prevents assigning Pocdy COGS to 97DECOR", async () => {
-  // 1. Explicit POCDY selection must throw immediately
-  await assert.rejects(
-    async () => {
-      await importFilesToFlowaSheet("POCDY", [
-        {
-          file: new File(["dummy content"], "orders.csv", { type: "text/csv" }),
-          relativePath: "orders.csv",
-        },
-      ]);
-    },
-    {
-      message:
-        'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
-    },
-  );
-
-  // 2. AUTO import with file in Pocdy directory containing COGS name must be rejected, not assigned to 97DECOR
-  const dummyFile = new File(["dummy content"], "OrderManagement_Aug.xlsx", {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-  const { results } = await importFilesToFlowaSheet("AUTO", [
-    {
-      file: dummyFile,
-      relativePath: "FL DATA/Pocdy/OrderManagement_Aug.xlsx",
-    },
-  ]);
-
-  assert.equal(results.length, 1);
-  assert.equal(results[0].status, "FAILED");
-  assert.equal(
-    results[0].message,
-    'Shop "Pocdy" (POCDY) không còn được hỗ trợ. Không thể nhập dữ liệu.',
-  );
-  assert.notEqual(
-    results[0].shopCode,
-    "97DECOR",
-    "Pocdy COGS file must never be assigned to 97DECOR",
-  );
-});
-
-test("COGS files are always routed to 97DECOR even when in Evernest folder or manually selected shop", async () => {
-  const dummyFile = new File(["dummy content"], "OrderManagement_Aug.xlsx", {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-
-  // 1. Manually selected shop is overridden for COGS
-  const manualResult = await importFilesToFlowaSheet("EVERNEST", [
-    {
-      file: dummyFile,
-      relativePath: "OrderManagement_Aug.xlsx",
-    },
-  ]);
-  assert.equal(manualResult.results[0].shopCode, "97DECOR");
-
-  // 2. AUTO import with file in Evernest folder is routed to 97DECOR
-  const autoResult = await importFilesToFlowaSheet("AUTO", [
-    {
-      file: dummyFile,
-      relativePath: "FL DATA/Evernest/OrderManagement_Aug.xlsx",
-    },
-  ]);
-  assert.equal(autoResult.results[0].shopCode, "97DECOR");
-
-  // 3. Manually selected Timond with claim file is routed to 97DECOR
-  const claimFile = new File(["dummy content"], "issue_claim.csv", {
-    type: "text/csv",
-  });
-  const claimResult = await importFilesToFlowaSheet("TIMOND", [
-    {
-      file: claimFile,
-      relativePath: "issue_claim.csv",
-    },
-  ]);
-  assert.equal(claimResult.results[0].shopCode, "97DECOR");
 });
 
 test("normalizeShopCode strips accents, spaces, and special characters", () => {

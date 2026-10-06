@@ -5,6 +5,26 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/ecombius/drive-sync",
+        destination: "/ecombius/bo-import",
+        permanent: false,
+      },
+      {
+        source: "/flowa/drive-sync",
+        destination: "/ecombius/bo-import",
+        permanent: false,
+      },
+      {
+        source: "/ecombius/import",
+        destination: "/ecombius/bo-import",
+        permanent: false,
+      },
+      {
+        source: "/flowa/import",
+        destination: "/ecombius/bo-import",
+        permanent: false,
+      },
+      {
         source: "/flowa",
         destination: "/ecombius",
         permanent: false,
