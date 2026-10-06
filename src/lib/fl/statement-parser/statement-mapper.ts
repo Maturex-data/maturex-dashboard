@@ -1,4 +1,5 @@
 import { parseCsv } from "@/lib/fl/orders-parser/csv-parser";
+import { validateShopFilename } from "@/lib/fl/orders-parser/orders-mapper";
 import {
   ETSY_STATEMENT_SOURCE_HEADERS,
   type MappedStatementRow,
@@ -182,23 +183,8 @@ export function parseAndMapEtsyStatement(
     );
   }
 
-  // 4. Kiểm tra tên shop nếu có trong tên file
-  const lowerFileName = fileName.toLowerCase();
-  if (
-    lowerFileName.includes("linh") ||
-    lowerFileName.includes("97decor") ||
-    lowerFileName.includes("97_decor")
-  ) {
-    // Hợp lệ cho shop 97Decor
-  } else if (
-    lowerFileName.includes("evernest") ||
-    lowerFileName.includes("orivia") ||
-    lowerFileName.includes("kindlora")
-  ) {
-    throw new Error(
-      `File "${fileName}" dường như thuộc về shop khác, không phải của shop 97Decor (BO Ms. Linh).`,
-    );
-  }
+  const filenameCheck = validateShopFilename(fileName, options.shopCode);
+  if (!filenameCheck.valid) throw new Error(filenameCheck.error);
 
   // Tạo map header -> index cột
   const headerIndexMap = new Map<string, number>();

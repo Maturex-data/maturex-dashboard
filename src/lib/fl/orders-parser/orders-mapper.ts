@@ -283,12 +283,13 @@ export interface ParseAndMapResult {
  */
 export function validateShopFilename(
   fileName: string,
-  _targetShopCode = "97DECOR",
+  targetShopCode = "97DECOR",
 ): { valid: boolean; error?: string } {
   const lower = fileName.toLowerCase();
 
   // Kiểm tra nếu tên file chứa tên các shop khác
   const otherShops = [
+    { code: "97DECOR", pattern: "97decor" },
     { code: "EVERNEST", pattern: "evernest" },
     { code: "ORIVIA", pattern: "orivia" },
     { code: "TIMOND", pattern: "timond" },
@@ -299,10 +300,10 @@ export function validateShopFilename(
   ];
 
   for (const other of otherShops) {
-    if (lower.includes(other.pattern)) {
+    if (other.code !== targetShopCode && lower.includes(other.pattern)) {
       return {
         valid: false,
-        error: `Tên file "${fileName}" chứa nhận diện của shop "${other.code}". Không được gán file của shop khác vào 97Decor.`,
+        error: `Tên file "${fileName}" chứa nhận diện của shop "${other.code}". Không được gán file của shop khác vào ${targetShopCode}.`,
       };
     }
   }
@@ -474,7 +475,7 @@ export function parseAndMapEtsyOrders(
     warnings,
     shopCode,
     storeValue,
-    detectedShopName: "97Decor",
+    detectedShopName: storeValue,
   };
 
   return {

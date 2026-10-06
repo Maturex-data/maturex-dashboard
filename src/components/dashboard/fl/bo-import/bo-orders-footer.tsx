@@ -9,7 +9,7 @@ import type { GenericValidationSummary } from "./bo-orders-summary";
 interface BoOrdersFooterProps {
   group: BoGroup;
   selectedShop?: BoShopOption;
-  reportType?: "ORDERS" | "ITEMS" | "STATEMENTS";
+  reportType?: "ORDERS" | "ITEMS" | "STATEMENTS" | "COGS";
   summary: GenericValidationSummary | null;
   importing: boolean;
   onImportToSheet: () => void;
@@ -25,26 +25,55 @@ export function BoOrdersFooter({
 }: BoOrdersFooterProps) {
   const isItems = reportType === "ITEMS";
   const isStatement = reportType === "STATEMENTS";
+  const isCogs = reportType === "COGS";
 
-  const dataTypeLabel = isStatement
-    ? "Etsy Payment Statement"
-    : isItems
-      ? "Etsy Sold Order Items"
-      : "Etsy Sold Orders";
+  const dataTypeLabel = isCogs
+    ? "COGS Equarus"
+    : isStatement
+      ? "Etsy Payment Statement"
+      : isItems
+        ? "Etsy Sold Order Items"
+        : "Etsy Sold Orders";
 
-  // Mở khóa import cho cả Orders, Items và Statement khi file hợp lệ
+  // Only enable COGS writes for a signed preview without blocking errors.
+  const isCogsLocked =
+    isCogs && (!summary?.previewToken || summary.blocked === true);
+
   const isImportDisabled =
+    isCogsLocked ||
     !summary ||
-    summary.validRowsCount === 0 ||
-    summary.errorRowsCount > 0 ||
+    (summary.validRowsCount ?? summary.mapped97DecorCount ?? 0) === 0 ||
+    (summary.errorRowsCount ?? 0) > 0 ||
     importing;
 
-  const rowUnit = isStatement ? "giao dịch" : isItems ? "item" : "đơn";
-  const buttonText = importing
-    ? "Đang ghi vào Google Sheet..."
+  const rowUnit = isCogs
+    ? "đơn"
+    : isStatement
+      ? "giao dịch"
+      : isItems
+        ? "item"
+        : "đơn";
+
+  let buttonText = "Import vào Google Sheet";
+  if (isCogs) {
+    buttonText = importing
+      ? "Đang ghi..."
+      : isCogsLocked
+        ? "Cần xử lý lỗi preview"
+        : "Ghi dòng mới và cập nhật đã duyệt";
+  } else if (importing) {
+    buttonText = "Đang ghi vào Google Sheet...";
+  } else if (summary) {
+    buttonText = `Import ${(summary.validRowsCount ?? summary.mapped97DecorCount ?? 0).toLocaleString("vi-VN")} ${rowUnit} vào Google Sheet`;
+  }
+
+  const validDisplayCount = isCogs
+    ? summary
+      ? `${summary.mapped97DecorCount ?? 0} đơn thuộc Ms. Linh`
+      : "Chưa kiểm tra"
     : summary
-      ? `Import ${summary.validRowsCount.toLocaleString("vi-VN")} ${rowUnit} vào Google Sheet`
-      : "Import vào Google Sheet";
+      ? (summary.validRowsCount ?? 0).toLocaleString("vi-VN")
+      : "Chưa kiểm tra";
 
   return (
     <CardFooter className="flex flex-col gap-4 border-t bg-muted/30 p-5 lg:flex-row lg:items-center lg:justify-between">
@@ -55,7 +84,11 @@ export function BoOrdersFooter({
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Shop</dt>
-          <dd className="font-medium">{selectedShop?.name ?? "97Decor"}</dd>
+          <dd className="font-medium">
+            {isCogs
+              ? group.shops.map((shop) => shop.name).join(" · ")
+              : (selectedShop?.name ?? "97Decor")}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Dữ liệu</dt>
@@ -63,18 +96,25 @@ export function BoOrdersFooter({
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Dòng hợp lệ</dt>
-          <dd className="font-medium tabular-nums">
-            {summary ? summary.validRowsCount : "Chưa kiểm tra"}
-          </dd>
+          <dd className="font-medium tabular-nums">{validDisplayCount}</dd>
         </div>
       </dl>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+        {isCogs && (
+          <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+            Chỉ cập nhật các dòng bạn đã chọn duyệt
+          </span>
+        )}
         <Button
           type="button"
           disabled={isImportDisabled}
           onClick={onImportToSheet}
-          className="h-10 gap-2 bg-purple-600 px-5 font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed"
+          className={`h-10 gap-2 px-5 font-semibold text-white disabled:cursor-not-allowed ${
+            isCogs
+              ? "bg-muted-foreground/50 hover:bg-muted-foreground/50 text-white"
+              : "bg-purple-600 hover:bg-purple-700"
+          }`}
         >
           {importing ? (
             <Loader2Icon className="size-4 animate-spin" />

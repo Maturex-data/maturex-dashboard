@@ -81,7 +81,11 @@ export async function replaceStatementMonthInGoogleSheet(
       .toLowerCase();
     const rowMonth = extractMonthFromDateString(dateVal);
 
-    const isTargetShop = storeVal === "97decor" || storeVal === "97 decor";
+    const targetStore = String(mappedRows[0]?.Store ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s/g, "");
+    const isTargetShop = storeVal.replace(/\s/g, "") === targetStore;
     const isTargetMonth = rowMonth === verifiedMonth;
 
     if (isTargetShop && isTargetMonth) {

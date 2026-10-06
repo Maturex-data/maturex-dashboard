@@ -23,7 +23,8 @@
     "test:drive-metadata": "node --env-file=.env scripts/test-drive-metadata-sync.mjs",
     "test:orders": "npx tsx scripts/test-orders-parser.ts",
     "test:items": "npx tsx scripts/test-items-parser.ts",
-    "test:statement": "npx tsx scripts/test-statement-parser.ts"
+    "test:statement": "npx tsx scripts/test-statement-parser.ts",
+    "test:cogs": "npx tsx --env-file=.env scripts/test-cogs-parser.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

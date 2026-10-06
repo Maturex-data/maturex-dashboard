@@ -1,4 +1,5 @@
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
+import { requireImportedOrders } from "@/lib/fl/orders-prerequisite";
 import type { MappedItemRow } from "./types";
 import { RAW_ITEMS_HEADERS } from "./types";
 
@@ -36,6 +37,7 @@ export async function upsertItemsToGoogleSheet(
     };
   }
 
+  await requireImportedOrders(mappedRows);
   const { accessToken } = await getGoogleDriveAccess();
 
   // 1. Đọc dữ liệu hiện có trong tab RAW.Items (từ hàng 2 đến AH)

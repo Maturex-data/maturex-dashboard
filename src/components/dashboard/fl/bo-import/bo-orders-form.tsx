@@ -34,12 +34,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { BoGroup } from "@/lib/fl/bo-import-config";
+import { CogsReview } from "./cogs-review";
 
 interface BoOrdersFormProps {
   group: BoGroup;
 }
 
-export type BoReportType = "ORDERS" | "ITEMS" | "STATEMENTS";
+export type BoReportType = "ORDERS" | "ITEMS" | "STATEMENTS" | "COGS";
 
 export function BoOrdersForm({ group }: BoOrdersFormProps) {
   const baseId = useId();
@@ -55,6 +56,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
   const [validating, setValidating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [approvedKeys, setApprovedKeys] = useState<string[]>([]);
   const [summary, setSummary] = useState<GenericValidationSummary | null>(null);
   const [importedResult, setImportedResult] =
     useState<ImportedSheetResult | null>(null);
@@ -63,12 +65,18 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
   const selectedShop = group.shops.find((s) => s.code === shopCode);
   const isItems = reportType === "ITEMS";
   const isStatement = reportType === "STATEMENTS";
+  const isCogs = reportType === "COGS";
 
   let reportTitle = `Etsy Sold Orders · ${group.name}`;
   let reportBadge = "37 cột RAW.Orders";
   let validatingText = "Đang kiểm tra 36 header và ánh xạ sang RAW.Orders...";
 
-  if (isStatement) {
+  if (isCogs) {
+    reportTitle = `COGS Equarus · ${group.name}`;
+    reportBadge = "14 cột RAW.COGS";
+    validatingText =
+      "Đang đọc Order Management, kiểm tra Orders và Store, đối chiếu RAW.COGS...";
+  } else if (isStatement) {
     reportTitle = `Etsy Payment Statement · ${group.name}`;
     reportBadge = "10 cột RAW.Statement";
     validatingText = "Đang kiểm tra 9 header và ánh xạ sang RAW.Statement...";
@@ -79,6 +87,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
   }
 
   function getApiEndpoint() {
+    if (isCogs) return "/api/fl/bo-cogs/preview";
     if (isStatement) return "/api/fl/bo-statement/preview";
     if (isItems) return "/api/fl/bo-items/preview";
     return "/api/fl/bo-orders/preview";
@@ -86,11 +95,13 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
 
   function handleReportTypeChange(val: string | null) {
     const nextType: BoReportType =
-      val === "STATEMENTS"
-        ? "STATEMENTS"
-        : val === "ITEMS"
-          ? "ITEMS"
-          : "ORDERS";
+      val === "COGS"
+        ? "COGS"
+        : val === "STATEMENTS"
+          ? "STATEMENTS"
+          : val === "ITEMS"
+            ? "ITEMS"
+            : "ORDERS";
     setReportType(nextType);
     setSelectedFile(null);
     setSummary(null);
@@ -111,7 +122,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       const endpoint = getApiEndpoint();
       const formData = new FormData();
       formData.set("file", file);
-      formData.set("shopCode", shopCode);
+      formData.set("shopCode", isCogs ? "ALL" : shopCode);
       formData.set("boId", group.id);
       formData.set("action", "validate");
 
@@ -122,10 +133,11 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Không thể phân tích file CSV.");
+        throw new Error(data.error || "Không thể phân tích file.");
       }
 
       setSummary(data.summary);
+      setApprovedKeys([]);
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : "Đã xảy ra lỗi khi kiểm tra file.",
@@ -143,7 +155,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
   }
 
   async function handleImportToSheet() {
-    if (!selectedFile || !summary || summary.errorRowsCount > 0) return;
+    if (!selectedFile || !summary) return;
     setImporting(true);
     setErrorMessage("");
 
@@ -151,9 +163,13 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       const endpoint = getApiEndpoint();
       const formData = new FormData();
       formData.set("file", selectedFile);
-      formData.set("shopCode", shopCode);
+      formData.set("shopCode", isCogs ? "ALL" : shopCode);
       formData.set("boId", group.id);
       formData.set("action", "import");
+      if (isCogs) {
+        formData.set("previewToken", summary.previewToken || "");
+        formData.set("approvedKeys", JSON.stringify(approvedKeys));
+      }
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -168,6 +184,12 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       }
 
       setImportedResult(data.importResult);
+      if (isCogs) {
+        setSummary((prev) =>
+          prev ? { ...prev, previewToken: undefined } : null,
+        );
+        setApprovedKeys([]);
+      }
     } catch (err) {
       setErrorMessage(
         err instanceof Error
@@ -187,7 +209,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       const endpoint = getApiEndpoint();
       const formData = new FormData();
       formData.set("file", selectedFile);
-      formData.set("shopCode", shopCode);
+      formData.set("shopCode", isCogs ? "ALL" : shopCode);
       formData.set("boId", group.id);
       formData.set("action", "download");
 
@@ -203,7 +225,9 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
 
       const dateStr = new Date().toISOString().slice(0, 10);
       let downloadFilename = `linh-97decor-orders-preview-${dateStr}.xlsx`;
-      if (isStatement) {
+      if (isCogs) {
+        downloadFilename = `linh-97decor-cogs-preview-${dateStr}.xlsx`;
+      } else if (isStatement) {
         downloadFilename = `linh-97decor-statement-preview-${dateStr}.xlsx`;
       } else if (isItems) {
         downloadFilename = `linh-97decor-items-preview-${dateStr}.xlsx`;
@@ -244,35 +268,70 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
             {group.shops.map((shop) => shop.name).join(" · ")}
           </CardDescription>
         </div>
-        <Badge variant="outline">CSV (RFC 4180)</Badge>
+        <Badge variant="outline">
+          {isCogs ? "Excel (XLSX)" : "CSV (RFC 4180)"}
+        </Badge>
       </CardHeader>
 
       <CardContent className="grid gap-6 p-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 lg:col-span-2">
+          <p className="font-semibold text-red-800 dark:text-red-200">
+            Thứ tự khuyến nghị: Orders → Items → Statement → COGS
+          </p>
+          <p className="mt-1">
+            Items và COGS cần có Orders tương ứng, đúng Store. Statement import
+            độc lập; không cần đủ Items hoặc Statement để import COGS.
+          </p>
+        </div>
         {/* Cột trái: Shop & Loại dữ liệu */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor={shopSelectId}>Shop</Label>
-            <Select
-              value={shopCode}
-              onValueChange={(val) => setShopCode(val ? String(val) : "")}
-            >
-              <SelectTrigger id={shopSelectId} className="w-full h-10 text-xs">
-                <SelectValue placeholder="Chọn shop" />
-              </SelectTrigger>
-              <SelectContent>
-                {group.shops.map((shop) => (
-                  <SelectItem
-                    key={shop.code}
-                    value={shop.code}
-                    className="text-xs"
-                  >
-                    {shop.name} ({shop.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor={isCogs ? undefined : shopSelectId}>
+              {isCogs ? "Phạm vi COGS" : "Shop"}
+            </Label>
+            {isCogs ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-xs">
+                <p className="font-medium">
+                  File chung ·{" "}
+                  {group.shops.map((shop) => shop.name).join(" · ")}
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Store đối chiếu theo từng đơn với Orders. Cần import Orders
+                  trước COGS.
+                </p>
+              </div>
+            ) : (
+              <Select
+                value={shopCode}
+                onValueChange={(val) => {
+                  setShopCode(val ? String(val) : "");
+                  setSummary(null);
+                  setApprovedKeys([]);
+                  setImportedResult(null);
+                  setErrorMessage("");
+                }}
+              >
+                <SelectTrigger
+                  id={shopSelectId}
+                  className="w-full h-10 text-xs"
+                >
+                  <SelectValue placeholder="Chọn shop" />
+                </SelectTrigger>
+                <SelectContent>
+                  {group.shops.map((shop) => (
+                    <SelectItem
+                      key={shop.code}
+                      value={shop.code}
+                      className="text-xs"
+                    >
+                      {shop.name} ({shop.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <p className="text-[11px] text-muted-foreground">
-              Chỉ phụ trách shop 97Decor.
+              Phụ trách shop {group.shops.map((shop) => shop.name).join(" · ")}.
             </p>
           </div>
 
@@ -295,18 +354,25 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
                 <SelectItem value="STATEMENTS" className="text-xs font-medium">
                   Etsy Payment Statement (10 cột RAW.Statement)
                 </SelectItem>
-                <SelectItem
-                  value="COGS"
-                  disabled
-                  className="text-xs text-muted-foreground"
-                >
-                  COGS (Chờ mapping)
+                <SelectItem value="COGS" className="text-xs font-medium">
+                  COGS Equarus (14 cột RAW.COGS)
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {isStatement ? (
+          {isCogs ? (
+            <div className="flex gap-2 rounded-lg border border-amber-500/30 bg-amber-50/70 p-3 text-xs leading-relaxed text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+              <InfoIcon className="mt-0.5 size-3.5 shrink-0" />
+              <div>
+                <strong className="block font-semibold">
+                  Cần import Orders trước để xác định shop.
+                </strong>
+                Tự động ánh xạ 14 cột RAW.COGS, đối chiếu các đơn hiện có và
+                kiểm tra chênh lệch thanh toán.
+              </div>
+            </div>
+          ) : isStatement ? (
             <div className="flex gap-2 rounded-lg border border-purple-500/30 bg-purple-50/70 p-3 text-xs leading-relaxed text-purple-900 dark:bg-purple-500/10 dark:text-purple-200">
               <InfoIcon className="mt-0.5 size-3.5 shrink-0" />
               <p>
@@ -386,6 +452,13 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
                 </div>
               )}
 
+              {isCogs && summary && !importedResult && (
+                <CogsReview
+                  summary={summary}
+                  approvedKeys={approvedKeys}
+                  onChange={setApprovedKeys}
+                />
+              )}
               {/* Tóm tắt kết quả kiểm tra thành công */}
               {summary && (
                 <BoOrdersSummary

@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isLinhShop } from "@/lib/fl/bo-import-config";
 import { parseAndMapEtsyItems } from "@/lib/fl/items-parser/items-mapper";
 import { exportItemsPreviewToBuffer } from "@/lib/fl/items-parser/xlsx-exporter";
+import { requireImportedOrders } from "@/lib/fl/orders-prerequisite";
 
 export const maxDuration = 60;
 
@@ -19,12 +21,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (boId !== "ms-linh" || shopCode !== "97DECOR") {
+    if (boId !== "ms-linh" || !isLinhShop(shopCode)) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Tính năng Items hiện chỉ áp dụng cho BO Ms. Linh (shop 97Decor).",
+            "Tính năng Items hiện chỉ áp dụng cho BO Ms. Linh (97Decor và Timond).",
         },
         { status: 400 },
       );
@@ -34,13 +36,15 @@ export async function POST(req: NextRequest) {
     const csvContent = buffer.toString("utf-8");
 
     const result = parseAndMapEtsyItems(csvContent, file.name, file.size, {
-      shopCode: "97DECOR",
-      storeValue: "97Decor",
+      shopCode,
+      storeValue: shopCode === "TIMOND" ? "Timond" : "97Decor",
     });
+
+    if (action !== "import") await requireImportedOrders(result.rows);
 
     if (action === "download") {
       const xlsxBuffer = exportItemsPreviewToBuffer(result);
-      const outputFilename = `linh-97decor-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const outputFilename = `linh-${shopCode.toLowerCase()}-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,

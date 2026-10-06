@@ -31,7 +31,7 @@ export const BO_GROUPS = [
   {
     id: "ms-linh",
     name: "Ms. Linh",
-    shops: ["97DECOR"],
+    shops: ["97DECOR", "TIMOND"],
   },
 ] as const satisfies readonly BoGroupConfig[];
 
@@ -65,4 +65,12 @@ export function resolveBoId(value: string | string[] | undefined): string {
   return BO_GROUPS.some((group) => group.id === candidate)
     ? (candidate as string)
     : DEFAULT_BO_ID;
+}
+
+export function isLinhShop(code: string): boolean {
+  return (
+    BO_GROUPS.find((group) => group.id === "ms-linh")?.shops.some(
+      (shop) => shop === code,
+    ) ?? false
+  );
 }
