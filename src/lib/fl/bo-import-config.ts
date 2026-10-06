@@ -28,6 +28,11 @@ export const BO_GROUPS = [
     name: "Mr. Phúc",
     shops: ["EVERNEST", "ORIVIA", "KINDLORA"],
   },
+  {
+    id: "ms-linh",
+    name: "Ms. Linh",
+    shops: ["97DECOR"],
+  },
 ] as const satisfies readonly BoGroupConfig[];
 
 export const DEFAULT_BO_ID: string = BO_GROUPS[0].id;

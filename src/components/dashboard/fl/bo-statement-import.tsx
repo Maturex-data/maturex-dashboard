@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
+import { BoOrdersForm } from "@/components/dashboard/fl/bo-import/bo-orders-form";
 import { BoStatementForm } from "@/components/dashboard/fl/bo-import/bo-statement-form";
 import {
   Card,
@@ -75,8 +76,11 @@ export function BoStatementImport({
           value={group.id}
           className={cn(isPending && "opacity-70 transition-opacity")}
         >
-          {/* key theo BO: đổi BO sẽ reset shop và danh sách file */}
-          <BoStatementForm key={group.id} group={group} />
+          {group.id === "ms-linh" ? (
+            <BoOrdersForm key={group.id} group={group} />
+          ) : (
+            <BoStatementForm key={group.id} group={group} />
+          )}
         </TabsContent>
       ))}
     </Tabs>
