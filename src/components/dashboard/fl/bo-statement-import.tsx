@@ -4,7 +4,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { BoOrdersForm } from "@/components/dashboard/fl/bo-import/bo-orders-form";
 import { BoStatementForm } from "@/components/dashboard/fl/bo-import/bo-statement-form";
+import { FastwaySyncCard } from "@/components/dashboard/fl/bo-import/fastway-sync-card";
 import { FolderImport } from "@/components/dashboard/fl/bo-import/folder-import";
+import { PrintifySyncCard } from "@/components/dashboard/fl/bo-import/printify-sync-card";
 import {
   Card,
   CardDescription,
@@ -81,22 +83,26 @@ export function BoStatementImport({
           value={group.id}
           className={cn(isPending && "opacity-70 transition-opacity")}
         >
-          {group.id === "ms-linh" || group.id === "mr-nam" ? (
-            <div className="space-y-5">
-              <a
-                href={`https://docs.google.com/spreadsheets/d/${getBoSheetDestination(group.id).spreadsheetId}/edit`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex text-sm text-emerald-700 underline underline-offset-4 dark:text-emerald-400"
-              >
-                Mở Google Sheet đích · {group.name}
-              </a>
-              <FolderImport key={`folder-${group.id}`} group={group} />
-              <BoOrdersForm key={`file-${group.id}`} group={group} />
-            </div>
-          ) : (
-            <BoStatementForm key={group.id} group={group} />
-          )}
+          <div className="space-y-5">
+            {group.id === "mr-phuc" && <PrintifySyncCard />}
+            {group.id === "ms-linh" && <FastwaySyncCard />}
+            {group.id === "ms-linh" || group.id === "mr-nam" ? (
+              <div className="space-y-5">
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${getBoSheetDestination(group.id).spreadsheetId}/edit`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex text-sm text-emerald-700 underline underline-offset-4 dark:text-emerald-400"
+                >
+                  Mở Google Sheet đích · {group.name}
+                </a>
+                <FolderImport key={`folder-${group.id}`} group={group} />
+                <BoOrdersForm key={`file-${group.id}`} group={group} />
+              </div>
+            ) : (
+              <BoStatementForm key={group.id} group={group} />
+            )}
+          </div>
         </TabsContent>
       ))}
     </Tabs>
