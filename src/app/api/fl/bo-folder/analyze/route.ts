@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { canImportBoShop } from "@/lib/fl/bo-import-config";
 import { parseEquarusWorkbook } from "@/lib/fl/cogs-parser/equarus-parser";
 import { parseAndMapEtsyItems } from "@/lib/fl/items-parser/items-mapper";
 import { parseCsv } from "@/lib/fl/orders-parser/csv-parser";
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
       file = form.get("file");
     if (!(file instanceof File) || file.size > 20 * 1024 * 1024)
       throw Error("Chỉ nhận file tối đa 20 MB.");
+    const boId = String(form.get("boId") || "ms-linh");
+    if (boId !== "ms-linh" && boId !== "mr-nam")
+      throw Error("BO không hỗ trợ import thư mục.");
     const buffer = Buffer.from(await file.arrayBuffer());
     if (file.name.toLowerCase().endsWith(".xlsx")) {
       const p = parseEquarusWorkbook(buffer);
@@ -65,6 +69,8 @@ export async function POST(req: NextRequest) {
         rows: 0,
         needsShop: true,
       });
+    if (!canImportBoShop(boId, shop))
+      throw Error("Shop không thuộc phạm vi import của BO đã chọn.");
     const options = {
       shopCode: shop,
       storeValue: shop === "TIMOND" ? "Timond" : "97Decor",

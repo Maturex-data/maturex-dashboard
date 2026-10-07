@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
 import type {
   ColumnMappingInfo,
   MappedOrderRow,
@@ -9,11 +10,14 @@ import { RAW_ORDERS_HEADERS } from "@/lib/fl/orders-parser/types";
 /**
  * Xuất workbook 3 sheet: RAW.Orders, Mapping, Validation
  */
-export function buildOrdersPreviewWorkbook(params: {
-  rows: MappedOrderRow[];
-  summary: OrdersValidationSummary;
-  mappingTable: ColumnMappingInfo[];
-}): XLSX.WorkBook {
+export function buildOrdersPreviewWorkbook(
+  params: {
+    rows: MappedOrderRow[];
+    summary: OrdersValidationSummary;
+    mappingTable: ColumnMappingInfo[];
+  },
+  boId = "ms-linh",
+): XLSX.WorkBook {
   const { rows, summary, mappingTable } = params;
 
   const workbook = XLSX.utils.book_new();
@@ -89,7 +93,7 @@ export function buildOrdersPreviewWorkbook(params: {
     ["Thời gian kiểm tra", new Date().toLocaleString("vi-VN")],
     ["Tên file nguồn", summary.fileName],
     ["Dung lượng file", `${(summary.fileSizeBytes / 1024).toFixed(1)} KB`],
-    ["Nhóm BO", "Ms. Linh (ms-linh)"],
+    ["Nhóm BO", boId === "mr-nam" ? "Mr. Nam (mr-nam)" : "Ms. Linh (ms-linh)"],
     ["Shop phụ trách", "97Decor (97DECOR)"],
     ["Giá trị gán cột Store", summary.storeValue],
     [""],
@@ -110,7 +114,7 @@ export function buildOrdersPreviewWorkbook(params: {
     ],
     [
       "2.",
-      "Google Sheet đích: Spreadsheet ID: 1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do (tab RAW.Orders - gid 839747432).",
+      `Google Sheet đích: Spreadsheet ID: ${getBoSheetDestination(boId).spreadsheetId} (tab RAW.Orders - gid ${getBoSheetDestination(boId).ordersSheetId}).`,
     ],
     [
       "3.",
@@ -177,11 +181,14 @@ export function exportOrdersPreviewToFile(
 /**
  * Xuất buffer (dành cho web download / API response)
  */
-export function exportOrdersPreviewToBuffer(params: {
-  rows: MappedOrderRow[];
-  summary: OrdersValidationSummary;
-  mappingTable: ColumnMappingInfo[];
-}): Buffer {
-  const workbook = buildOrdersPreviewWorkbook(params);
+export function exportOrdersPreviewToBuffer(
+  params: {
+    rows: MappedOrderRow[];
+    summary: OrdersValidationSummary;
+    mappingTable: ColumnMappingInfo[];
+  },
+  boId = "ms-linh",
+): Buffer {
+  const workbook = buildOrdersPreviewWorkbook(params, boId);
   return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
 }

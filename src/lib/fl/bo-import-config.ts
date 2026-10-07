@@ -33,6 +33,7 @@ export const BO_GROUPS = [
     name: "Ms. Linh",
     shops: ["97DECOR", "TIMOND"],
   },
+  { id: "mr-nam", name: "Mr. Nam", shops: ["TIMOND"] },
 ] as const satisfies readonly BoGroupConfig[];
 
 export const DEFAULT_BO_ID: string = BO_GROUPS[0].id;
@@ -73,4 +74,44 @@ export function isLinhShop(code: string): boolean {
       (shop) => shop === code,
     ) ?? false
   );
+}
+
+/** Phạm vi các BO dùng luồng import Etsy hiện có. */
+export function canImportBoShop(boId: string, shopCode: string): boolean {
+  return (
+    (boId === "ms-linh" || boId === "mr-nam") &&
+    (BO_GROUPS.find((group) => group.id === boId)?.shops.some(
+      (shop: string) => shop === shopCode,
+    ) ??
+      false)
+  );
+}
+
+export interface BoSheetDestination {
+  spreadsheetId: string;
+  ordersSheetId: number;
+  itemsSheetId: number;
+  statementSheetId: number;
+  cogsHeaderRow: number;
+}
+
+const LINH_DESTINATION: BoSheetDestination = {
+  spreadsheetId: "1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do",
+  ordersSheetId: 839747432,
+  itemsSheetId: 136409036,
+  statementSheetId: 69264119,
+  cogsHeaderRow: 2,
+};
+const NAM_DESTINATION: BoSheetDestination = {
+  spreadsheetId: "1lljLIG41N-LGmOR0dLq1jxaNY4B9RGkGNCVVvhkiBcw",
+  ordersSheetId: 11216734,
+  itemsSheetId: 926543721,
+  statementSheetId: 1957049761,
+  cogsHeaderRow: 1,
+};
+
+export function getBoSheetDestination(boId: string): BoSheetDestination {
+  if (boId === "mr-nam") return NAM_DESTINATION;
+  if (boId === "ms-linh") return LINH_DESTINATION;
+  throw new Error("BO chưa được cấu hình Sheet đích.");
 }

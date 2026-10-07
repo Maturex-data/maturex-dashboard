@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { isLinhShop } from "@/lib/fl/bo-import-config";
+import {
+  canImportBoShop,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import { parseAndMapEtsyItems } from "@/lib/fl/items-parser/items-mapper";
 import { exportItemsPreviewToBuffer } from "@/lib/fl/items-parser/xlsx-exporter";
 import { requireImportedOrders } from "@/lib/fl/orders-prerequisite";
@@ -21,16 +24,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (boId !== "ms-linh" || !isLinhShop(shopCode)) {
+    if (!canImportBoShop(boId, shopCode)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Tính năng Items hiện chỉ áp dụng cho BO Ms. Linh (97Decor và Timond).",
+          error: "Shop không thuộc phạm vi import của BO đã chọn.",
         },
         { status: 400 },
       );
     }
+
+    const destination = getBoSheetDestination(boId);
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const csvContent = buffer.toString("utf-8");
@@ -40,11 +44,12 @@ export async function POST(req: NextRequest) {
       storeValue: shopCode === "TIMOND" ? "Timond" : "97Decor",
     });
 
-    if (action !== "import") await requireImportedOrders(result.rows);
+    if (action !== "import")
+      await requireImportedOrders(result.rows, destination.spreadsheetId);
 
     if (action === "download") {
-      const xlsxBuffer = exportItemsPreviewToBuffer(result);
-      const outputFilename = `linh-${shopCode.toLowerCase()}-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const xlsxBuffer = exportItemsPreviewToBuffer(result, boId);
+      const outputFilename = `${boId === "mr-nam" ? "nam" : "linh"}-${shopCode.toLowerCase()}-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,
@@ -60,7 +65,10 @@ export async function POST(req: NextRequest) {
       const { upsertItemsToGoogleSheet } = await import(
         "@/lib/fl/items-parser/items-sheet-writer"
       );
-      const importResult = await upsertItemsToGoogleSheet(result.rows);
+      const importResult = await upsertItemsToGoogleSheet(
+        result.rows,
+        destination,
+      );
       return NextResponse.json({
         success: true,
         summary: result.summary,

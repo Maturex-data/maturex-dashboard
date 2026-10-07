@@ -1,4 +1,8 @@
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
+import {
+  type BoSheetDestination,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import { requireImportedOrders } from "@/lib/fl/orders-prerequisite";
 import type { MappedItemRow } from "./types";
 import { RAW_ITEMS_HEADERS } from "./types";
@@ -26,23 +30,24 @@ export interface ItemSheetImportResult {
  */
 export async function upsertItemsToGoogleSheet(
   mappedRows: MappedItemRow[],
+  destination: BoSheetDestination = getBoSheetDestination("ms-linh"),
 ): Promise<ItemSheetImportResult> {
   if (!mappedRows.length) {
     return {
       insertedCount: 0,
       updatedCount: 0,
       totalSheetRows: 0,
-      spreadsheetId: ECOMBIUS_ITEMS_SPREADSHEET_ID,
+      spreadsheetId: destination.spreadsheetId,
       tabName: ITEMS_TAB_NAME,
     };
   }
 
-  await requireImportedOrders(mappedRows);
+  await requireImportedOrders(mappedRows, destination.spreadsheetId);
   const { accessToken } = await getGoogleDriveAccess();
 
   // 1. Đọc dữ liệu hiện có trong tab RAW.Items (từ hàng 2 đến AH)
   const range = `${ITEMS_TAB_NAME}!A2:${ITEMS_LAST_COLUMN}`;
-  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ITEMS_SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
+  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
 
   const existingRes = await fetch(getUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -103,7 +108,7 @@ export async function upsertItemsToGoogleSheet(
 
   // 2. Đảm bảo gridProperties.rowCount trên Sheet đủ lớn
   const spreadsheetMetaRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ITEMS_SPREADSHEET_ID}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
 
@@ -128,7 +133,7 @@ export async function upsertItemsToGoogleSheet(
 
       if (currentRowCount < requiredRowCount) {
         await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ITEMS_SPREADSHEET_ID}:batchUpdate`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}:batchUpdate`,
           {
             method: "POST",
             headers: {
@@ -140,7 +145,7 @@ export async function upsertItemsToGoogleSheet(
                 {
                   updateSheetProperties: {
                     properties: {
-                      sheetId: ITEMS_SHEET_ID,
+                      sheetId: destination.itemsSheetId,
                       gridProperties: { rowCount: requiredRowCount },
                     },
                     fields: "gridProperties.rowCount",
@@ -156,7 +161,7 @@ export async function upsertItemsToGoogleSheet(
 
   // 3. Xóa dữ liệu cũ từ A2:AH và ghi đè danh sách đã gộp mới
   await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ITEMS_SPREADSHEET_ID}/values/${encodeURIComponent(`${ITEMS_TAB_NAME}!A2:${ITEMS_LAST_COLUMN}`)}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(`${ITEMS_TAB_NAME}!A2:${ITEMS_LAST_COLUMN}`)}:clear`,
     {
       method: "POST",
       headers: {
@@ -179,7 +184,7 @@ export async function upsertItemsToGoogleSheet(
 
   if (writeData.length > 0) {
     const writeRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ITEMS_SPREADSHEET_ID}/values:batchUpdate`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values:batchUpdate`,
       {
         method: "POST",
         headers: {
@@ -207,7 +212,7 @@ export async function upsertItemsToGoogleSheet(
     insertedCount,
     updatedCount,
     totalSheetRows: nextSheetRows.length,
-    spreadsheetId: ECOMBIUS_ITEMS_SPREADSHEET_ID,
+    spreadsheetId: destination.spreadsheetId,
     tabName: ITEMS_TAB_NAME,
   };
 }

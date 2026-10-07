@@ -351,9 +351,11 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
                 <SelectItem value="STATEMENTS" className="text-xs font-medium">
                   Etsy Payment Statement (10 cột RAW.Statement)
                 </SelectItem>
-                <SelectItem value="COGS" className="text-xs font-medium">
-                  COGS Equarus (14 cột RAW.COGS)
-                </SelectItem>
+                {(group.id === "ms-linh" || group.id === "mr-nam") && (
+                  <SelectItem value="COGS" className="text-xs font-medium">
+                    COGS Equarus (14 cột RAW.COGS)
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -455,6 +457,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
               {/* Tóm tắt kết quả kiểm tra thành công */}
               {summary && (
                 <BoOrdersSummary
+                  boId={group.id}
                   summary={summary}
                   downloading={downloading}
                   onDownloadXlsx={handleDownloadXlsx}

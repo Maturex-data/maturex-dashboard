@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
 import type {
   MappedStatementRow,
   StatementParseResult,
@@ -103,6 +104,7 @@ export interface StatementPreviewWorkbookOptions {
 
 export function buildStatementPreviewWorkbook(
   options: StatementPreviewWorkbookOptions,
+  boId = "ms-linh",
 ): XLSX.WorkBook {
   const { rows, summary } = options;
   const workbook = XLSX.utils.book_new();
@@ -182,7 +184,10 @@ export function buildStatementPreviewWorkbook(
       `${summary.verifiedMonth} (${summary.verifiedMonthLabel})`,
     ],
     ["Shop phụ trách:", "97DECOR (Store: 97Decor)"],
-    ["BO phụ trách:", "ms-linh (Ms. Linh)"],
+    [
+      "BO phụ trách:",
+      boId === "mr-nam" ? "mr-nam (Mr. Nam)" : "ms-linh (Ms. Linh)",
+    ],
     ["Tổng số dòng nguồn hợp lệ:", summary.totalSourceRows],
     ["Số dòng có lỗi:", summary.errorRowsCount],
     [
@@ -214,7 +219,7 @@ export function buildStatementPreviewWorkbook(
     ],
     [
       "2.",
-      "Google Sheet đích: Spreadsheet ID: 1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do (tab RAW.Statement - gid 69264119).",
+      `Google Sheet đích: Spreadsheet ID: ${getBoSheetDestination(boId).spreadsheetId} (tab RAW.Statement - gid ${getBoSheetDestination(boId).statementSheetId}).`,
     ],
     [
       "3.",
@@ -252,10 +257,14 @@ export function buildStatementPreviewWorkbook(
 
 export function exportStatementPreviewToBuffer(
   result: StatementParseResult,
+  boId = "ms-linh",
 ): Buffer {
-  const workbook = buildStatementPreviewWorkbook({
-    rows: result.rows,
-    summary: result.summary,
-  });
+  const workbook = buildStatementPreviewWorkbook(
+    {
+      rows: result.rows,
+      summary: result.summary,
+    },
+    boId,
+  );
   return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 }

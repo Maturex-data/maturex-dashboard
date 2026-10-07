@@ -1,13 +1,12 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
+import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
 import { prisma } from "@/lib/prisma";
 import { mapEquarusOrdersToCogs, normalizeStoreName } from "./cogs-mapper";
 import { parseEquarusWorkbook } from "./equarus-parser";
 import { COMPARED_COLUMNS, planCogs, snapshotHash } from "./import-plan";
 import { RAW_COGS_HEADERS } from "./types";
 
-const BASE =
-  "https://sheets.googleapis.com/v4/spreadsheets/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do";
 const secret = () => {
   const key = process.env.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY;
   if (!key) throw Error("Thiếu khóa ký preview.");
@@ -45,7 +44,15 @@ export function checkPreviewToken(
   )
     throw Error("File hoặc Sheet đã thay đổi; hãy tạo lại preview.");
 }
-export async function prepareCogs(file: Buffer, fileName: string) {
+export async function prepareCogs(
+  file: Buffer,
+  fileName: string,
+  boId = "ms-linh",
+) {
+  const destination = getBoSheetDestination(boId);
+  const BASE = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}`;
+  const hashState = (orders: unknown[][], cogs: unknown[][]) =>
+    `${snapshotHash(orders, cogs)}:${destination.spreadsheetId}`;
   const { accessToken } = await getGoogleDriveAccess();
   const request = async (path: string, init?: RequestInit) => {
     const res = await fetch(BASE + path, {
@@ -61,7 +68,7 @@ export async function prepareCogs(file: Buffer, fileName: string) {
   };
   const read = async () => {
     const p = await request(
-      "/values:batchGet?ranges=RAW.Orders!A1:AK&ranges=RAW.COGS!A2:N&valueRenderOption=FORMULA",
+      `/values:batchGet?ranges=RAW.Orders!A1:AK&ranges=RAW.COGS!A${destination.cogsHeaderRow}:N&valueRenderOption=FORMULA`,
     );
     const orders = (p.valueRanges[0].values ?? []) as unknown[][];
     const all = (p.valueRanges[1].values ?? []) as unknown[][];
@@ -70,7 +77,7 @@ export async function prepareCogs(file: Buffer, fileName: string) {
     const header = orders[0]?.map(String) ?? [];
     if (!header.includes("Order ID") || !header.includes("Store"))
       throw Error("RAW.Orders thiếu Order ID/Store.");
-    return { orders, cogs: all.slice(1) };
+    return { orders, cogs: all.slice(3 - destination.cogsHeaderRow) };
   };
   const state = await read();
   const lookup = new Map<string, Set<string>>();
@@ -83,11 +90,45 @@ export async function prepareCogs(file: Buffer, fileName: string) {
   }
   const parsed = parseEquarusWorkbook(file);
   if (!parsed.orderRows.length) throw Error("File không có đơn COGS.");
-  const mapped = mapEquarusOrdersToCogs(
-    parsed.orderRows,
-    parsed.paymentSummaries,
-    { fileName, fileSizeBytes: file.length, ordersLookup: lookup },
-  );
+  let skippedOtherShops = 0;
+  const scopedRows =
+    boId === "mr-nam"
+      ? parsed.orderRows.filter((row) => {
+          const stores =
+            lookup.get(row.orderId) ??
+            lookup.get(row.orderId.replace(/-Replace$/i, ""));
+          const knownStore = stores?.size === 1 ? [...stores][0] : "";
+          const sourceStore = normalizeStoreName(row.sourceStore ?? "");
+          if (
+            (knownStore &&
+              knownStore !== "TIMOND" &&
+              (!sourceStore || sourceStore === knownStore)) ||
+            (!stores?.size && sourceStore && sourceStore !== "TIMOND")
+          ) {
+            skippedOtherShops++;
+            return false;
+          }
+          return true;
+        })
+      : parsed.orderRows;
+  const mapped = mapEquarusOrdersToCogs(scopedRows, parsed.paymentSummaries, {
+    fileName,
+    fileSizeBytes: file.length,
+    ordersLookup: lookup,
+  });
+  if (boId === "mr-nam") {
+    const outside = mapped.rows.filter(
+      (row) => row.Store && row.Store !== "TIMOND",
+    );
+    if (outside.length)
+      throw Error("COGS có Store ngoài phạm vi Timond của Nam.");
+    mapped.summary.skippedOrdersCount =
+      (mapped.summary.skippedOrdersCount ?? 0) + skippedOtherShops;
+    if (skippedOtherShops)
+      mapped.summary.warnings.push(
+        `Bỏ qua ${skippedOtherShops} đơn thuộc shop khác; Nam chỉ import Timond.`,
+      );
+  }
   const plan = planCogs(mapped.rows, state.cogs);
   mapped.summary.alreadyInCogsCount = plan.decisions.filter(
     (d) => d.kind === "CHANGED" || d.kind === "UNCHANGED",
@@ -117,7 +158,7 @@ export async function prepareCogs(file: Buffer, fileName: string) {
             ? "DIFF_COST"
             : "NOT_IN_COGS",
     }));
-  const snapshot = snapshotHash(state.orders, state.cogs);
+  const snapshot = hashState(state.orders, state.cogs);
   const blocked =
     mapped.summary.unmappedCount +
     mapped.summary.conflictCount +
@@ -130,6 +171,7 @@ export async function prepareCogs(file: Buffer, fileName: string) {
   );
   return {
     mapped,
+    hashState,
     plan,
     state,
     snapshot,
@@ -143,15 +185,20 @@ export async function importCogs(
   name: string,
   token: string,
   _approved: string[],
+  boId = "ms-linh",
 ) {
   return prisma.$transaction(
     async (tx) => {
+      const lockKey =
+        boId === "ms-linh"
+          ? "ecombius-linh-raw-cogs"
+          : `ecombius-${boId}-raw-cogs`;
       const locks = await tx.$queryRaw<
         Array<{ locked: boolean }>
-      >`SELECT pg_try_advisory_xact_lock(hashtext('ecombius-linh-raw-cogs')) AS locked`;
+      >`SELECT pg_try_advisory_xact_lock(hashtext(${lockKey})) AS locked`;
       if (!locks[0]?.locked)
         throw Error("Một phiên import COGS đang chạy. Hãy thử lại sau.");
-      const p = await prepareCogs(file, name);
+      const p = await prepareCogs(file, name, boId);
       checkPreviewToken(token, p.snapshot, file);
       if (p.blocked)
         throw Error(
@@ -212,7 +259,7 @@ export async function applyCogs(
         : "Dữ liệu đã có, không cần cập nhật.",
     };
   const fresh = await p.read();
-  if (snapshotHash(fresh.orders, fresh.cogs) !== p.snapshot)
+  if (p.hashState(fresh.orders, fresh.cogs) !== p.snapshot)
     throw Error("Sheet đã thay đổi; hãy tạo lại preview.");
   if (insertedCount) {
     const metadata = await p.request(
@@ -242,7 +289,7 @@ export async function applyCogs(
         }),
       });
     const beforeWrite = await p.read();
-    if (snapshotHash(beforeWrite.orders, beforeWrite.cogs) !== p.snapshot)
+    if (p.hashState(beforeWrite.orders, beforeWrite.cogs) !== p.snapshot)
       throw Error("Sheet đã thay đổi; hãy tạo lại preview.");
   }
   await p.request("/values:batchUpdate", {

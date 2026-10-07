@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { isLinhShop } from "@/lib/fl/bo-import-config";
+import { canImportBoShop } from "@/lib/fl/bo-import-config";
 import {
   importCogs,
   makePreviewToken,
@@ -36,12 +36,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (boId !== "ms-linh" || (shopCode !== "ALL" && !isLinhShop(shopCode))) {
+    if (
+      (boId !== "ms-linh" && boId !== "mr-nam") ||
+      (shopCode !== "ALL" && !canImportBoShop(boId, shopCode))
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Tính năng COGS Equarus hiện chỉ áp dụng cho BO Ms. Linh (97Decor và Timond).",
+          error: "Shop không thuộc phạm vi COGS của BO đã chọn.",
         },
         { status: 400 },
       );
@@ -69,10 +71,11 @@ export async function POST(req: NextRequest) {
         file.name,
         String(formData.get("previewToken") || ""),
         approved,
+        boId,
       );
       return NextResponse.json({ success: true, importResult });
     }
-    const prepared = await prepareCogs(buffer, file.name);
+    const prepared = await prepareCogs(buffer, file.name, boId);
     const result = prepared.mapped;
     const decisions = prepared.plan.decisions;
     const summary = {
@@ -100,7 +103,7 @@ export async function POST(req: NextRequest) {
     result.summary.diffCostCount = summary.diffCostCount;
     if (action === "download") {
       const xlsxBuffer = exportCogsPreviewToBuffer(result, prepared.plan);
-      const outputFilename = `linh-cogs-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const outputFilename = `${boId === "mr-nam" ? "nam" : "linh"}-cogs-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,

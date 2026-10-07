@@ -1,0 +1,42 @@
+name: Team Phuc Printify to RAW.COGS
+
+on:
+  schedule:
+    # 00:00 Asia/Ho_Chi_Minh (UTC+7) = 17:00 UTC on the preceding day.
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phuc-printify-raw-cogs
+  cancel-in-progress: false
+
+jobs:
+  sync-printify:
+    name: Sync Printify Team Phuc
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Sync and verify RAW.COGS
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
+          GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY: ${{ secrets.GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY }}
+          PHUC_PRINTIFY_ACCESS_TOKEN: ${{ secrets.PHUC_PRINTIFY_ACCESS_TOKEN }}
+          PHUC_PRINTIFY_SHOP_ID: ${{ secrets.PHUC_PRINTIFY_SHOP_ID }}
+          PHUC_COGS_SPREADSHEET_ID: ${{ secrets.PHUC_COGS_SPREADSHEET_ID }}
+          PHUC_COGS_SHEET_ID: ${{ secrets.PHUC_COGS_SHEET_ID }}
+        run: npm run sync:phuc:printify

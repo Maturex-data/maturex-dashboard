@@ -1,4 +1,8 @@
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
+import {
+  type BoSheetDestination,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import { extractMonthFromDateString } from "./statement-mapper";
 import type { MappedStatementRow } from "./types";
 import { RAW_STATEMENT_HEADERS } from "./types";
@@ -31,6 +35,7 @@ export interface StatementSheetImportResult {
 export async function replaceStatementMonthInGoogleSheet(
   mappedRows: MappedStatementRow[],
   verifiedMonth: string,
+  destination: BoSheetDestination = getBoSheetDestination("ms-linh"),
 ): Promise<StatementSheetImportResult> {
   if (!mappedRows.length) {
     return {
@@ -38,7 +43,7 @@ export async function replaceStatementMonthInGoogleSheet(
       preservedCount: 0,
       newCount: 0,
       totalSheetRows: 0,
-      spreadsheetId: ECOMBIUS_STATEMENT_SPREADSHEET_ID,
+      spreadsheetId: destination.spreadsheetId,
       tabName: STATEMENT_TAB_NAME,
       verifiedMonth,
     };
@@ -48,7 +53,7 @@ export async function replaceStatementMonthInGoogleSheet(
 
   // 1. Đọc dữ liệu hiện có trong tab RAW.Statement (từ hàng 2 đến J)
   const range = `${STATEMENT_TAB_NAME}!A2:${STATEMENT_LAST_COLUMN}`;
-  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_STATEMENT_SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
+  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
 
   const existingRes = await fetch(getUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -107,7 +112,7 @@ export async function replaceStatementMonthInGoogleSheet(
 
   // 4. Đảm bảo số hàng trong Sheet đủ chứa dữ liệu
   const spreadsheetMetaRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_STATEMENT_SPREADSHEET_ID}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
 
@@ -132,7 +137,7 @@ export async function replaceStatementMonthInGoogleSheet(
 
       if (currentRowCount < requiredRowCount) {
         await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_STATEMENT_SPREADSHEET_ID}:batchUpdate`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}:batchUpdate`,
           {
             method: "POST",
             headers: {
@@ -166,7 +171,7 @@ export async function replaceStatementMonthInGoogleSheet(
     const endRow = startRow + chunk.length - 1;
     const writeRange = `${STATEMENT_TAB_NAME}!A${startRow}:${STATEMENT_LAST_COLUMN}${endRow}`;
 
-    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_STATEMENT_SPREADSHEET_ID}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
+    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
 
     const updateRes = await fetch(updateUrl, {
       method: "PUT",
@@ -196,7 +201,7 @@ export async function replaceStatementMonthInGoogleSheet(
     const clearStartRow = nextSheetRows.length + 2;
     const clearEndRow = existingRows.length + 1;
     const clearRange = `${STATEMENT_TAB_NAME}!A${clearStartRow}:${STATEMENT_LAST_COLUMN}${clearEndRow}`;
-    const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_STATEMENT_SPREADSHEET_ID}/values/${encodeURIComponent(clearRange)}:clear`;
+    const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(clearRange)}:clear`;
 
     await fetch(clearUrl, {
       method: "POST",
@@ -212,7 +217,7 @@ export async function replaceStatementMonthInGoogleSheet(
     preservedCount: preservedRows.length,
     newCount: formattedNewRows.length,
     totalSheetRows: nextSheetRows.length,
-    spreadsheetId: ECOMBIUS_STATEMENT_SPREADSHEET_ID,
+    spreadsheetId: destination.spreadsheetId,
     tabName: STATEMENT_TAB_NAME,
     verifiedMonth,
   };

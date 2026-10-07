@@ -1,4 +1,8 @@
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
+import {
+  type BoSheetDestination,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import type { MappedOrderRow } from "@/lib/fl/orders-parser/types";
 import { RAW_ORDERS_HEADERS } from "@/lib/fl/orders-parser/types";
 
@@ -25,13 +29,14 @@ export interface SheetImportResult {
  */
 export async function upsertOrdersToGoogleSheet(
   mappedRows: MappedOrderRow[],
+  destination: BoSheetDestination = getBoSheetDestination("ms-linh"),
 ): Promise<SheetImportResult> {
   if (!mappedRows.length) {
     return {
       insertedCount: 0,
       updatedCount: 0,
       totalSheetRows: 0,
-      spreadsheetId: ECOMBIUS_ORDERS_SPREADSHEET_ID,
+      spreadsheetId: destination.spreadsheetId,
       tabName: ORDERS_TAB_NAME,
     };
   }
@@ -40,7 +45,7 @@ export async function upsertOrdersToGoogleSheet(
 
   // 1. Đọc dữ liệu hiện có trong tab RAW.Orders (từ hàng 2 đến AK)
   const range = `${ORDERS_TAB_NAME}!A2:${ORDERS_LAST_COLUMN}`;
-  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ORDERS_SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
+  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
 
   const existingRes = await fetch(getUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -101,7 +106,7 @@ export async function upsertOrdersToGoogleSheet(
 
   // 2. Đảm bảo gridProperties.rowCount trên Sheet đủ lớn
   const spreadsheetMetaRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ORDERS_SPREADSHEET_ID}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
 
@@ -126,7 +131,7 @@ export async function upsertOrdersToGoogleSheet(
 
       if (currentRowCount < requiredRowCount) {
         await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ORDERS_SPREADSHEET_ID}:batchUpdate`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}:batchUpdate`,
           {
             method: "POST",
             headers: {
@@ -138,7 +143,7 @@ export async function upsertOrdersToGoogleSheet(
                 {
                   updateSheetProperties: {
                     properties: {
-                      sheetId: ORDERS_SHEET_ID,
+                      sheetId: destination.ordersSheetId,
                       gridProperties: { rowCount: requiredRowCount },
                     },
                     fields: "gridProperties.rowCount",
@@ -154,7 +159,7 @@ export async function upsertOrdersToGoogleSheet(
 
   // 3. Xóa dữ liệu cũ từ A2:AK và ghi đè danh sách đã gộp mới
   await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ORDERS_SPREADSHEET_ID}/values/${encodeURIComponent(`${ORDERS_TAB_NAME}!A2:${ORDERS_LAST_COLUMN}`)}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(`${ORDERS_TAB_NAME}!A2:${ORDERS_LAST_COLUMN}`)}:clear`,
     {
       method: "POST",
       headers: {
@@ -177,7 +182,7 @@ export async function upsertOrdersToGoogleSheet(
 
   if (writeData.length > 0) {
     const writeRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ECOMBIUS_ORDERS_SPREADSHEET_ID}/values:batchUpdate`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values:batchUpdate`,
       {
         method: "POST",
         headers: {
@@ -205,7 +210,7 @@ export async function upsertOrdersToGoogleSheet(
     insertedCount,
     updatedCount,
     totalSheetRows: nextSheetRows.length,
-    spreadsheetId: ECOMBIUS_ORDERS_SPREADSHEET_ID,
+    spreadsheetId: destination.spreadsheetId,
     tabName: ORDERS_TAB_NAME,
   };
 }

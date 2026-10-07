@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
 import type {
   ItemsParseResult,
   ItemsValidationSummary,
@@ -256,10 +257,13 @@ export const ITEMS_MAPPING_SPEC: ItemColumnMappingInfo[] = [
   },
 ];
 
-export function buildItemsPreviewWorkbook(params: {
-  rows: MappedItemRow[];
-  summary: ItemsValidationSummary;
-}): XLSX.WorkBook {
+export function buildItemsPreviewWorkbook(
+  params: {
+    rows: MappedItemRow[];
+    summary: ItemsValidationSummary;
+  },
+  boId = "ms-linh",
+): XLSX.WorkBook {
   const { rows, summary } = params;
   const workbook = XLSX.utils.book_new();
 
@@ -350,7 +354,7 @@ export function buildItemsPreviewWorkbook(params: {
     ],
     [
       "2.",
-      "Google Sheet đích: Spreadsheet ID: 1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do (tab RAW.Items - gid 136409036).",
+      `Google Sheet đích: Spreadsheet ID: ${getBoSheetDestination(boId).spreadsheetId} (tab RAW.Items - gid ${getBoSheetDestination(boId).itemsSheetId}).`,
     ],
     ["3.", "Khóa chống trùng (Deduplication): Transaction ID (Cột N)."],
     [""],
@@ -392,10 +396,16 @@ export function buildItemsPreviewWorkbook(params: {
   return workbook;
 }
 
-export function exportItemsPreviewToBuffer(result: ItemsParseResult): Buffer {
-  const workbook = buildItemsPreviewWorkbook({
-    rows: result.rows,
-    summary: result.summary,
-  });
+export function exportItemsPreviewToBuffer(
+  result: ItemsParseResult,
+  boId = "ms-linh",
+): Buffer {
+  const workbook = buildItemsPreviewWorkbook(
+    {
+      rows: result.rows,
+      summary: result.summary,
+    },
+    boId,
+  );
   return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 }

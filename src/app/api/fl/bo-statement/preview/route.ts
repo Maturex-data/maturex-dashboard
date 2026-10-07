@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { isLinhShop } from "@/lib/fl/bo-import-config";
+import {
+  canImportBoShop,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import { parseAndMapEtsyStatement } from "@/lib/fl/statement-parser/statement-mapper";
 import { exportStatementPreviewToBuffer } from "@/lib/fl/statement-parser/xlsx-exporter";
 
@@ -20,16 +23,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (boId !== "ms-linh" || !isLinhShop(shopCode)) {
+    if (!canImportBoShop(boId, shopCode)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Tính năng Statement hiện chỉ áp dụng cho BO Ms. Linh (97Decor và Timond).",
+          error: "Shop không thuộc phạm vi import của BO đã chọn.",
         },
         { status: 400 },
       );
     }
+
+    const destination = getBoSheetDestination(boId);
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const csvContent = buffer.toString("utf-8");
@@ -40,8 +44,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (action === "download") {
-      const xlsxBuffer = exportStatementPreviewToBuffer(result);
-      const outputFilename = `linh-${shopCode.toLowerCase()}-statement-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const xlsxBuffer = exportStatementPreviewToBuffer(result, boId);
+      const outputFilename = `${boId === "mr-nam" ? "nam" : "linh"}-${shopCode.toLowerCase()}-statement-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,
@@ -60,6 +64,7 @@ export async function POST(req: NextRequest) {
       const importResult = await replaceStatementMonthInGoogleSheet(
         result.rows,
         result.summary.verifiedMonth,
+        destination,
       );
       return NextResponse.json({
         success: true,

@@ -7,6 +7,7 @@ import {
   Loader2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
 
 export interface ImportedSheetResult {
   insertedCount?: number;
@@ -53,6 +54,7 @@ export interface GenericValidationSummary {
 }
 
 interface BoOrdersSummaryProps {
+  boId?: string;
   summary: GenericValidationSummary;
   downloading: boolean;
   onDownloadXlsx: () => void;
@@ -60,36 +62,27 @@ interface BoOrdersSummaryProps {
   reportType?: "ORDERS" | "ITEMS" | "STATEMENTS" | "COGS";
 }
 
-const ORDERS_SPREADSHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do/edit?gid=839747432#gid=839747432";
-
-const ITEMS_SPREADSHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do/edit?gid=136409036#gid=136409036";
-
-const STATEMENTS_SPREADSHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do/edit?gid=69264119#gid=69264119";
-
-const COGS_SPREADSHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do/edit?gid=58221536#gid=58221536";
-
 export function BoOrdersSummary({
   summary,
   downloading,
   onDownloadXlsx,
   importedResult,
   reportType = "ORDERS",
+  boId = "ms-linh",
 }: BoOrdersSummaryProps) {
   const isItems = reportType === "ITEMS";
   const isStatement = reportType === "STATEMENTS";
   const isCogs = reportType === "COGS";
 
-  const targetSpreadsheetUrl = isCogs
-    ? COGS_SPREADSHEET_URL
+  const destination = getBoSheetDestination(boId);
+  const targetSheetId = isCogs
+    ? 58221536
     : isStatement
-      ? STATEMENTS_SPREADSHEET_URL
+      ? destination.statementSheetId
       : isItems
-        ? ITEMS_SPREADSHEET_URL
-        : ORDERS_SPREADSHEET_URL;
+        ? destination.itemsSheetId
+        : destination.ordersSheetId;
+  const targetSpreadsheetUrl = `https://docs.google.com/spreadsheets/d/${destination.spreadsheetId}/edit#gid=${targetSheetId}`;
 
   const tabName = isCogs
     ? "RAW.COGS"

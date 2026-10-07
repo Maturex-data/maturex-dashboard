@@ -1,7 +1,6 @@
 import { ArrowLeftIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { FastwaySyncCard } from "@/components/dashboard/fl/bo-import/fastway-sync-card";
 import { BoStatementImport } from "@/components/dashboard/fl/bo-statement-import";
 import {
   Breadcrumb,
@@ -84,7 +83,6 @@ export default async function EcombiusBoImportPage({
           </Link>
         </section>
 
-        <FastwaySyncCard />
         <Suspense fallback={null}>
           <BoStatementImport groups={groups} activeBoId={activeBoId} />
         </Suspense>
