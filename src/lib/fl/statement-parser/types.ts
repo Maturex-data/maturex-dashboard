@@ -73,3 +73,9 @@ export interface StatementParseResult {
   rows: MappedStatementRow[];
   summary: StatementValidationSummary;
 }
+
+export function getStatementHeaders(extended = false): readonly string[] {
+  return extended
+    ? [...ETSY_STATEMENT_SOURCE_HEADERS, "Status", "Availability Date", "Store"]
+    : RAW_STATEMENT_HEADERS;
+}

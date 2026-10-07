@@ -1,11 +1,11 @@
 import * as XLSX from "xlsx";
-import { getBoSheetDestination } from "@/lib/fl/bo-import-config";
+import { getBoName, getBoSheetDestination } from "@/lib/fl/bo-import-config";
 import type {
   MappedStatementRow,
   StatementParseResult,
   StatementValidationSummary,
 } from "./types";
-import { RAW_STATEMENT_HEADERS } from "./types";
+import { getStatementHeaders } from "./types";
 
 export interface StatementColumnMappingInfo {
   targetHeader: string;
@@ -93,7 +93,7 @@ export const STATEMENT_MAPPING_SPEC: StatementColumnMappingInfo[] = [
     dataType: "String",
     isRequired: true,
     notes:
-      "Cố định '97Decor' theo cấu hình BO Ms. Linh. Không lấy từ cột phụ thứ 10 của CSV.",
+      "Lấy tên shop theo cấu hình BO đang import. Không lấy từ cột phụ thứ 10 của CSV.",
   },
 ];
 
@@ -108,13 +108,16 @@ export function buildStatementPreviewWorkbook(
 ): XLSX.WorkBook {
   const { rows, summary } = options;
   const workbook = XLSX.utils.book_new();
+  const headers = getStatementHeaders(
+    getBoSheetDestination(boId).extendedStatement,
+  );
 
   // ----------------------------------------------------
   // Sheet 1: RAW.Statement (10 cột chuẩn)
   // ----------------------------------------------------
   const sheetData = [
-    [...RAW_STATEMENT_HEADERS],
-    ...rows.map((row) => RAW_STATEMENT_HEADERS.map((h) => row[h] ?? "")),
+    [...headers],
+    ...rows.map((row) => headers.map((h) => row[h] ?? "")),
   ];
 
   const rawStatementSheet = XLSX.utils.aoa_to_sheet(sheetData);
@@ -144,14 +147,25 @@ export function buildStatementPreviewWorkbook(
       "Bắt buộc",
       "Ghi chú chuyển đổi & Bảo toàn",
     ],
-    ...STATEMENT_MAPPING_SPEC.map((spec, idx) => [
-      idx + 1,
-      spec.targetHeader,
-      spec.sourceHeader,
-      spec.dataType,
-      spec.isRequired ? "Có" : "Không",
-      spec.notes,
-    ]),
+    ...headers.map((header, idx) => {
+      const spec = STATEMENT_MAPPING_SPEC.find(
+        (item) => item.targetHeader === header,
+      ) ?? {
+        targetHeader: header,
+        sourceHeader: header,
+        dataType: "String",
+        isRequired: false,
+        notes: "Lấy theo tên header nguồn; không có thì để trống.",
+      };
+      return [
+        idx + 1,
+        spec.targetHeader,
+        spec.sourceHeader,
+        spec.dataType,
+        spec.isRequired ? "Có" : "Không",
+        spec.notes,
+      ];
+    }),
   ];
 
   const mappingSheet = XLSX.utils.aoa_to_sheet(mappingRows);
@@ -183,11 +197,8 @@ export function buildStatementPreviewWorkbook(
       "Tháng xác minh:",
       `${summary.verifiedMonth} (${summary.verifiedMonthLabel})`,
     ],
-    ["Shop phụ trách:", "97DECOR (Store: 97Decor)"],
-    [
-      "BO phụ trách:",
-      boId === "mr-nam" ? "mr-nam (Mr. Nam)" : "ms-linh (Ms. Linh)",
-    ],
+    ["Shop phụ trách:", [...new Set(rows.map((row) => row.Store))].join(", ")],
+    ["BO phụ trách:", getBoName(boId)],
     ["Tổng số dòng nguồn hợp lệ:", summary.totalSourceRows],
     ["Số dòng có lỗi:", summary.errorRowsCount],
     [
@@ -205,25 +216,22 @@ export function buildStatementPreviewWorkbook(
     ],
     [
       "2.",
-      "Cơ chế thay thế an toàn: Khi import tháng đã xác minh (vd: 2026-09) cho shop 97Decor, hệ thống sẽ xóa các dòng cũ của 97Decor trong tháng đó và ghi toàn bộ dữ liệu mới.",
+      "Cơ chế thay thế an toàn: Khi import tháng đã xác minh (vd: 2026-09) cho shop đang chọn, hệ thống sẽ thay các dòng cũ của shop đó trong tháng đó và ghi toàn bộ dữ liệu mới.",
     ],
     [
       "3.",
-      "Bảo toàn shop khác: Toàn bộ dòng của các shop khác (vd: Timond) hoặc các tháng khác của 97Decor trong tab RAW.Statement được giữ nguyên 100%.",
+      "Bảo toàn shop khác: Toàn bộ dòng của các shop khác (vd: Timond) hoặc các tháng khác của shop đang chọn trong tab RAW.Statement được giữ nguyên 100%.",
     ],
     [""],
     ["LƯU Ý QUAN TRỌNG"],
-    [
-      "1.",
-      "File này được tạo ở chế độ xem trước (Preview) để duyệt cấu trúc 10 cột RAW.Statement.",
-    ],
+    ["1.", `Preview ${headers.length} cột RAW.Statement.`],
     [
       "2.",
       `Google Sheet đích: Spreadsheet ID: ${getBoSheetDestination(boId).spreadsheetId} (tab RAW.Statement - gid ${getBoSheetDestination(boId).statementSheetId}).`,
     ],
     [
       "3.",
-      "Tính năng ghi thật lên Google Sheet tạm thời bị khóa cho đến khi người dùng duyệt preview và cơ chế thay thế.",
+      "Import chỉ thay dữ liệu của shop và tháng đã xác minh; giữ nguyên các shop và tháng khác.",
     ],
     [""],
   ];

@@ -234,8 +234,10 @@ export function FolderImport({ group }: { group: BoGroup }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Orders → Items → Statement → COGS chung. COGS thay đổi tự cập nhật các
-          cột nguồn; không cần duyệt từng dòng.
+          Orders → Items → Statement
+          {group.id === "mr-phuc"
+            ? ". COGS đồng bộ riêng qua Printify."
+            : " → COGS chung. COGS thay đổi tự cập nhật các cột nguồn; không cần duyệt từng dòng."}
         </p>
         <Button
           type="button"

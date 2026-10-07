@@ -278,6 +278,11 @@ export function parseAndMapEtsyStatement(
       mappedRow[h] = (rawCell ?? "").trim();
     }
 
+    for (const header of ["Status", "Availability Date"]) {
+      const index = headerIndexMap.get(header);
+      mappedRow[header] =
+        index === undefined ? "" : (rawRow[index] ?? "").trim();
+    }
     mappedRows.push(mappedRow);
   }
 

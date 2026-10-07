@@ -3,7 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { BoOrdersForm } from "@/components/dashboard/fl/bo-import/bo-orders-form";
-import { BoStatementForm } from "@/components/dashboard/fl/bo-import/bo-statement-form";
 import { FastwaySyncCard } from "@/components/dashboard/fl/bo-import/fastway-sync-card";
 import { FolderImport } from "@/components/dashboard/fl/bo-import/folder-import";
 import { PrintifySyncCard } from "@/components/dashboard/fl/bo-import/printify-sync-card";
@@ -86,7 +85,7 @@ export function BoStatementImport({
           <div className="space-y-5">
             {group.id === "mr-phuc" && <PrintifySyncCard />}
             {group.id === "ms-linh" && <FastwaySyncCard />}
-            {group.id === "ms-linh" || group.id === "mr-nam" ? (
+            {
               <div className="space-y-5">
                 <a
                   href={`https://docs.google.com/spreadsheets/d/${getBoSheetDestination(group.id).spreadsheetId}/edit`}
@@ -99,9 +98,7 @@ export function BoStatementImport({
                 <FolderImport key={`folder-${group.id}`} group={group} />
                 <BoOrdersForm key={`file-${group.id}`} group={group} />
               </div>
-            ) : (
-              <BoStatementForm key={group.id} group={group} />
-            )}
+            }
           </div>
         </TabsContent>
       ))}

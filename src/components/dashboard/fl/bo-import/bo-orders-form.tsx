@@ -77,7 +77,7 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       "Đang đọc Order Management, kiểm tra Orders và Store, đối chiếu RAW.COGS...";
   } else if (isStatement) {
     reportTitle = `Etsy Payment Statement · ${group.name}`;
-    reportBadge = "10 cột RAW.Statement";
+    reportBadge = `${group.id === "mr-phuc" ? 12 : 10} cột RAW.Statement`;
     validatingText = "Đang kiểm tra 9 header và ánh xạ sang RAW.Statement...";
   } else if (isItems) {
     reportTitle = `Etsy Sold Order Items · ${group.name}`;
@@ -273,11 +273,13 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
       <CardContent className="grid gap-6 p-5 lg:grid-cols-[280px_minmax(0,1fr)]">
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 lg:col-span-2">
           <p className="font-semibold text-red-800 dark:text-red-200">
-            Thứ tự khuyến nghị: Orders → Items → Statement → COGS
+            Thứ tự khuyến nghị: Orders → Items → Statement
+            {group.id !== "mr-phuc" && " → COGS"}
           </p>
           <p className="mt-1">
-            Items và COGS cần có Orders tương ứng, đúng Store. Statement import
-            độc lập; không cần đủ Items hoặc Statement để import COGS.
+            {group.id === "mr-phuc"
+              ? "Items cần có Orders tương ứng, đúng Store. Statement import độc lập. COGS đồng bộ riêng qua Printify."
+              : "Items và COGS cần có Orders tương ứng, đúng Store. Statement import độc lập; không cần đủ Items hoặc Statement để import COGS."}
           </p>
         </div>
         {/* Cột trái: Shop & Loại dữ liệu */}
@@ -349,7 +351,8 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
                   Etsy Sold Order Items (34 cột RAW.Items)
                 </SelectItem>
                 <SelectItem value="STATEMENTS" className="text-xs font-medium">
-                  Etsy Payment Statement (10 cột RAW.Statement)
+                  Etsy Payment Statement ({group.id === "mr-phuc" ? 12 : 10} cột
+                  RAW.Statement)
                 </SelectItem>
                 {(group.id === "ms-linh" || group.id === "mr-nam") && (
                   <SelectItem value="COGS" className="text-xs font-medium">
@@ -375,7 +378,8 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
             <div className="flex gap-2 rounded-lg border border-purple-500/30 bg-purple-50/70 p-3 text-xs leading-relaxed text-purple-900 dark:bg-purple-500/10 dark:text-purple-200">
               <InfoIcon className="mt-0.5 size-3.5 shrink-0" />
               <p>
-                Đã mở khóa import: Tự động ánh xạ 10 cột và cập nhật vào tab
+                Đã mở khóa import: Tự động ánh xạ{" "}
+                {group.id === "mr-phuc" ? 12 : 10} cột và cập nhật vào tab
                 RAW.Statement trên Google Sheet (Thay thế an toàn theo tháng xác
                 minh).
               </p>

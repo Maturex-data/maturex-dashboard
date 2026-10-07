@@ -5,7 +5,7 @@ import {
 } from "@/lib/fl/bo-import-config";
 import { extractMonthFromDateString } from "./statement-mapper";
 import type { MappedStatementRow } from "./types";
-import { RAW_STATEMENT_HEADERS } from "./types";
+import { getStatementHeaders } from "./types";
 
 export const ECOMBIUS_STATEMENT_SPREADSHEET_ID =
   "1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do";
@@ -49,10 +49,33 @@ export async function replaceStatementMonthInGoogleSheet(
     };
   }
 
+  const headers = getStatementHeaders(destination.extendedStatement);
+  const lastColumn = destination.extendedStatement ? "L" : "J";
+  const storeIndex = headers.indexOf("Store");
   const { accessToken } = await getGoogleDriveAccess();
 
+  const headerRange = `${STATEMENT_TAB_NAME}!A1:${lastColumn}1`;
+  const headerResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(headerRange)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!headerResponse.ok)
+    throw new Error("Không thể kiểm tra header RAW.Statement.");
+  const headerPayload = (await headerResponse.json()) as {
+    values?: string[][];
+  };
+  const actualHeaders = headerPayload.values?.[0] ?? [];
+  if (
+    actualHeaders.length !== headers.length ||
+    headers.some((header, index) => actualHeaders[index]?.trim() !== header)
+  ) {
+    throw new Error(
+      "Header RAW.Statement không khớp cấu hình BO. Chưa ghi dữ liệu.",
+    );
+  }
+
   // 1. Đọc dữ liệu hiện có trong tab RAW.Statement (từ hàng 2 đến J)
-  const range = `${STATEMENT_TAB_NAME}!A2:${STATEMENT_LAST_COLUMN}`;
+  const range = `${STATEMENT_TAB_NAME}!A2:${lastColumn}`;
   const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
 
   const existingRes = await fetch(getUrl, {
@@ -81,7 +104,7 @@ export async function replaceStatementMonthInGoogleSheet(
 
   for (const row of existingRows) {
     const dateVal = String(row[0] ?? "").trim();
-    const storeVal = String(row[9] ?? "")
+    const storeVal = String(row[storeIndex] ?? "")
       .trim()
       .toLowerCase();
     const rowMonth = extractMonthFromDateString(dateVal);
@@ -102,7 +125,7 @@ export async function replaceStatementMonthInGoogleSheet(
 
   // 3. Chuẩn bị tập dữ liệu mới: các dòng được bảo toàn + toàn bộ dòng mới
   const formattedNewRows: (string | number | null)[][] = mappedRows.map((r) =>
-    RAW_STATEMENT_HEADERS.map((h) => {
+    headers.map((h) => {
       const val = r[h];
       return val === null || val === undefined ? "" : val;
     }),
@@ -169,7 +192,7 @@ export async function replaceStatementMonthInGoogleSheet(
     const chunk = nextSheetRows.slice(i, i + CHUNK_SIZE);
     const startRow = i + 2;
     const endRow = startRow + chunk.length - 1;
-    const writeRange = `${STATEMENT_TAB_NAME}!A${startRow}:${STATEMENT_LAST_COLUMN}${endRow}`;
+    const writeRange = `${STATEMENT_TAB_NAME}!A${startRow}:${lastColumn}${endRow}`;
 
     const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
 
@@ -200,7 +223,7 @@ export async function replaceStatementMonthInGoogleSheet(
   if (nextSheetRows.length < existingRows.length) {
     const clearStartRow = nextSheetRows.length + 2;
     const clearEndRow = existingRows.length + 1;
-    const clearRange = `${STATEMENT_TAB_NAME}!A${clearStartRow}:${STATEMENT_LAST_COLUMN}${clearEndRow}`;
+    const clearRange = `${STATEMENT_TAB_NAME}!A${clearStartRow}:${lastColumn}${clearEndRow}`;
     const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(clearRange)}:clear`;
 
     await fetch(clearUrl, {

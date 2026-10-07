@@ -93,7 +93,7 @@ export function buildOrdersPreviewWorkbook(
     ["Thời gian kiểm tra", new Date().toLocaleString("vi-VN")],
     ["Tên file nguồn", summary.fileName],
     ["Dung lượng file", `${(summary.fileSizeBytes / 1024).toFixed(1)} KB`],
-    ["Nhóm BO", boId === "mr-nam" ? "Mr. Nam (mr-nam)" : "Ms. Linh (ms-linh)"],
+    ["Nhóm BO", boId],
     ["Shop phụ trách", "97Decor (97DECOR)"],
     ["Giá trị gán cột Store", summary.storeValue],
     [""],

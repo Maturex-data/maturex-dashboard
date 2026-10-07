@@ -79,11 +79,9 @@ export function isLinhShop(code: string): boolean {
 /** Phạm vi các BO dùng luồng import Etsy hiện có. */
 export function canImportBoShop(boId: string, shopCode: string): boolean {
   return (
-    (boId === "ms-linh" || boId === "mr-nam") &&
-    (BO_GROUPS.find((group) => group.id === boId)?.shops.some(
+    BO_GROUPS.find((group) => group.id === boId)?.shops.some(
       (shop: string) => shop === shopCode,
-    ) ??
-      false)
+    ) ?? false
   );
 }
 
@@ -93,6 +91,7 @@ export interface BoSheetDestination {
   itemsSheetId: number;
   statementSheetId: number;
   cogsHeaderRow: number;
+  extendedStatement?: boolean;
 }
 
 const LINH_DESTINATION: BoSheetDestination = {
@@ -110,7 +109,27 @@ const NAM_DESTINATION: BoSheetDestination = {
   cogsHeaderRow: 1,
 };
 
+const PHUC_DESTINATION: BoSheetDestination = {
+  spreadsheetId: "1QFRzd6-gZ9zrjUtywnTeQMotvAVL_0nGUqhAvRZ6_BM",
+  ordersSheetId: 1775631154,
+  itemsSheetId: 2092427388,
+  statementSheetId: 51793608,
+  cogsHeaderRow: 3,
+  extendedStatement: true,
+};
+
+export function getBoShopName(shopCode: string): string {
+  const shop = ETSY_SHOPS.find((shop) => shop.code === shopCode);
+  if (!shop) throw new Error("Shop không hợp lệ.");
+  return shop.name;
+}
+
+export function getBoName(boId: string): string {
+  return BO_GROUPS.find((group) => group.id === boId)?.name ?? boId;
+}
+
 export function getBoSheetDestination(boId: string): BoSheetDestination {
+  if (boId === "mr-phuc") return PHUC_DESTINATION;
   if (boId === "mr-nam") return NAM_DESTINATION;
   if (boId === "ms-linh") return LINH_DESTINATION;
   throw new Error("BO chưa được cấu hình Sheet đích.");
