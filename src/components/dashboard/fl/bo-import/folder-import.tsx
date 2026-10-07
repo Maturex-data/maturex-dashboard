@@ -19,6 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import type { BoGroup } from "@/lib/fl/bo-import-config";
+
 type Kind = "orders" | "items" | "statement" | "cogs";
 type Job = {
   valid?: boolean;
@@ -60,7 +62,7 @@ async function droppedFiles(
   }
   return result;
 }
-export function FolderImport() {
+export function FolderImport({ group }: { group: BoGroup }) {
   const [jobs, setJobs] = useState<Job[]>([]),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -70,6 +72,7 @@ export function FolderImport() {
     form.set("file", job.file);
     form.set("path", job.path);
     form.set("shop", job.shop);
+    form.set("boId", group.id);
     try {
       const res = await fetch("/api/fl/bo-folder/analyze", {
         method: "POST",
@@ -174,7 +177,7 @@ export function FolderImport() {
           const form = new FormData();
           form.set("file", job.file);
           form.set("shopCode", job.shop);
-          form.set("boId", "ms-linh");
+          form.set("boId", group.id);
           form.set("action", "validate");
           const url = `/api/fl/bo-${job.kind}/preview`;
           const check = await fetch(url, { method: "POST", body: form });
@@ -227,7 +230,7 @@ export function FolderImport() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Import nhanh cả thư mục · Ms. Linh</CardTitle>
+        <CardTitle>Import nhanh cả thư mục · {group.name}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -331,8 +334,11 @@ export function FolderImport() {
                           <SelectValue placeholder="Chọn shop" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="97DECOR">97Decor</SelectItem>
-                          <SelectItem value="TIMOND">Timond</SelectItem>
+                          {group.shops.map((shop) => (
+                            <SelectItem key={shop.code} value={shop.code}>
+                              {shop.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}

@@ -4,11 +4,12 @@ import { normalizeStoreName } from "@/lib/fl/cogs-parser/cogs-mapper";
 /** Read current Orders on every validation and immediately before an Items write. */
 export async function requireImportedOrders(
   rows: readonly { "Order ID": string; Store: string }[],
+  spreadsheetId = "1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do",
 ): Promise<void> {
   if (!rows.length) return;
   const { accessToken } = await getGoogleDriveAccess();
   const res = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1_BysyndKW-loIuuMb9AzWMJZCrWj2cHjovaXJC5D2Do/values/RAW.Orders!A1:AK?valueRenderOption=UNFORMATTED_VALUE",
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/RAW.Orders!A1:AK?valueRenderOption=UNFORMATTED_VALUE`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",

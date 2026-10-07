@@ -12,7 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BO_QUERY_PARAM, type BoGroup } from "@/lib/fl/bo-import-config";
+import {
+  BO_QUERY_PARAM,
+  type BoGroup,
+  getBoSheetDestination,
+} from "@/lib/fl/bo-import-config";
 import { cn } from "@/lib/utils";
 
 interface BoStatementImportProps {
@@ -77,10 +81,18 @@ export function BoStatementImport({
           value={group.id}
           className={cn(isPending && "opacity-70 transition-opacity")}
         >
-          {group.id === "ms-linh" ? (
+          {group.id === "ms-linh" || group.id === "mr-nam" ? (
             <div className="space-y-5">
-              <FolderImport />
-              <BoOrdersForm key={group.id} group={group} />
+              <a
+                href={`https://docs.google.com/spreadsheets/d/${getBoSheetDestination(group.id).spreadsheetId}/edit`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex text-sm text-emerald-700 underline underline-offset-4 dark:text-emerald-400"
+              >
+                Mở Google Sheet đích · {group.name}
+              </a>
+              <FolderImport key={`folder-${group.id}`} group={group} />
+              <BoOrdersForm key={`file-${group.id}`} group={group} />
             </div>
           ) : (
             <BoStatementForm key={group.id} group={group} />
