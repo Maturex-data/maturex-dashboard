@@ -47,7 +47,7 @@ export async function GET() {
   }
 
   const connection = await getGoogleDriveConnection();
-  if (!connection?.rootFolderId) {
+  if (!connection) {
     return NextResponse.json({ state: "disconnected" satisfies HealthState });
   }
 
@@ -102,6 +102,28 @@ export async function GET() {
     if (!targetResponse.ok) {
       return NextResponse.json({ state: "unavailable" satisfies HealthState });
     }
+
+    const permissionsResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${REPORT_SPREADSHEET_ID}?fields=capabilities(canEdit,canModifyContent)`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      },
+    );
+    if (!permissionsResponse.ok)
+      return NextResponse.json({
+        state: "target_unavailable" satisfies HealthState,
+      });
+    const permissions = (await permissionsResponse.json()) as {
+      capabilities?: { canEdit?: boolean; canModifyContent?: boolean };
+    };
+    if (
+      permissions.capabilities?.canEdit !== true ||
+      permissions.capabilities?.canModifyContent !== true
+    )
+      return NextResponse.json({
+        state: "target_unavailable" satisfies HealthState,
+      });
 
     return NextResponse.json({
       state: "connected" satisfies HealthState,

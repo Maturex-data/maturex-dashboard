@@ -16,6 +16,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export type DriveConnectionInfo = {
+  authMode?: "oauth" | "service_account";
   email: string | null;
   rootFolderId: string | null;
   rootFolderName: string;
@@ -47,6 +48,7 @@ export function EcDriveConnectionCard({
   targetFileName?: string | null;
 }) {
   const router = useRouter();
+  const isServiceAccount = connection?.authMode === "service_account";
   const displayName = targetFileName || "EcomCreate_TheDeerly_PL_FINAL";
   const [connecting, setConnecting] = useState(false);
   const [awaitingCallback, setAwaitingCallback] = useState(false);
@@ -138,6 +140,9 @@ export function EcDriveConnectionCard({
         title={
           <div className="flex flex-wrap items-center gap-2.5">
             <span>Google Sheets Destination</span>
+            {isServiceAccount && (
+              <Badge variant="secondary">Service Account</Badge>
+            )}
             {health === "checking" && connection ? (
               <Badge variant="secondary" className="text-xs font-medium">
                 Đang kiểm tra kết nối
@@ -191,7 +196,9 @@ export function EcDriveConnectionCard({
           <div className="flex items-center gap-2.5">
             {connection ? (
               <>
-                {health === "unavailable" || health === "target_unavailable" ? (
+                {isServiceAccount ||
+                health === "unavailable" ||
+                health === "target_unavailable" ? (
                   <Button
                     onClick={onHealthCheck}
                     size="sm"
@@ -216,7 +223,7 @@ export function EcDriveConnectionCard({
                     </span>
                   </Button>
                 ) : null}
-                {connection.rootFolderId ? (
+                {connection ? (
                   <a
                     className={buttonVariants({
                       size: "sm",
@@ -232,18 +239,20 @@ export function EcDriveConnectionCard({
                     <span>Mở Google Sheet</span>
                   </a>
                 ) : null}
-                <Button
-                  disabled={disconnecting}
-                  onClick={onDisconnect}
-                  size="sm"
-                  variant="ghost"
-                  className="h-9 gap-1.5 rounded-xl px-3 text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  <UnplugIcon
-                    className={`size-3.5 ${disconnecting ? "animate-spin" : ""}`}
-                  />
-                  <span>Ngắt kết nối</span>
-                </Button>
+                {!isServiceAccount && (
+                  <Button
+                    disabled={disconnecting}
+                    onClick={onDisconnect}
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 gap-1.5 rounded-xl px-3 text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  >
+                    <UnplugIcon
+                      className={`size-3.5 ${disconnecting ? "animate-spin" : ""}`}
+                    />
+                    <span>Ngắt kết nối</span>
+                  </Button>
+                )}
               </>
             ) : (
               <Button
