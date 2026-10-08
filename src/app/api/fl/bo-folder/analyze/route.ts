@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { canImportBoShop } from "@/lib/fl/bo-import-config";
+import {
+  BO_GROUPS,
+  canImportBoShop,
+  getBoShopName,
+} from "@/lib/fl/bo-import-config";
 import { parseEquarusWorkbook } from "@/lib/fl/cogs-parser/equarus-parser";
 import { parseAndMapEtsyItems } from "@/lib/fl/items-parser/items-mapper";
 import { parseCsv } from "@/lib/fl/orders-parser/csv-parser";
@@ -21,10 +25,14 @@ export async function POST(req: NextRequest) {
     if (!(file instanceof File) || file.size > 20 * 1024 * 1024)
       throw Error("Chỉ nhận file tối đa 20 MB.");
     const boId = String(form.get("boId") || "ms-linh");
-    if (boId !== "ms-linh" && boId !== "mr-nam")
+    if (!BO_GROUPS.some((group) => group.id === boId))
       throw Error("BO không hỗ trợ import thư mục.");
     const buffer = Buffer.from(await file.arrayBuffer());
     if (file.name.toLowerCase().endsWith(".xlsx")) {
+      if (boId === "mr-phuc")
+        throw Error(
+          "Team Phúc đồng bộ COGS qua Printify; chỉ import CSV Orders, Items và Statement.",
+        );
       const p = parseEquarusWorkbook(buffer);
       return NextResponse.json({
         kind: "cogs",
@@ -54,9 +62,12 @@ export async function POST(req: NextRequest) {
         ? ["97DECOR"]
         : []),
       ...(path.includes("timond") ? ["TIMOND"] : []),
+      ...["EVERNEST", "ORIVIA", "KINDLORA"].filter((code) =>
+        path.includes(code.toLowerCase()),
+      ),
     ];
     const override = String(form.get("shop") || "");
-    const shop = ["97DECOR", "TIMOND"].includes(override)
+    const shop = canImportBoShop(boId, override)
       ? override
       : shops.length === 1
         ? shops[0]
@@ -73,7 +84,7 @@ export async function POST(req: NextRequest) {
       throw Error("Shop không thuộc phạm vi import của BO đã chọn.");
     const options = {
       shopCode: shop,
-      storeValue: shop === "TIMOND" ? "Timond" : "97Decor",
+      storeValue: getBoShopName(shop),
     };
     const p =
       kind === "orders"

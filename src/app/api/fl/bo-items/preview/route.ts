@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   canImportBoShop,
   getBoSheetDestination,
+  getBoShopName,
 } from "@/lib/fl/bo-import-config";
 import { parseAndMapEtsyItems } from "@/lib/fl/items-parser/items-mapper";
 import { exportItemsPreviewToBuffer } from "@/lib/fl/items-parser/xlsx-exporter";
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const result = parseAndMapEtsyItems(csvContent, file.name, file.size, {
       shopCode,
-      storeValue: shopCode === "TIMOND" ? "Timond" : "97Decor",
+      storeValue: getBoShopName(shopCode),
     });
 
     if (action !== "import")
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "download") {
       const xlsxBuffer = exportItemsPreviewToBuffer(result, boId);
-      const outputFilename = `${boId === "mr-nam" ? "nam" : "linh"}-${shopCode.toLowerCase()}-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const outputFilename = `${boId}-${shopCode.toLowerCase()}-items-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,

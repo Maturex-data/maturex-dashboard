@@ -95,7 +95,7 @@ export function BoOrdersSummary({
   const targetColCount = isCogs
     ? "14 cột"
     : isStatement
-      ? "10 cột"
+      ? `${boId === "mr-phuc" ? 12 : 10} cột`
       : isItems
         ? "34 cột"
         : "37 cột";

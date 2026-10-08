@@ -2,9 +2,13 @@ async function main() {
   process.env.USE_NATIVE_PRISMA = "true";
   const required = [
     "DATABASE_URL",
-    "GOOGLE_DRIVE_CLIENT_ID",
-    "GOOGLE_DRIVE_CLIENT_SECRET",
-    "GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY",
+    ...(process.env.GOOGLE_AUTH_MODE === "service_account"
+      ? ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+      : [
+          "GOOGLE_DRIVE_CLIENT_ID",
+          "GOOGLE_DRIVE_CLIENT_SECRET",
+          "GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY",
+        ]),
     "PHUC_PRINTIFY_ACCESS_TOKEN",
     "PHUC_PRINTIFY_SHOP_ID",
     "PHUC_COGS_SPREADSHEET_ID",

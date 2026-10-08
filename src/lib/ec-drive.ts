@@ -1,4 +1,9 @@
 import crypto from "node:crypto";
+import {
+  getServiceAccountAccessToken,
+  getServiceAccountEmail,
+  serviceAccountEnabled,
+} from "@/lib/google-service-account";
 import { prisma } from "@/lib/prisma";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive openid email";
@@ -203,6 +208,15 @@ export async function getGoogleDriveAccess(options?: {
   accessToken: string;
   rootFolderId: string;
 }> {
+  if (serviceAccountEnabled()) {
+    const accessToken = await getServiceAccountAccessToken(
+      options?.forceRefresh,
+    );
+    const rootFolderId =
+      process.env.GOOGLE_SERVICE_ACCOUNT_ROOT_FOLDER_ID?.trim() || "";
+    return { accessToken, rootFolderId };
+  }
+
   const connection = await prisma.ecDriveConnection.findUnique({
     where: { provider: PROVIDER },
   });
@@ -251,6 +265,8 @@ export async function ensureGoogleDriveFolder(
   name: string,
   parentId: string,
 ): Promise<string> {
+  if (!parentId)
+    throw new Error("Cần cấu hình folder Drive đích trước khi xuất file.");
   const lookup = new URL("https://www.googleapis.com/drive/v3/files");
   lookup.searchParams.set(
     "q",
@@ -283,6 +299,8 @@ export async function uploadGoogleDriveFile(
   name: string,
   content: Uint8Array,
 ): Promise<{ id: string; url: string }> {
+  if (!parentId)
+    throw new Error("Cần cấu hình folder Drive đích trước khi xuất file.");
   const boundary = `maturex-${crypto.randomUUID()}`;
   const metadata = JSON.stringify({
     name,
@@ -368,6 +386,20 @@ export async function getGoogleDriveFileName(
 }
 
 export async function getGoogleDriveConnection() {
+  if (serviceAccountEnabled()) {
+    return {
+      authMode: "service_account" as const,
+      email: getServiceAccountEmail(),
+      rootFolderId:
+        process.env.GOOGLE_SERVICE_ACCOUNT_ROOT_FOLDER_ID?.trim() || null,
+      rootFolderName: "Service Account",
+      scope:
+        "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets",
+      tokenExpiresAt: null,
+      connectedAt: new Date(0),
+      updatedAt: new Date(0),
+    };
+  }
   return prisma.ecDriveConnection.findUnique({
     where: { provider: PROVIDER },
     select: {
@@ -383,6 +415,8 @@ export async function getGoogleDriveConnection() {
 }
 
 export async function disconnectGoogleDrive(): Promise<void> {
+  if (serviceAccountEnabled())
+    throw new Error("Service Account được quản lý bằng cấu hình máy chủ.");
   const connection = await prisma.ecDriveConnection.findUnique({
     where: { provider: PROVIDER },
   });

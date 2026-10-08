@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   canImportBoShop,
   getBoSheetDestination,
+  getBoShopName,
 } from "@/lib/fl/bo-import-config";
 import { parseAndMapEtsyOrders } from "@/lib/fl/orders-parser/orders-mapper";
 import { exportOrdersPreviewToBuffer } from "@/lib/fl/orders-parser/xlsx-exporter";
@@ -40,12 +41,12 @@ export async function POST(req: NextRequest) {
 
     const result = parseAndMapEtsyOrders(csvContent, file.name, file.size, {
       shopCode,
-      storeValue: shopCode === "TIMOND" ? "Timond" : "97Decor",
+      storeValue: getBoShopName(shopCode),
     });
 
     if (action === "download") {
       const xlsxBuffer = exportOrdersPreviewToBuffer(result, boId);
-      const outputFilename = `${boId === "mr-nam" ? "nam" : "linh"}-${shopCode.toLowerCase()}-orders-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const outputFilename = `${boId}-${shopCode.toLowerCase()}-orders-preview-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         status: 200,
