@@ -1,4 +1,8 @@
 import {
+  cogsSalesTax,
+  ensureCogsSalesTaxHeader,
+} from "@/lib/ec/cogs/sales-tax-sheet";
+import {
   ensureOrdersDeliveryHeaders,
   orderDeliveryValues,
 } from "@/lib/ec/order-delivery-sheet";
@@ -24,7 +28,7 @@ const REPORT_SPREADSHEET_ID =
 
 const REPORT_SHEETS = {
   Orders: { lastColumn: "V", dateIndex: 3, source: "all-data / RAW.ORDER" },
-  COGS: { lastColumn: "L", dateIndex: 3, source: "all-data / RAW.COGS" },
+  COGS: { lastColumn: "O", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
     lastColumn: "P",
@@ -214,6 +218,9 @@ async function fetchFromPlatforms(
         row.itemKey,
         cogsTreatment(row),
         REPORT_SHEETS.COGS.source,
+        "", // PL recognition month is maintained on the Sheet.
+        "", // Recognition status is maintained on the Sheet.
+        cogsSalesTax(row),
       ]);
     }
     case "Ads": {
@@ -317,6 +324,7 @@ async function syncSheet(
 ): Promise<{ changed: boolean }> {
   console.log(`[${sheet}] Fetching existing rows from Google Sheet...`);
   if (sheet === "Orders") await ensureOrdersDeliveryHeaders(sheetsRequest);
+  if (sheet === "COGS") await ensureCogsSalesTaxHeader(sheetsRequest);
   const { dateIndex, lastColumn } = REPORT_SHEETS[sheet];
 
   const existingResponse = await sheetsRequest(
@@ -348,6 +356,10 @@ async function syncSheet(
   for (const row of newRows) {
     const key = getUniqueKey(sheet, row);
     if (key) {
+      if (sheet === "COGS") {
+        row[12] = mergedMap.get(key)?.[12] ?? "";
+        row[13] = mergedMap.get(key)?.[13] ?? "";
+      }
       mergedMap.set(key, row);
     }
   }

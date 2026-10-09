@@ -72,16 +72,22 @@ export async function fetchPrintify(
         const orderId = text(order.id);
         const cost = amount(item.cost) / 100;
         const shipping = amount(item.shipping_cost) / 100;
+        // Tax is order-level: attach it to the first item only.
+        const salesTaxCents =
+          index === 0 && typeof order.total_tax === "number"
+            ? order.total_tax
+            : null;
+        const salesTax = (salesTaxCents ?? 0) / 100;
         return makeRow(
           "Printify",
           orderId,
           created,
           order.app_order_id || record(order.metadata).shop_order_label,
           orderId,
-          cost + shipping,
-          cost + shipping,
+          cost + shipping + salesTax,
+          cost + shipping + salesTax,
           `${text(item.id) || index}`,
-          { order, item },
+          { order, item, ecSalesTax: salesTaxCents === null ? null : salesTax },
         );
       });
     });
