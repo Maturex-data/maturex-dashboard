@@ -7,6 +7,10 @@ import {
   vietnamMonthRange,
 } from "@/lib/date-time";
 import {
+  cogsSalesTax,
+  ensureCogsSalesTaxHeader,
+} from "@/lib/ec/cogs/sales-tax-sheet";
+import {
   ensureOrdersDeliveryHeaders,
   orderDeliveryValues,
 } from "@/lib/ec/order-delivery-sheet";
@@ -23,7 +27,7 @@ const REPORT_SPREADSHEET_ID =
 
 const REPORT_SHEETS = {
   Orders: { lastColumn: "V", dateIndex: 3, source: "all-data / RAW.ORDER" },
-  COGS: { lastColumn: "L", dateIndex: 3, source: "all-data / RAW.COGS" },
+  COGS: { lastColumn: "O", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
     lastColumn: "P",
@@ -213,6 +217,9 @@ async function valuesFor(
         row.itemKey,
         cogsTreatment(row),
         REPORT_SHEETS.COGS.source,
+        "", // PL recognition month is maintained on the Sheet.
+        "", // Recognition status is maintained on the Sheet.
+        cogsSalesTax(row),
       ]);
     }
     case "Ads": {
@@ -303,6 +310,10 @@ async function writeSheet(
       sheetsRequest(accessToken, path, init),
     );
   }
+  if (sheet === "COGS")
+    await ensureCogsSalesTaxHeader((path, init) =>
+      sheetsRequest(accessToken, path, init),
+    );
   const { dateIndex, lastColumn } = REPORT_SHEETS[sheet];
   const existingResponse = await sheetsRequest(
     accessToken,
@@ -312,6 +323,16 @@ async function writeSheet(
   const existing = Array.isArray(existingPayload.values)
     ? existingPayload.values.filter(Array.isArray)
     : [];
+  if (sheet === "COGS") {
+    const recognition = new Map(
+      existing.map((row) => [text(row[9]), [row[12] ?? "", row[13] ?? ""]]),
+    );
+    for (const row of values) {
+      const preserved = recognition.get(text(row[9]));
+      row[12] = preserved?.[0] ?? "";
+      row[13] = preserved?.[1] ?? "";
+    }
+  }
   const preserved = existing.filter((row) => {
     const dateValue = text(row[dateIndex]);
     const date = new Date(
