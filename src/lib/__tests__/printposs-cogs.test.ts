@@ -22,6 +22,7 @@ test("PrintPoss COGS: paginates with GET and maps one order-level row", async ()
     url: URL;
     method: string | undefined;
     authorization: string | null;
+    userAgent: string | null;
   }> = [];
 
   globalThis.fetch = async (input, init) => {
@@ -30,6 +31,7 @@ test("PrintPoss COGS: paginates with GET and maps one order-level row", async ()
       url,
       method: init?.method,
       authorization: new Headers(init?.headers).get("Authorization"),
+      userAgent: new Headers(init?.headers).get("User-Agent"),
     });
 
     if (url.searchParams.get("page") === "1") {
@@ -89,6 +91,11 @@ test("PrintPoss COGS: paginates with GET and maps one order-level row", async ()
     const rows = await fetchPrintPoss(range);
 
     assert.equal(requests.length, 2);
+    assert.ok(
+      requests.every(
+        (request) => request.userAgent === "Maturex-COGS-Sync/1.0",
+      ),
+    );
     assert.ok(requests.every((request) => request.method === "GET"));
     assert.ok(
       requests.every(

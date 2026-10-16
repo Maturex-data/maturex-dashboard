@@ -10,13 +10,30 @@ on:
     - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
+      diagnostics:
+        description: Read-only PrintPoss diagnostic
+        type: boolean
+        default: false
       reason:
         description: 'Manual trigger reason'
         required: false
         default: 'Manual test from GitHub Actions'
 
 jobs:
+  diagnose-printposs:
+    if: ${{ inputs.diagnostics == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read-only PrintPoss request
+        env:
+          PRINTPOSS_API_TOKEN: ${{ secrets.PRINTPOSS_API_TOKEN }}
+        run: node scripts/diagnose-printposs.mjs
   sync-ec-sheet:
+    if: ${{ inputs.diagnostics != true }}
     name: Trigger EC Sheet Sync
     runs-on: ubuntu-latest
     steps:
