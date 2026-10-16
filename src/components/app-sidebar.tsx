@@ -111,6 +111,12 @@ export function AppSidebar({
 
   const micromNav = [
     {
+      title: "Báo cáo kinh doanh",
+      url: "/microm/business-report",
+      icon: <BarChart3Icon />,
+      isActive: pathname === "/microm/business-report",
+    },
+    {
       title: "Báo cáo P&L Microm",
       url: "/microm",
       icon: <LayersIcon className="size-4 text-sky-400" />,
