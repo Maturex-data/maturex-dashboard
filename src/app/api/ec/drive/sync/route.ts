@@ -14,6 +14,10 @@ import {
   ensureOrdersDeliveryHeaders,
   orderDeliveryValues,
 } from "@/lib/ec/order-delivery-sheet";
+import {
+  applyPendingAmounts,
+  ensurePayoutPendingHeader,
+} from "@/lib/ec/payout-pending-sheet";
 import { getGoogleDriveAccess } from "@/lib/ec-drive";
 import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/jwt-service";
 import { fetchMetaDailyFinancialsFromApi } from "@/lib/meta-daily-financials-sync";
@@ -30,7 +34,7 @@ const REPORT_SHEETS = {
   COGS: { lastColumn: "O", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
-    lastColumn: "P",
+    lastColumn: "Q",
     dateIndex: 9,
     source: "all-data / RAW.PAYOUT_DETAIL",
   },
@@ -267,6 +271,7 @@ async function valuesFor(
           text(row.source_id || row.order_id || row.source_order_id),
           text(row.order_id || row.source_order_id),
           REPORT_SHEETS.Payouts.source,
+          row.payout_status === "pending" ? Number(row.net) : 0,
         ];
       });
     }
@@ -314,6 +319,10 @@ async function writeSheet(
     await ensureCogsSalesTaxHeader((path, init) =>
       sheetsRequest(accessToken, path, init),
     );
+  if (sheet === "Payouts")
+    await ensurePayoutPendingHeader((path, init) =>
+      sheetsRequest(accessToken, path, init),
+    );
   const { dateIndex, lastColumn } = REPORT_SHEETS[sheet];
   const existingResponse = await sheetsRequest(
     accessToken,
@@ -349,6 +358,7 @@ async function writeSheet(
       next[1] = index + 2;
       return next;
     });
+  if (sheet === "Payouts") await applyPendingAmounts(numbered);
   const spreadsheetResponse = await sheetsRequest(
     accessToken,
     "?fields=sheets.properties(sheetId,title,gridProperties.rowCount)",

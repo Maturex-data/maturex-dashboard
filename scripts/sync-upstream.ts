@@ -6,6 +6,10 @@ import {
   ensureOrdersDeliveryHeaders,
   orderDeliveryValues,
 } from "@/lib/ec/order-delivery-sheet";
+import {
+  applyPendingAmounts,
+  ensurePayoutPendingHeader,
+} from "@/lib/ec/payout-pending-sheet";
 
 process.env.USE_NATIVE_PRISMA = "true";
 
@@ -31,7 +35,7 @@ const REPORT_SHEETS = {
   COGS: { lastColumn: "O", dateIndex: 3, source: "all-data / RAW.COGS" },
   Ads: { lastColumn: "K", dateIndex: 3, source: "all-data / META_ADS" },
   Payouts: {
-    lastColumn: "P",
+    lastColumn: "Q",
     dateIndex: 9,
     source: "all-data / RAW.PAYOUT_DETAIL",
   },
@@ -268,6 +272,7 @@ async function fetchFromPlatforms(
           text(row.source_id || row.order_id || row.source_order_id),
           text(row.order_id || row.source_order_id),
           REPORT_SHEETS.Payouts.source,
+          row.payout_status === "pending" ? Number(row.net) : 0,
         ];
       });
     }
@@ -325,6 +330,7 @@ async function syncSheet(
   console.log(`[${sheet}] Fetching existing rows from Google Sheet...`);
   if (sheet === "Orders") await ensureOrdersDeliveryHeaders(sheetsRequest);
   if (sheet === "COGS") await ensureCogsSalesTaxHeader(sheetsRequest);
+  if (sheet === "Payouts") await ensurePayoutPendingHeader(sheetsRequest);
   const { dateIndex, lastColumn } = REPORT_SHEETS[sheet];
 
   const existingResponse = await sheetsRequest(
@@ -374,6 +380,8 @@ async function syncSheet(
       next[1] = index + 2;
       return next;
     });
+
+  if (sheet === "Payouts") await applyPendingAmounts(mergedArray);
 
   // Smart Skip calculation
   let hasChanges = false;
