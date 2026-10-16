@@ -64,6 +64,15 @@ async function collection(
   return rows;
 }
 
+export async function fetchPendingPaymentTransactions(): Promise<
+  ShopifyPaymentTransaction[]
+> {
+  return collection(
+    "shopify_payments/balance/transactions.json?payout_status=pending&limit=250",
+    "transactions",
+  );
+}
+
 export async function fetchShopifyPaymentTransactionsFromApi(range: {
   from: Date;
   to: Date;
