@@ -118,6 +118,7 @@ export async function fetchPrintPoss(
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        "User-Agent": "Maturex-COGS-Sync/1.0",
       },
     });
     let payload: JsonRecord;
