@@ -2,6 +2,11 @@ import { getGoogleDriveAccess } from "@/lib/ec-drive";
 import { prisma } from "@/lib/prisma";
 import { MICROM_SPREADSHEET_ID } from "./constants";
 import { acquireMicromLock } from "./lock-manager";
+import { fetchMicromMerchOneOrders } from "./merchone-adapter";
+import {
+  readStoredMicromOrderRefs,
+  writeMerchOneToSheet,
+} from "./merchone-sheet";
 import { fetchMicromMetaInsights } from "./meta-adapter";
 import { fetchMicromPGPrintOrders } from "./pgprint-adapter";
 import {
@@ -133,6 +138,35 @@ export async function runMicromProviderToSheetSync(
       sourcesSummary.pgprint = { success: false, error: msg };
     }
 
+    // Full MerchOne scan also refreshes legacy orders outside the rolling window.
+    try {
+      const storedOrders = await readStoredMicromOrderRefs(
+        spreadsheetId,
+        token,
+      );
+      const merchone = await fetchMicromMerchOneOrders(storedOrders);
+      const written = await writeMerchOneToSheet(
+        spreadsheetId,
+        token,
+        merchone.rows,
+      );
+      fingerprints.COGS = written.fingerprint;
+      stats.COGS = { rowCount: written.writtenCount };
+      sourcesSummary.merchone = {
+        success: true,
+        ordersFetched: merchone.ordersFetched,
+        matched: merchone.matched,
+        unmapped: merchone.unmapped,
+        added: written.added,
+        updated: written.updated,
+        skipped: written.skipped,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      errors.push(`MerchOne: ${msg}`);
+      sourcesSummary.merchone = { success: false, error: msg };
+    }
+
     // --- Provider 3: Meta Ads ---
     try {
       const metaRes = await fetchMicromMetaInsights({
@@ -166,7 +200,7 @@ export async function runMicromProviderToSheetSync(
     let isReconciled = errors.length === 0;
     let finalStatus: "SUCCESS" | "PARTIAL_SUCCESS" | "FAILED" = isReconciled
       ? "SUCCESS"
-      : errors.length < 3
+      : errors.length < 4
         ? "PARTIAL_SUCCESS"
         : "FAILED";
 
