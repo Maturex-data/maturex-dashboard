@@ -66,10 +66,11 @@ async function fetchSheetRows(
   accessToken: string,
   tab: string,
   range: string,
+  renderOption = "UNFORMATTED_VALUE",
 ): Promise<unknown[][]> {
   const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(
     `${tab}!${range}`,
-  )}?valueRenderOption=UNFORMATTED_VALUE`;
+  )}?valueRenderOption=${renderOption}`;
   const res = await fetch(readUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -268,7 +269,8 @@ export async function writeCogsToSheet(
     spreadsheetId,
     accessToken,
     MICROM_TABS.COGS,
-    "A2:M",
+    "A2:O",
+    "FORMULA",
   );
 
   // Map by composite key (supplier order ID + Customer Order ID + Child Item Identifier)
@@ -294,7 +296,7 @@ export async function writeCogsToSheet(
       r.nguonDong,
       idx,
     );
-    const rowArray = [
+    const rowArray: unknown[] = [
       r.pgprintOrderId,
       r.pgcOrderId,
       r.customerOrderId,
@@ -309,6 +311,8 @@ export async function writeCogsToSheet(
       r.nguonDong,
       r.kiemSoat,
     ];
+    const previous = rowsMap.get(key);
+    rowArray.push(previous?.[13] ?? "", previous?.[14] ?? "");
     rowsMap.set(key, rowArray);
   }
 
@@ -318,9 +322,9 @@ export async function writeCogsToSheet(
     return dateB.localeCompare(dateA);
   });
 
-  await clearTabDataRows(spreadsheetId, accessToken, MICROM_TABS.COGS, "M");
+  await clearTabDataRows(spreadsheetId, accessToken, MICROM_TABS.COGS, "O");
 
-  const range = `${MICROM_TABS.COGS}!A2:M${finalRows.length + 1}`;
+  const range = `${MICROM_TABS.COGS}!A2:O${finalRows.length + 1}`;
   const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(
     range,
   )}?valueInputOption=USER_ENTERED`;
