@@ -77,10 +77,8 @@ export function mapPrintifyOrder(order: PrintifyOrder): (string | number)[] {
     )
   )
     throw Error("Số lượng item không hợp lệ.");
-  if (items.some((item) => item.quantity !== 1))
-    throw Error(
-      "Đơn có item quantity khác 1. Cần xác minh cách tính cost trước khi đồng bộ.",
-    );
+  // Printify reports the cost for the whole line, including its quantity.
+  // Sum each API line once; multiplying by quantity would double-charge it.
   const production =
     items.length && items.every((item) => Number.isSafeInteger(item.cost))
       ? items.reduce((sum, item) => sum + (item.cost ?? 0), 0) / 100
