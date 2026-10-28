@@ -1,3 +1,4 @@
+export {};
 async function main() {
   process.env.USE_NATIVE_PRISMA = "true";
   const required = [

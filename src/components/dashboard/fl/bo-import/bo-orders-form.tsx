@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { invalidateEtsyTableCache } from "@/lib/etsy-table-cache";
 import type { BoGroup } from "@/lib/fl/bo-import-config";
 import { CogsReview } from "./cogs-review";
 
@@ -181,6 +182,8 @@ export function BoOrdersForm({ group }: BoOrdersFormProps) {
         );
       }
 
+      invalidateEtsyTableCache();
+      window.dispatchEvent(new Event("etsy-cache-invalidated"));
       setImportedResult(data.importResult);
       if (isCogs) {
         setSummary((prev) =>

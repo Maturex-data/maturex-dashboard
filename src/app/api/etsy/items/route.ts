@@ -75,7 +75,12 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
       }),
       prisma.etsyOrderItem.findMany({
-        where: { shop: { active: true } },
+        where: {
+          shop:
+            shopCode && shopCode !== "all"
+              ? { code: shopCode, active: true }
+              : { active: true },
+        },
         select: { saleDate: true },
         distinct: ["saleDate"],
         orderBy: { saleDate: "desc" },
