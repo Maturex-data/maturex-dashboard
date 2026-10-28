@@ -110,7 +110,11 @@ export function FlowaDataTable({ shops }: { shops: ShopOption[] }) {
           )
         : [];
       setAvailableMonths(months);
-      if (months.length > 0 && !months.includes(selectedMonth)) {
+      if (
+        selectedMonth !== "all" &&
+        months.length > 0 &&
+        !months.includes(selectedMonth)
+      ) {
         setSelectedMonth(months[0]);
         setPage(1);
         replaceTableUrl(activeTab, selectedShop, months[0]);
@@ -346,7 +350,7 @@ export function FlowaDataTable({ shops }: { shops: ShopOption[] }) {
                 className="gap-2 text-xs py-2 px-1 font-medium transition-colors hover:text-foreground"
               >
                 <DatabaseIcon className="size-3.5 text-sky-500" />
-                <span>3. Chi Tiết SP (chỉ Artisan)</span>
+                <span>3. Chi Tiết SP (Items)</span>
                 {activeTab === "items" && (
                   <span className="ml-1 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.2 text-[10px] font-mono font-semibold">
                     {total}

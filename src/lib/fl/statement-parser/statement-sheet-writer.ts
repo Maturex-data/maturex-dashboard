@@ -3,6 +3,7 @@ import {
   type BoSheetDestination,
   getBoSheetDestination,
 } from "@/lib/fl/bo-import-config";
+import { syncBoRowsToDashboard } from "@/lib/fl/dashboard-sync/import";
 import { extractMonthFromDateString } from "./statement-mapper";
 import type { MappedStatementRow } from "./types";
 import { getStatementHeaders } from "./types";
@@ -194,7 +195,7 @@ export async function replaceStatementMonthInGoogleSheet(
     const endRow = startRow + chunk.length - 1;
     const writeRange = `${STATEMENT_TAB_NAME}!A${startRow}:${lastColumn}${endRow}`;
 
-    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`;
+    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(writeRange)}?valueInputOption=RAW`;
 
     const updateRes = await fetch(updateUrl, {
       method: "PUT",
@@ -233,6 +234,18 @@ export async function replaceStatementMonthInGoogleSheet(
         "Content-Type": "application/json",
       },
     });
+  }
+
+  try {
+    await syncBoRowsToDashboard(
+      "statements",
+      mappedRows,
+      `BO Google Sheet ${destination.spreadsheetId}`,
+    );
+  } catch (error) {
+    throw new Error(
+      `Sheet đã ghi thành công nhưng chưa cập nhật dashboard. Hãy import lại để thử tiếp: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 
   return {

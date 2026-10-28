@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { invalidateEtsyTableCache } from "@/lib/etsy-table-cache";
 
 import type { BoGroup } from "@/lib/fl/bo-import-config";
 
@@ -204,6 +205,8 @@ export function FolderImport({ group }: { group: BoGroup }) {
           const res = await fetch(url, { method: "POST", body: form });
           const p = await res.json();
           if (!res.ok || !p.success) throw Error(p.error || "Import lỗi.");
+          invalidateEtsyTableCache();
+          window.dispatchEvent(new Event("etsy-cache-invalidated"));
           const r = p.importResult;
           next[i] = {
             ...job,

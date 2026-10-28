@@ -3,6 +3,7 @@ import {
   type BoSheetDestination,
   getBoSheetDestination,
 } from "@/lib/fl/bo-import-config";
+import { syncBoRowsToDashboard } from "@/lib/fl/dashboard-sync/import";
 import { requireImportedOrders } from "@/lib/fl/orders-prerequisite";
 import type { MappedItemRow } from "./types";
 import { RAW_ITEMS_HEADERS } from "./types";
@@ -47,7 +48,7 @@ export async function upsertItemsToGoogleSheet(
 
   // 1. Đọc dữ liệu hiện có trong tab RAW.Items (từ hàng 2 đến AH)
   const range = `${ITEMS_TAB_NAME}!A2:${ITEMS_LAST_COLUMN}`;
-  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMATTED_VALUE`;
+  const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${destination.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMULA`;
 
   const existingRes = await fetch(getUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -192,7 +193,7 @@ export async function upsertItemsToGoogleSheet(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          valueInputOption: "USER_ENTERED",
+          valueInputOption: "RAW",
           data: writeData,
         }),
       },
@@ -206,6 +207,18 @@ export async function upsertItemsToGoogleSheet(
         `Không thể ghi dữ liệu vào Google Sheet: ${writeErr.error?.message || writeRes.statusText}`,
       );
     }
+  }
+
+  try {
+    await syncBoRowsToDashboard(
+      "items",
+      mappedRows,
+      `BO Google Sheet ${destination.spreadsheetId}`,
+    );
+  } catch (error) {
+    throw new Error(
+      `Sheet đã ghi thành công nhưng chưa cập nhật dashboard. Hãy import lại để thử tiếp: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 
   return {
